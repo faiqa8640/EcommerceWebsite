@@ -1,7 +1,7 @@
-import {useState,type JSX } from "react";
+import {useState } from "react";
 
 
-export default function Newsletter(): JSX.Element {
+export default function Newsletter(){
   const [email, setEmail] = useState<string>(""); // it is used for storing the email
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>): void => {

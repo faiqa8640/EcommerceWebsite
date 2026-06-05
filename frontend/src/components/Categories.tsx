@@ -1,6 +1,4 @@
-import {type JSX } from "react";
-
-export default function Categories(): JSX.Element {
+export default function Categories(){
   type Category = {
     title: string;
     desc: string;

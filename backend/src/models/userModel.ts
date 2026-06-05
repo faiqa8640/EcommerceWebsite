@@ -1,51 +1,66 @@
-// models  tell that how does my data look like.. you can say that in we define the schema etc
+// Defines how our user data looks in MongoDB
 
 import mongoose, { Document, Model } from "mongoose";
-import bcrypt from "bcryptjs"; // to bcrypt the password
+import bcrypt from "bcryptjs";
 
-// 1. Define user interface
+// 1. TypeScript interface for user document
 export interface IUser extends Document {
   name: string;
   email: string;
   password: string;
   role: "user" | "admin";
+
+  // Email verification
+  isVerified: boolean;
+  emailVerifyToken?: string;
+  emailVerifyExpire?: Date;
+
+  // Password reset
+  resetPasswordToken?: string;
+  resetPasswordExpire?: Date;
+
   matchPassword(enteredPassword: string): Promise<boolean>;
 }
 
-// 2. Defining the userSchema
+// 2. Mongoose schema
 const userSchema = new mongoose.Schema<IUser>(
   {
-    // contain name , email, password, role
-    name: { type: String, required: true },
-    email: { type: String, required: true, unique: true, lowercase: true },
+    name: { type: String, required: true, trim: true },
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
+    },
     password: { type: String, required: true, minlength: 6 },
     role: { type: String, enum: ["user", "admin"], default: "user" },
+
+    // Email verification fields
+    isVerified: { type: Boolean, default: false },
+    emailVerifyToken: String,
+    emailVerifyExpire: Date,
+
+    // Password reset fields
+    resetPasswordToken: String,
+    resetPasswordExpire: Date,
   },
-  { timestamps: true } // mongodb add created at and updated at automatically
+  { timestamps: true } // adds createdAt and updatedAt automatically
 );
 
-// 3. Hash password
-// we will hash the password before saying in the db -> for that purpose we will use becrypt
-userSchema.pre("save", async function () { // this runs before  everthing is saved to the db -> kind of middleware 
-  if (!this.isModified("password")) return; // if the password is modifed only then bcrypt
-  this.password = await bcrypt.hash(this.password, 10);//10 is salt number -> higher  salt number means higher security and but slow hashing 
+// 3. Hash password before saving (only when modified)
+userSchema.pre("save", async function () {
+  if (!this.isModified("password")) return;
+  this.password = await bcrypt.hash(this.password, 10);
+  // salt=10 → standard security/performance balance
 });
-// salt number is a random data added before hashing 
-// and for one password diff hashes is possible  and remember that 10 is the standard for hashing 
 
-// 4. Match password method
+// 4. Compare entered password with hashed DB password
 userSchema.methods.matchPassword = async function (
   enteredPassword: string
 ): Promise<boolean> {
-  return await bcrypt.compare(enteredPassword, this.password);// compare theuser type passwprd with the hash passoword
+  return await bcrypt.compare(enteredPassword, this.password);
 };
 
-//  so overall working is that 
-// 1) user enter the password , the password is hashed and then stored into the database okay 
-// 2) if the user come and login what happen is that the enetered password is compared with the hased one oky 
-// (bcrypt.compare -> apply the same hashing to the enetered password and  then compare)
-// 3) if true user login if not then incorrect password 
-// 5. Model type
 const User: Model<IUser> = mongoose.model<IUser>("User", userSchema);
-
 export default User;

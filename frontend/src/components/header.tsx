@@ -1,44 +1,49 @@
-import { useState, useEffect , type JSX} from "react";
-import { Link, useLocation } from "react-router-dom";
+// Header with dynamic Login/Logout based on auth state
 
-export default function Header(): JSX.Element {
-  const [menuOpen, setMenuOpen] = useState<boolean>(false); // state that control the phone menu 
-  const [scrolled, setScrolled] = useState<boolean>(false); // track if the user track down
-  const location = useLocation(); // it is used for the active linking 
+import { useState, useEffect } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+
+export default function Header() {
+  const [menuOpen, setMenuOpen] = useState<boolean>(false); // state that control the phone menu
+  const [scrolled, setScrolled] = useState<boolean>(false);// track if the user track down
+  const location = useLocation();// it is used for the active linking 
+  const navigate = useNavigate();
+  const { user, logout } = useAuth(); // get auth state
 
   useEffect(() => { // is used to handle the scrolling 
-    const handleScroll = (): void =>
-      setScrolled(window.scrollY > 20); // if scrolling >20 then true 
-
-    window.addEventListener("scroll", handleScroll); // if true then handle the scroll like dim opacity->header become smaller and dark
-
+    const handleScroll = (): void => setScrolled(window.scrollY > 20);// if scrolling >20 then true 
+    window.addEventListener("scroll", handleScroll);// if true then handle the scroll like dim opacity->header become smaller and dark
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  useEffect(() => { // it closes the mobile menu when user navigate
+  useEffect(() => {// it closes the mobile menu when user navigate
     setMenuOpen(false);
   }, [location]);
 
-  const navLinks: { label: string; to: string }[] = [ // map for the links
+  const navLinks: { label: string; to: string }[] = [
     { label: "Home", to: "/" },
     { label: "Shop", to: "/shop" },
     { label: "About", to: "/about" },
     { label: "Contact", to: "/contact" },
   ];
 
-  const isActive = (path: string): boolean =>
-    location.pathname === path; // used for active path detection -> if url is of shop ->then shop link will become active
+  const isActive = (path: string): boolean => location.pathname === path;
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
 
   return (
     <>
-      <style>{` 
+      <style>{`
         :root {
           --primary: #111844;
           --accent: #4B5694;
           --accent-light: #7288AE;
           --text: #EAE0CF;
           --text-muted: #7288AE;
-          --bg: #111844;
         }
 
         .eloura-header {
@@ -46,11 +51,11 @@ export default function Header(): JSX.Element {
           top: 0; left: 0; right: 0;
           z-index: 1000;
           backdrop-filter: blur(12px);
-          border-bottom: 1px solid rgba(234, 224, 207, 0.15);
+          border-bottom: 1px solid rgba(234,224,207,0.15);
           transition: all 0.4s ease;
         }
 
-        .eloura-header::before { 
+        .eloura-header::before {
           content: '';
           position: absolute;
           top: 0; left: 0; right: 0;
@@ -88,9 +93,7 @@ export default function Header(): JSX.Element {
           transition: color 0.3s;
         }
 
-        .eloura-logo:hover .eloura-logo-name {
-          color: var(--accent-light);
-        }
+        .eloura-logo:hover .eloura-logo-name { color: var(--accent-light); }
 
         .eloura-logo-tag {
           font-family: 'Jost', system-ui, sans-serif;
@@ -126,8 +129,7 @@ export default function Header(): JSX.Element {
         .eloura-nav-link::after {
           content: '';
           position: absolute;
-          bottom: 4px;
-          left: 50%;
+          bottom: 4px; left: 50%;
           transform: translateX(-50%);
           height: 1px;
           background: var(--accent-light);
@@ -135,12 +137,23 @@ export default function Header(): JSX.Element {
         }
 
         .eloura-nav-link.active::after,
-        .eloura-nav-link:hover::after {
-          width: 55%;
+        .eloura-nav-link:hover::after { width: 55%; }
+        .eloura-nav-link:not(.active)::after { width: 0; }
+
+        /* Auth buttons area */
+        .eloura-auth {
+          display: flex;
+          align-items: center;
+          gap: 0.8rem;
+          flex-shrink: 0;
         }
 
-        .eloura-nav-link:not(.active)::after {
-          width: 0;
+        .eloura-user-name {
+          font-family: 'Jost', system-ui, sans-serif;
+          font-size: 0.68rem;
+          letter-spacing: 0.1em;
+          color: var(--text-muted);
+          white-space: nowrap;
         }
 
         .eloura-login {
@@ -157,13 +170,34 @@ export default function Header(): JSX.Element {
           color: var(--text);
           transition: all 0.3s ease;
           white-space: nowrap;
-          flex-shrink: 0;
+          cursor: pointer;
         }
 
         .eloura-login:hover {
           background: var(--accent-light);
           border-color: var(--accent-light);
           transform: translateY(-1px);
+        }
+
+        .eloura-logout {
+          font-family: 'Jost', system-ui, sans-serif;
+          font-size: 0.68rem;
+          font-weight: 500;
+          letter-spacing: 0.2em;
+          text-transform: uppercase;
+          padding: 0.55rem 1.4rem;
+          border-radius: 2px;
+          border: 1px solid rgba(114,136,174,0.4);
+          background: transparent;
+          color: var(--text-muted);
+          transition: all 0.3s ease;
+          white-space: nowrap;
+          cursor: pointer;
+        }
+
+        .eloura-logout:hover {
+          border-color: var(--accent-light);
+          color: var(--text);
         }
 
         .eloura-hamburger {
@@ -194,7 +228,7 @@ export default function Header(): JSX.Element {
           position: fixed;
           inset: 0;
           z-index: 999;
-          background: rgba(17, 24, 68, 0.98);
+          background: rgba(17,24,68,0.98);
           backdrop-filter: blur(20px);
           display: flex;
           flex-direction: column;
@@ -216,13 +250,12 @@ export default function Header(): JSX.Element {
           transition: all 0.3s;
         }
 
-        .eloura-mobile-link:hover,
-        .eloura-mobile-link.active {
+        .eloura-mobile-link:hover, .eloura-mobile-link.active {
           color: var(--accent-light);
           transform: translateX(8px);
         }
 
-        .eloura-mobile-login {
+        .eloura-mobile-btn {
           margin-top: 2rem;
           font-family: 'Jost', system-ui, sans-serif;
           font-size: 0.75rem;
@@ -235,15 +268,15 @@ export default function Header(): JSX.Element {
           color: var(--text);
           border-radius: 2px;
           transition: background 0.3s;
+          border: none;
+          cursor: pointer;
         }
 
-        .eloura-mobile-login:hover {
-          background: var(--accent-light);
-        }
+        .eloura-mobile-btn:hover { background: var(--accent-light); }
 
         @media (max-width: 768px) {
           .eloura-nav { display: none; }
-          .eloura-login { display: none; }
+          .eloura-auth { display: none; }
           .eloura-hamburger { display: flex; }
         }
       `}</style>
@@ -269,30 +302,39 @@ export default function Header(): JSX.Element {
               <Link
                 key={link.to}
                 to={link.to}
-                className={`eloura-nav-link${
-                  isActive(link.to) ? " active" : ""
-                }`}
+                className={`eloura-nav-link${isActive(link.to) ? " active" : ""}`}
               >
                 {link.label}
               </Link>
             ))}
           </nav>
 
-          <Link to="/login" className="eloura-login">
-            Login
-          </Link>
+          {/* Desktop auth area */}
+          <div className="eloura-auth">
+            {user ? (
+              <>
+                <span className="eloura-user-name">Hi, {user.name.split(" ")[0]}</span>
+                <button className="eloura-logout" onClick={handleLogout}>
+                  Logout
+                </button>
+              </>
+            ) : (
+              <Link to="/login" className="eloura-login">
+                Login
+              </Link>
+            )}
+          </div>
 
           <button
             className={`eloura-hamburger${menuOpen ? " open" : ""}`}
             onClick={() => setMenuOpen(!menuOpen)}
           >
-            <span />
-            <span />
-            <span />
+            <span /><span /><span />
           </button>
         </div>
       </header>
 
+      {/* Mobile Menu */}
       <div
         className="eloura-mobile"
         style={{
@@ -304,22 +346,29 @@ export default function Header(): JSX.Element {
           <Link
             key={link.to}
             to={link.to}
-            className={`eloura-mobile-link${
-              isActive(link.to) ? " active" : ""
-            }`}
+            className={`eloura-mobile-link${isActive(link.to) ? " active" : ""}`}
             onClick={() => setMenuOpen(false)}
           >
             {link.label}
           </Link>
         ))}
 
-        <Link
-          to="/login"
-          className="eloura-mobile-login"
-          onClick={() => setMenuOpen(false)}
-        >
-          Login
-        </Link>
+        {user ? (
+          <button
+            className="eloura-mobile-btn"
+            onClick={() => { handleLogout(); setMenuOpen(false); }}
+          >
+            Logout
+          </button>
+        ) : (
+          <Link
+            to="/login"
+            className="eloura-mobile-btn"
+            onClick={() => setMenuOpen(false)}
+          >
+            Login
+          </Link>
+        )}
       </div>
 
       <div
@@ -330,12 +379,11 @@ export default function Header(): JSX.Element {
       />
 
       {/* COMMENTS:
-      GLASSMORPHISM-> IT INCLUDE BLURRED TRANSPARENT BACKGROUND+SOFT BORDER +LIGHT SHADOW
-      it make it look like that the component is floating above the page
-      properties used is background->opacity 0.1 ->make the element see through,
-      backdrop-filter:blur(10px)-> it blur the element
-      border -> to make soft border
-      box-shadow make it feels like floating above the ground this is my header.tsx and dont remove the comments i want the comments in tsx file also */}
+      useAuth() → gets user and logout from AuthContext
+      user exists → show "Hi, Name" + Logout button
+      user is null → show Login link
+      handleLogout() → clears auth state + localStorage then redirects to /login
+      */}
     </>
   );
 }

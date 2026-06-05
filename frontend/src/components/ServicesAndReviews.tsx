@@ -1,6 +1,4 @@
-import {type JSX } from "react";
-
-export default function ServicesAndReviews(): JSX.Element {
+export default function ServicesAndReviews(){
   type Service = {
     title: string;
     desc: string;

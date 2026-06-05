@@ -1,25 +1,37 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "./context/AuthContext";
+// import ProtectedRoute from "./components/ProtectedRoute";
+
 import Header from "./components/header";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
-import {type JSX } from "react";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
+import VerifyEmail from "./pages/VerifyEmail";
+import ResendVerification from "./pages/ResendVerification";
 
-function App(): JSX.Element {
+
+
+function App() {
   return (
-    <BrowserRouter>
-      <Header />
-      <Routes>
-        {/* Home page */}
-        <Route path="/" element={<Home />} />
+    // AuthProvider wraps everything so all pages can access auth state
+    <AuthProvider>
+      <BrowserRouter>
+        <Header />
+        <Routes>
+          {/* ── Public Routes ─────────────────────────────────── */}
+          <Route path="/" element={<Home />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password/:token" element={<ResetPassword />} />
+          <Route path="/verify-email/:token" element={<VerifyEmail />} />
+          <Route path="/resend-verification" element={<ResendVerification />} />
 
-        {/* Login page */}
-        <Route path="/login" element={<Login />} />
-
-        {/* Signup page */}
-        <Route path="/signup" element={<Signup />} />
-      </Routes>
-    </BrowserRouter>
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   );
 }
 
