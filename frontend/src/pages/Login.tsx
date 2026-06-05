@@ -1,74 +1,66 @@
-import { useState, type JSX } from "react";
-import { Link, useNavigate } from "react-router-dom";
-// link is used for navigation without page reload
-// usenavigation
+// Login form — uses AuthContext to store auth state globally
+
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";// link is used for navigation without page reload
+
+import { useAuth } from "../context/AuthContext";
 
 type UserData = {
   email: string;
   password: string;
 };
 
-export default function Login(): JSX.Element {
-  const [userData, setUserData] = useState<UserData>({
-    email: "",
-    password: "",
-  });
-  //state for the user data
+export default function Login() {
+  const [userData, setUserData] = useState<UserData>({ email: "", password: "" });//state for the user data
+  const [error, setError] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(false);
+  const [notVerified, setNotVerified] = useState<boolean>(false); // show resend option
 
-  const [error, setError] = useState<string>(""); // for error -> send the error to frontend
-  const [loading, setLoading] = useState<boolean>(false); // as the user start login then true if not then false
-
-  const navigate = useNavigate(); // use to redirect user to certain route
+  const { login } = useAuth(); // get login function from context
+  const navigate = useNavigate();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     setUserData({ ...userData, [e.target.name]: e.target.value });
+    setNotVerified(false); // reset on new input
     // this function run whenever user inputs
     //e.target.name -> give the feild and e.target.value gives what user type
     //keep the rest feild same and change only the feild in  which user is typing
   };
 
-  // after user press submit button this function runs
-  const handlesubmit = async (
+  const handleSubmit = async (
     e: React.FormEvent<HTMLFormElement>
   ): Promise<void> => {
-    e.preventDefault(); // stop the reloading -> usually forms reload the page so it stop it
-    setError(""); // clear old error
-    setLoading(true); // start loading state
+    e.preventDefault();// stop the reloading -> usually forms reload the page so it stop it
+    setError("");
+    setNotVerified(false);
+    setLoading(true);
 
     try {
-      const response = await fetch(
-        "http://localhost:5000/api/auth/signin",
-        {
-          //calling backend api / send request to the backend api
-          method: "POST", // user is sending data to backend therefor using the post
-          headers: {
-            "Content-Type": "application/json", //  informing that sending json
-          },
-          body: JSON.stringify(userData), // convert the user data  from json to string as the http request detail with strings
-        }
-      );
+      const response = await fetch("http://localhost:5000/api/auth/signin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(userData),
+      });
 
-      const data = await response.json(); // covert the json back into java script object
+      const data = await response.json();
 
       if (!response.ok) {
-        // error handle it
+        // Special case: unverified account
+        if (data.notVerified) {
+          setNotVerified(true);
+        }
         setError(data.message || "Login failed");
         setLoading(false);
         return;
       }
 
-      localStorage.setItem("token", data.token); // store the token in browswer so that it could be used for the future
-      localStorage.setItem("user", JSON.stringify(data.user)); // local storage save string
-
-      alert("Login successful!");
-      navigate("/"); // after login moving the user to the homepage
+      // Save to context (and localStorage inside context)
+      login(data.token, data.user);
+      navigate("/"); // redirect to homepage
     } catch (err: unknown) {
-      // catch error
-      const message =
-        err instanceof Error ? err.message : "An error occurred";
+      const message = err instanceof Error ? err.message : "An error occurred";
       setError(message);
     } finally {
-      // after login seting the loading again false
       setLoading(false);
     }
   };
@@ -91,9 +83,9 @@ export default function Login(): JSX.Element {
           max-width: 420px;
           padding: 2.5rem;
           border-radius: 18px;
-          background: rgba(234, 224, 207, 0.06);
+          background: rgba(234,224,207,0.06);
           backdrop-filter: blur(18px);
-          border: 1px solid rgba(114, 136, 174, 0.25);
+          border: 1px solid rgba(114,136,174,0.25);
           box-shadow: 0 20px 60px rgba(0,0,0,0.5);
           position: relative;
           overflow: hidden;
@@ -103,12 +95,7 @@ export default function Login(): JSX.Element {
           content: "";
           position: absolute;
           inset: 0;
-          background: linear-gradient(
-            135deg,
-            rgba(75, 86, 148, 0.25),
-            transparent,
-            rgba(114, 136, 174, 0.15)
-          );
+          background: linear-gradient(135deg, rgba(75,86,148,0.25), transparent, rgba(114,136,174,0.15));
           pointer-events: none;
         }
 
@@ -132,9 +119,7 @@ export default function Login(): JSX.Element {
           text-transform: uppercase;
         }
 
-        .form-group {
-          margin-bottom: 1.2rem;
-        }
+        .form-group { margin-bottom: 1.2rem; }
 
         label {
           display: block;
@@ -149,18 +134,31 @@ export default function Login(): JSX.Element {
           width: 100%;
           padding: 0.85rem 1rem;
           border-radius: 10px;
-          border: 1px solid rgba(114, 136, 174, 0.3);
-          background: rgba(17, 24, 68, 0.4);
+          border: 1px solid rgba(114,136,174,0.3);
+          background: rgba(17,24,68,0.4);
           color: #EAE0CF;
           font-size: 0.9rem;
           outline: none;
           transition: all 0.3s ease;
+          box-sizing: border-box;
         }
 
         input:focus {
           border-color: #7288AE;
-          box-shadow: 0 0 0 3px rgba(114, 136, 174, 0.15);
+          box-shadow: 0 0 0 3px rgba(114,136,174,0.15);
         }
+
+        .forgot-link {
+          display: block;
+          text-align: right;
+          font-size: 0.75rem;
+          color: #7288AE;
+          text-decoration: none;
+          margin-top: 0.3rem;
+          letter-spacing: 0.05em;
+        }
+
+        .forgot-link:hover { color: #EAE0CF; }
 
         .login-btn {
           width: 100%;
@@ -177,22 +175,24 @@ export default function Login(): JSX.Element {
           transition: all 0.3s ease;
         }
 
-        .login-btn:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 10px 25px rgba(75, 86, 148, 0.4);
-        }
+        .login-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(75,86,148,0.4); }
+        .login-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 
-        .login-btn:disabled {
-          opacity: 0.6;
-          cursor: not-allowed;
-        }
+        .error { margin-top: 1rem; color: #ff6b6b; font-size: 0.8rem; text-align: center; }
 
-        .error {
+        .not-verified-box {
           margin-top: 1rem;
-          color: #ff6b6b;
+          padding: 0.8rem 1rem;
+          border-radius: 10px;
+          background: rgba(114,136,174,0.15);
+          border: 1px solid rgba(114,136,174,0.3);
           font-size: 0.8rem;
+          color: #EAE0CF;
           text-align: center;
+          line-height: 1.6;
         }
+
+        .not-verified-box a { color: #7288AE; text-decoration: underline; cursor: pointer; }
 
         .signup {
           text-align: center;
@@ -201,16 +201,8 @@ export default function Login(): JSX.Element {
           color: #7288AE;
         }
 
-        .signup a {
-          color: #EAE0CF;
-          text-decoration: none;
-          font-weight: 500;
-          letter-spacing: 0.1em;
-        }
-
-        .signup a:hover {
-          color: #7288AE;
-        }
+        .signup a { color: #EAE0CF; text-decoration: none; font-weight: 500; }
+        .signup a:hover { color: #7288AE; }
       `}</style>
 
       <div className="login-page">
@@ -218,7 +210,7 @@ export default function Login(): JSX.Element {
           <div className="login-title">Eloura</div>
           <div className="login-subtitle">THE FRAGRANCE HOUSE</div>
 
-          <form onSubmit={handlesubmit}>
+          <form onSubmit={handleSubmit}>
             <div className="form-group">
               <label>Email</label>
               <input
@@ -241,18 +233,28 @@ export default function Login(): JSX.Element {
                 value={userData.password}
                 onChange={handleChange}
               />
+              <Link to="/forgot-password" className="forgot-link">
+                Forgot password?
+              </Link>
             </div>
 
             <button className="login-btn" type="submit" disabled={loading}>
               {loading ? "SIGNING IN..." : "LOGIN"}
             </button>
 
-            {error && <div className="error">{error}</div>}
+            {error && !notVerified && <div className="error">{error}</div>}
+
+            {/* Email not verified — offer resend link */}
+            {notVerified && (
+              <div className="not-verified-box">
+                Your email is not verified yet. Please check your inbox, or{" "}
+                <Link to="/resend-verification">resend the verification email</Link>.
+              </div>
+            )}
           </form>
 
           <div className="signup">
-            Don't have an account?{" "}
-            <Link to="/signup">Sign Up</Link>
+            Don't have an account? <Link to="/signup">Sign Up</Link>
           </div>
         </div>
       </div>

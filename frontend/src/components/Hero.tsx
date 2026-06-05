@@ -1,8 +1,7 @@
 import { Link } from "react-router-dom";
-import {type JSX } from "react";
 
 
-export default function Hero(): JSX.Element {
+export default function Hero() {
   return (
     <>
       <style>{`

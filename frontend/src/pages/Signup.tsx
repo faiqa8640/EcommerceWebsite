@@ -1,5 +1,7 @@
-import { useState, type JSX } from "react";
-import { Link, useNavigate } from "react-router-dom";
+// Registration form — creates account and shows "check your email" message
+
+import { useState } from "react";
+import { Link } from "react-router-dom";
 
 type UserData = {
   name: string;
@@ -8,61 +10,49 @@ type UserData = {
   confirmPassword: string;
 };
 
-export default function Signup(): JSX.Element {
+export default function Signup() {
   const [userData, setUserData] = useState<UserData>({
     name: "",
     email: "",
     password: "",
     confirmPassword: "",
   });
-  //state for the user data
 
   const [error, setError] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
-  const navigate = useNavigate();
+  const [success, setSuccess] = useState<boolean>(false); // show success state
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     setUserData({ ...userData, [e.target.name]: e.target.value });
-    // this function run whenever user inputs
+     // this function run whenever user inputs
     //e.target.name -> give the feild and e.target.value gives what user type
     //keep the rest feild same and change only the feild in  which user is typing
   };
 
-  // after user press submit button this button is run
-  const handlesubmit = async (
+  const handleSubmit = async (
     e: React.FormEvent<HTMLFormElement>
   ): Promise<void> => {
-    e.preventDefault(); // stop the reloading
-    setError(""); // clear old error
-    setLoading(true); // start loading state
+    e.preventDefault();
+    setError("");
+    setLoading(true);
 
     try {
-      const response = await fetch(
-        "http://localhost:5000/api/auth/signup",
-        {
-          //calling backend api
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json", // sending json
-          },
-          body: JSON.stringify(userData), // convert the user data into the json
-        }
-      );
+      const response = await fetch("http://localhost:5000/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(userData),
+      });
 
-      const data = await response.json(); // get the backend response
+      const data = await response.json();
 
       if (!response.ok) {
-        // error handle it
         setError(data.message || "Signup failed");
         setLoading(false);
         return;
       }
 
-      localStorage.setItem("token", data.token); // store the token in browswer
-      localStorage.setItem("user", JSON.stringify(data.user)); // local storage save string
-
-      alert("Account created successfully!");
-      navigate("/");
+      // Show success message (don't navigate — user must verify email first)
+      setSuccess(true);
     } catch (err: unknown) {
       const message =
         err instanceof Error ? err.message : "An error occurred";
@@ -102,12 +92,7 @@ export default function Signup(): JSX.Element {
           content: "";
           position: absolute;
           inset: 0;
-          background: linear-gradient(
-            135deg,
-            rgba(75, 86, 148, 0.25),
-            transparent,
-            rgba(114, 136, 174, 0.15)
-          );
+          background: linear-gradient(135deg, rgba(75,86,148,0.25), transparent, rgba(114,136,174,0.15));
           pointer-events: none;
         }
 
@@ -131,9 +116,7 @@ export default function Signup(): JSX.Element {
           text-transform: uppercase;
         }
 
-        .form-group {
-          margin-bottom: 1.1rem;
-        }
+        .form-group { margin-bottom: 1.1rem; }
 
         label {
           display: block;
@@ -148,17 +131,18 @@ export default function Signup(): JSX.Element {
           width: 100%;
           padding: 0.85rem 1rem;
           border-radius: 10px;
-          border: 1px solid rgba(114, 136, 174, 0.3);
-          background: rgba(17, 24, 68, 0.4);
+          border: 1px solid rgba(114,136,174,0.3);
+          background: rgba(17,24,68,0.4);
           color: #EAE0CF;
           font-size: 0.9rem;
           outline: none;
           transition: all 0.3s ease;
+          box-sizing: border-box;
         }
 
         input:focus {
           border-color: #7288AE;
-          box-shadow: 0 0 0 3px rgba(114, 136, 174, 0.15);
+          box-shadow: 0 0 0 3px rgba(114,136,174,0.15);
         }
 
         .auth-btn {
@@ -176,22 +160,10 @@ export default function Signup(): JSX.Element {
           transition: all 0.3s ease;
         }
 
-        .auth-btn:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 10px 25px rgba(75, 86, 148, 0.4);
-        }
+        .auth-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(75,86,148,0.4); }
+        .auth-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 
-        .auth-btn:disabled {
-          opacity: 0.6;
-          cursor: not-allowed;
-        }
-
-        .error {
-          margin-top: 1rem;
-          color: #ff6b6b;
-          font-size: 0.8rem;
-          text-align: center;
-        }
+        .error { margin-top: 1rem; color: #ff6b6b; font-size: 0.8rem; text-align: center; }
 
         .switch {
           text-align: center;
@@ -200,82 +172,132 @@ export default function Signup(): JSX.Element {
           color: #7288AE;
         }
 
-        .switch a {
+        .switch a { color: #EAE0CF; text-decoration: none; font-weight: 500; }
+        .switch a:hover { color: #7288AE; }
+
+        /* Success state */
+        .success-box {
+          text-align: center;
+          padding: 1rem 0;
+        }
+
+        .success-icon {
+          font-size: 3rem;
+          margin-bottom: 1rem;
+        }
+
+        .success-title {
+          font-family: 'Cormorant Garamond', serif;
+          font-size: 1.5rem;
           color: #EAE0CF;
-          text-decoration: none;
-          font-weight: 500;
+          margin-bottom: 1rem;
           letter-spacing: 0.1em;
         }
 
-        .switch a:hover {
+        .success-text {
+          color: rgba(234,224,207,0.8);
+          font-size: 0.9rem;
+          line-height: 1.7;
+          margin-bottom: 1.5rem;
+        }
+
+        .success-note {
+          font-size: 0.78rem;
           color: #7288AE;
+          line-height: 1.6;
         }
       `}</style>
 
       <div className="auth-page">
         <div className="auth-card">
           <div className="auth-title">Eloura</div>
-          <div className="auth-subtitle">Create your account</div>
 
-          <form onSubmit={handlesubmit}>
-            <div className="form-group">
-              <label>Name</label>
-              <input
-                type="text"
-                name="name"
-                required
-                placeholder="your name"
-                value={userData.name}
-                onChange={handleChange}
-              />
+          {success ? (
+            // ── Success: show "check your email" message ──
+            <div className="success-box">
+              <div className="success-icon">✉️</div>
+              <div className="success-title">Check Your Email</div>
+              <p className="success-text">
+                We've sent a verification link to <strong>{userData.email}</strong>.
+                Please open it to activate your account.
+              </p>
+              <p className="success-note">
+                Didn't receive it? Check your spam folder, or{" "}
+                <Link to="/resend-verification" style={{ color: "#7288AE" }}>
+                  resend the link
+                </Link>
+                .
+              </p>
+              <div className="switch" style={{ marginTop: "1.5rem" }}>
+                Already verified? <Link to="/login">Log In</Link>
+              </div>
             </div>
+          ) : (
+            // ── Registration Form ──
+            <>
+              <div className="auth-subtitle">Create your account</div>
 
-            <div className="form-group">
-              <label>Email</label>
-              <input
-                type="email"
-                name="email"
-                required
-                placeholder="you@email.com"
-                value={userData.email}
-                onChange={handleChange}
-              />
-            </div>
+              <form onSubmit={handleSubmit}>
+                <div className="form-group">
+                  <label>Name</label>
+                  <input
+                    type="text"
+                    name="name"
+                    required
+                    placeholder="Your full name"
+                    value={userData.name}
+                    onChange={handleChange}
+                  />
+                </div>
 
-            <div className="form-group">
-              <label>Password</label>
-              <input
-                type="password"
-                name="password"
-                required
-                placeholder="••••••••"
-                value={userData.password}
-                onChange={handleChange}
-              />
-            </div>
+                <div className="form-group">
+                  <label>Email</label>
+                  <input
+                    type="email"
+                    name="email"
+                    required
+                    placeholder="you@email.com"
+                    value={userData.email}
+                    onChange={handleChange}
+                  />
+                </div>
 
-            <div className="form-group">
-              <label>Confirm Password</label>
-              <input
-                type="password"
-                name="confirmPassword"
-                required
-                placeholder="••••••••"
-                value={userData.confirmPassword}
-                onChange={handleChange}
-              />
-            </div>
+                <div className="form-group">
+                  <label>Password</label>
+                  <input
+                    type="password"
+                    name="password"
+                    required
+                    placeholder="Min 6 characters"
+                    value={userData.password}
+                    onChange={handleChange}
+                  />
+                </div>
 
-            <button className="auth-btn" type="submit" disabled={loading}>
-              {loading ? "CREATING..." : "CREATE ACCOUNT"}
-            </button>
+                <div className="form-group">
+                  <label>Confirm Password</label>
+                  <input
+                    type="password"
+                    name="confirmPassword"
+                    required
+                    placeholder="••••••••"
+                    value={userData.confirmPassword}
+                    onChange={handleChange}
+                  />
+                </div>
 
-            {error && <div className="error">{error}</div>}
-          </form>
+                <button className="auth-btn" type="submit" disabled={loading}>
+                  {loading ? "CREATING ACCOUNT..." : "CREATE ACCOUNT"}
+                </button>
 
-          <div className="switch">
-            Already have an account? <Link to="/login">Login</Link>
-          </div>
+                {error && <div className="error">{error}</div>}
+              </form>
+
+              <div className="switch">
+                Already have an account? <Link to="/login">Log In</Link>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </>

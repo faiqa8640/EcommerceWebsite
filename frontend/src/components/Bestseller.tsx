@@ -1,4 +1,4 @@
-import {useRef,type JSX } from "react";
+import {useRef } from "react";
 
 type Product = {
   name: string;
@@ -6,7 +6,7 @@ type Product = {
   price: string;
 };
 
-export default function BestSellers(): JSX.Element {
+export default function BestSellers(){
   const scrollRef = useRef<HTMLDivElement | null>(null); 
   // is used to scroll the object row -> as we need scrolling of the object 
 
