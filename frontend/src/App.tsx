@@ -1,6 +1,7 @@
+// Main router — public + protected + admin-only routes
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
-// import ProtectedRoute from "./components/ProtectedRoute";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 import Header from "./components/header";
 import Home from "./pages/Home";
@@ -10,12 +11,10 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import VerifyEmail from "./pages/VerifyEmail";
 import ResendVerification from "./pages/ResendVerification";
-
-
+import AdminDashboard from "./pages/AdminDashboard";
 
 function App() {
   return (
-    // AuthProvider wraps everything so all pages can access auth state
     <AuthProvider>
       <BrowserRouter>
         <Header />
@@ -29,6 +28,27 @@ function App() {
           <Route path="/verify-email/:token" element={<VerifyEmail />} />
           <Route path="/resend-verification" element={<ResendVerification />} />
 
+          {/* ── Protected: any logged-in user ─────────────────── */}
+          {/*
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          */}
+
+          {/* ── Protected: admin only ──────────────────────────── */}
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute adminOnly>
+                <AdminDashboard />
+              </ProtectedRoute>
+            }
+          />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
@@ -36,3 +56,4 @@ function App() {
 }
 
 export default App;
+

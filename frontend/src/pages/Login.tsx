@@ -1,8 +1,8 @@
 // Login form — uses AuthContext to store auth state globally
+// Shows "session expired" banner when redirected from auto-logout
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";// link is used for navigation without page reload
-
 import { useAuth } from "../context/AuthContext";
 
 type UserData = {
@@ -11,26 +11,33 @@ type UserData = {
 };
 
 export default function Login() {
-  const [userData, setUserData] = useState<UserData>({ email: "", password: "" });//state for the user data
+  const [userData, setUserData] = useState<UserData>({ email: "", password: "" });
   const [error, setError] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
-  const [notVerified, setNotVerified] = useState<boolean>(false); // show resend option
+  const [notVerified, setNotVerified] = useState<boolean>(false);
+  const [sessionExpired, setSessionExpired] = useState<boolean>(false);
 
-  const { login } = useAuth(); // get login function from context
+  const { login } = useAuth();
   const navigate = useNavigate();
+
+  // Check if user was auto-logged out due to token expiry
+  useEffect(() => {
+    if (sessionStorage.getItem("sessionExpired") === "true") {
+      setSessionExpired(true);
+      sessionStorage.removeItem("sessionExpired");
+    }
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     setUserData({ ...userData, [e.target.name]: e.target.value });
-    setNotVerified(false); // reset on new input
-    // this function run whenever user inputs
-    //e.target.name -> give the feild and e.target.value gives what user type
-    //keep the rest feild same and change only the feild in  which user is typing
+    setNotVerified(false);
+    setSessionExpired(false);
   };
 
   const handleSubmit = async (
     e: React.FormEvent<HTMLFormElement>
   ): Promise<void> => {
-    e.preventDefault();// stop the reloading -> usually forms reload the page so it stop it
+    e.preventDefault();
     setError("");
     setNotVerified(false);
     setLoading(true);
@@ -45,21 +52,22 @@ export default function Login() {
       const data = await response.json();
 
       if (!response.ok) {
-        // Special case: unverified account
-        if (data.notVerified) {
-          setNotVerified(true);
-        }
+        if (data.notVerified) setNotVerified(true);
         setError(data.message || "Login failed");
         setLoading(false);
         return;
       }
 
-      // Save to context (and localStorage inside context)
       login(data.token, data.user);
-      navigate("/"); // redirect to homepage
+
+      // Admins go to admin dashboard, regular users go to home
+      if (data.user.role === "admin") {
+        navigate("/admin");
+      } else {
+        navigate("/");
+      }
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "An error occurred";
-      setError(message);
+      setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
       setLoading(false);
     }
@@ -155,9 +163,7 @@ export default function Login() {
           color: #7288AE;
           text-decoration: none;
           margin-top: 0.3rem;
-          letter-spacing: 0.05em;
         }
-
         .forgot-link:hover { color: #EAE0CF; }
 
         .login-btn {
@@ -180,6 +186,18 @@ export default function Login() {
 
         .error { margin-top: 1rem; color: #ff6b6b; font-size: 0.8rem; text-align: center; }
 
+        .session-expired-box {
+          margin-bottom: 1.2rem;
+          padding: 0.8rem 1rem;
+          border-radius: 10px;
+          background: rgba(255,165,0,0.1);
+          border: 1px solid rgba(255,165,0,0.3);
+          color: #ffc56b;
+          font-size: 0.82rem;
+          text-align: center;
+          line-height: 1.6;
+        }
+
         .not-verified-box {
           margin-top: 1rem;
           padding: 0.8rem 1rem;
@@ -192,7 +210,7 @@ export default function Login() {
           line-height: 1.6;
         }
 
-        .not-verified-box a { color: #7288AE; text-decoration: underline; cursor: pointer; }
+        .not-verified-box a { color: #7288AE; text-decoration: underline; }
 
         .signup {
           text-align: center;
@@ -209,6 +227,13 @@ export default function Login() {
         <div className="login-card">
           <div className="login-title">Eloura</div>
           <div className="login-subtitle">THE FRAGRANCE HOUSE</div>
+
+          {/* Session expired banner */}
+          {sessionExpired && (
+            <div className="session-expired-box">
+              ⏳ Your session has expired. Please log in again.
+            </div>
+          )}
 
           <form onSubmit={handleSubmit}>
             <div className="form-group">
@@ -244,10 +269,9 @@ export default function Login() {
 
             {error && !notVerified && <div className="error">{error}</div>}
 
-            {/* Email not verified — offer resend link */}
             {notVerified && (
               <div className="not-verified-box">
-                Your email is not verified yet. Please check your inbox, or{" "}
+                Your email is not verified yet. Check your inbox, or{" "}
                 <Link to="/resend-verification">resend the verification email</Link>.
               </div>
             )}
