@@ -1,30 +1,11 @@
-// Protected user routes — require valid JWT
-
+// User routes — just wires URLs to controller functions
 import express from "express";
-import { protect, adminOnly, AuthRequest } from "../middleware/authMiddleware";
-import { Response } from "express";
+import { protect, adminOnly } from "../middleware/authMiddleware";
+import { getProfile, getAdminData } from "../controllers/userController";
 
 const router = express.Router();
 
-// GET /api/user/profile — get current logged-in user's profile
-router.get("/profile", protect, (req: AuthRequest, res: Response) => {
-  res.json({
-    success: true,
-    user: req.user,
-  });
-});
-
-// GET /api/user/admin-only — example admin-only route
-router.get(
-  "/admin-only",
-  protect,
-  adminOnly,
-  (_req: AuthRequest, res: Response) => {
-    res.json({
-      success: true,
-      message: "Welcome, Admin! This is a protected admin route.",
-    });
-  }
-);
+router.get("/profile", protect, getProfile);
+router.get("/admin-only", protect, adminOnly, getAdminData);
 
 export default router;
