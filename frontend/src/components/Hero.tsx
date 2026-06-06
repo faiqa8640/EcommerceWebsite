@@ -9,9 +9,9 @@ export default function Hero() {
           min-height: 90vh;
           background: linear-gradient(
             135deg,
-            #111844 0%,
-            #182055 50%,
-            #111844 100%
+            #111844 35%,
+            #f1e9db 90%,
+            #111844 120%
           );
           display: flex;
           align-items: center;
@@ -195,8 +195,8 @@ export default function Hero() {
           position: absolute;
           bottom: 30px;
           left: -60px;
-          background: rgba(234,224,207,0.08);
-          backdrop-filter: blur(20px);
+          background: #1a245c;
+          backdrop-filter: blur(180px);
           border: 1px solid rgba(114,136,174,0.25);
           padding: 1rem 1.4rem;
           z-index: 3;
@@ -204,7 +204,7 @@ export default function Hero() {
         }
 
         .floating-card p:first-child {
-          color: #7288AE;
+          color: #EAE0CF;
           font-size: .7rem;
           text-transform: uppercase;
           letter-spacing: .15em;

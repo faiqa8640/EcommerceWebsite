@@ -12,6 +12,7 @@ import ResetPassword from "./pages/ResetPassword";
 import VerifyEmail from "./pages/VerifyEmail";
 import ResendVerification from "./pages/ResendVerification";
 import AdminDashboard from "./pages/AdminDashboard";
+import About from "./pages/About";
 
 function App() {
   return (
@@ -27,6 +28,7 @@ function App() {
           <Route path="/reset-password/:token" element={<ResetPassword />} />
           <Route path="/verify-email/:token" element={<VerifyEmail />} />
           <Route path="/resend-verification" element={<ResendVerification />} />
+          <Route path="/about" element={<About />} />
 
           {/* ── Protected: any logged-in user ─────────────────── */}
           {/*

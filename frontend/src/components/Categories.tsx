@@ -70,10 +70,11 @@ export default function Categories(){
           overflow: hidden;
 
           background: linear-gradient(
-            135deg,
-            #070f4e,
-            #ffffff
+            115deg,
+            #070f4ecc 8%,
+            #ffffffb5
           );
+          
 
           box-shadow: 0 18px 40px rgba(17,24,68,0.25);
 
