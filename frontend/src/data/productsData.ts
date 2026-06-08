@@ -32,32 +32,39 @@ export type Category = {
 // ── Categories ────────────────────────────────────────────────────────────────
 export const categories: Category[] = [
   {
+    slug: "all",
+    label: "All Perfumes",
+    desc: "Explore our complete fragrance collection.",
+    img: "/categories/all.jpg",
+    bannerImg: "/banners/all-banner.jpg",
+  },
+  {
     slug: "men",
     label: "Perfumes for Men",
     desc: "Bold, strong and luxury masculine scents.",
     img: "/categories/men.jpg",
-    bannerImg : "/categories/men-category.jpg",
+    bannerImg: "/banners/men-banner.jpg",
   },
   {
     slug: "women",
     label: "Perfumes for Women",
     desc: "Soft floral and elegant long-lasting fragrances.",
     img: "/categories/women.jpg",
-    bannerImg: "/categories/women-category.jpg",
+    bannerImg: "/banners/women-banner.jpg",
   },
   {
     slug: "unisex",
     label: "Unisex Perfumes",
     desc: "Balanced fragrances perfect for everyone.",
     img: "/categories/unisex.jpg",
-    bannerImg: "/categories/unisex-category.jpg",
+    bannerImg: "/banners/unisex-banner.jpg",
   },
   {
     slug: "luxury",
     label: "Luxury Exclusive",
     desc: "Premium rare perfumes for special occasions.",
     img: "/categories/luxury.jpg",
-    bannerImg: "/categories/luxury.jpg",
+    bannerImg: "/banners/luxury-banner.jpg",
   },
 ];
 
@@ -176,7 +183,7 @@ export const products: Product[] = [
     price: "PKR 7,500",
     priceNum: 7500,
     category: "women",
-    img: "/perfumes/p1.jpg",
+    img: "/perfumes/p6.jpg",
     shortDesc: "Airy white florals with a clean powdery finish.",
     description:
       "Fleur Blanc is the essence of understated femininity. White jasmine and gardenia float in an airy opening, grounded by soft iris and muguet. The dry-down is a clean, powdery musk — perfect for the woman who speaks softly but leaves a lasting impression.",
@@ -196,7 +203,7 @@ export const products: Product[] = [
     price: "PKR 9,000",
     priceNum: 9000,
     category: "women",
-    img: "/perfumes/p2.jpg",
+    img: "/perfumes/p7.jpg",
     badge: "New",
     shortDesc: "Dark rose meets smoky oud — sensual and mysterious.",
     description:
@@ -217,7 +224,7 @@ export const products: Product[] = [
     price: "PKR 8,200",
     priceNum: 8200,
     category: "women",
-    img: "/perfumes/p3.jpg",
+    img: "/perfumes/p8.jpg",
     shortDesc: "Exotic orchid and vanilla for a warm, feminine glow.",
     description:
       "Golden Orchid captures the lush warmth of an exotic greenhouse. White orchid and ylang-ylang form a heady floral heart, topped with bright mandarin. The base is a golden blend of vanilla, honey, and soft woods — sweet, warm, and deeply feminine.",
@@ -239,7 +246,7 @@ export const products: Product[] = [
     price: "PKR 9,500",
     priceNum: 9500,
     category: "unisex",
-    img: "/perfumes/p5.jpg",
+    img: "/perfumes/p9.jpg",
     badge: "Best Seller",
     shortDesc: "Warm golden musk that becomes your second skin.",
     description:
@@ -260,7 +267,7 @@ export const products: Product[] = [
     price: "PKR 8,400",
     priceNum: 8400,
     category: "unisex",
-    img: "/perfumes/p1.jpg",
+    img: "/perfumes/p10.jpg",
     shortDesc: "Earthy sage and aromatic cedar — fresh and grounded.",
     description:
       "Cedar & Sage is a nature-inspired composition for those who find beauty in simplicity. Fresh sage and eucalyptus open cleanly, giving way to a heart of aromatic cedarwood and fougère. The base is a minimal musk and oakmoss — effortlessly sophisticated.",
@@ -280,7 +287,7 @@ export const products: Product[] = [
     price: "PKR 9,800",
     priceNum: 9800,
     category: "unisex",
-    img: "/perfumes/p2.jpg",
+    img: "/perfumes/p11.jpg",
     badge: "Limited",
     shortDesc: "Smoky incense meets silky musks — bold and elegant.",
     description:
@@ -301,7 +308,7 @@ export const products: Product[] = [
     price: "PKR 7,600",
     priceNum: 7600,
     category: "unisex",
-    img: "/perfumes/p3.jpg",
+    img: "/perfumes/p12.jpg",
     shortDesc: "A clean green aquatic — like morning dew in a forest.",
     description:
       "Aqua Verde is a breath of fresh air in a bottle. Marine accord and green fig open with cool freshness, leading into a heart of violet leaf and light musk. The dry-down is crisp cedarwood and white tea — the ideal everyday scent for any season.",
@@ -323,7 +330,7 @@ export const products: Product[] = [
     price: "PKR 18,500",
     priceNum: 18500,
     category: "luxury",
-    img: "/perfumes/p4.jpg",
+    img: "/perfumes/p13.jpg",
     badge: "Exclusive",
     shortDesc: "The finest aged oud in a regal, unforgettable composition.",
     description:
@@ -344,7 +351,7 @@ export const products: Product[] = [
     price: "PKR 16,000",
     priceNum: 16000,
     category: "luxury",
-    img: "/perfumes/p5.jpg",
+    img: "/perfumes/p14.jpg",
     badge: "Limited",
     shortDesc: "A noir floral of impossible depth and dark elegance.",
     description:
@@ -365,7 +372,7 @@ export const products: Product[] = [
     price: "PKR 14,500",
     priceNum: 14500,
     category: "luxury",
-    img: "/perfumes/p1.jpg",
+    img: "/perfumes/p15.jpg",
     badge: "Exclusive",
     shortDesc: "A glowing amber accord of extraordinary warmth and richness.",
     description:
@@ -386,7 +393,7 @@ export const products: Product[] = [
     price: "PKR 15,000",
     priceNum: 15000,
     category: "luxury",
-    img: "/perfumes/p2.jpg",
+    img: "/perfumes/p16.jpg",
     shortDesc: "Pristine white florals with a crystalline iris heart.",
     description:
       "White Diamond is the pinnacle of floral luxury. Rare Sambac jasmine and Tahitian gardenia form a breathtaking heart, polished with crystalline iris and violet. The base is a flawless cashmere and sandalwood — transparent, radiant, and endlessly refined.",
@@ -404,8 +411,17 @@ export const products: Product[] = [
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-export const getProductsByCategory = (slug: string): Product[] =>
-  products.filter((p) => p.category === slug);
+export const getProductsByCategory = (
+  slug: string
+): Product[] => {
+  if (slug === "all") {
+    return products;
+  }
+
+  return products.filter(
+    (p) => p.category === slug
+  );
+};
 
 export const getProductById = (id: string): Product | undefined =>
   products.find((p) => p.id === id);
