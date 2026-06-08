@@ -1,8 +1,8 @@
 // Nodemailer setup — sends verification and password reset emails
 
-import nodemailer from "nodemailer";
-import dotenv from "dotenv";
-dotenv.config();
+import nodemailer from "nodemailer"; // pakage used to send email
+import dotenv from "dotenv"; // used to load the envirnment variables
+dotenv.config();// node reads the .env and male values avaiable
 
 
 
@@ -19,11 +19,11 @@ const transporter = nodemailer.createTransport({
 
 // ─── Send Email Verification ─────────────────────────────────────────────────
 export const sendVerificationEmail = async (
-  email: string,
-  name: string,
-  verifyUrl: string
-): Promise<void> => {
-  await transporter.sendMail({
+  email: string, // user email
+  name: string, // user password 
+  verifyUrl: string // the verification email
+): Promise<void> => { // function is async and return nothing  -> coz sending email take time
+  await transporter.sendMail({ // send the email 
     from: `"Eloura Fragrance House" <${process.env.EMAIL_USER}>`,
     to: email,
     subject: "Verify Your Email — Eloura",

@@ -17,6 +17,7 @@ export default function Hero() {
           align-items: center;
           position: relative;
           overflow: hidden;
+          margin-top:-5px;
         }
 
         .hero::before {

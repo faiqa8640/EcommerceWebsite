@@ -13,6 +13,9 @@ import VerifyEmail from "./pages/VerifyEmail";
 import ResendVerification from "./pages/ResendVerification";
 import AdminDashboard from "./pages/AdminDashboard";
 import About from "./pages/About";
+import Shop from "./pages/Shop";
+import CategoryPage from "./pages/CategoryPage";
+import ProductDetail from "./pages/ProductDetail";
 
 function App() {
   return (
@@ -29,6 +32,9 @@ function App() {
           <Route path="/verify-email/:token" element={<VerifyEmail />} />
           <Route path="/resend-verification" element={<ResendVerification />} />
           <Route path="/about" element={<About />} />
+          <Route path="/shop" element={<Shop />} />
+          <Route path="/shop/:category" element={<CategoryPage />} />
+          <Route path="/shop/:category/:productId" element={<ProductDetail />} />
 
           {/* ── Protected: any logged-in user ─────────────────── */}
           {/*
