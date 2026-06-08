@@ -1,5 +1,3 @@
-// Product detail page — full info for a single product
-
 import { Link, useParams, Navigate } from "react-router-dom";
 import Header from "../components/header";
 import Footer from "../components/Footer";
@@ -36,8 +34,9 @@ export default function ProductDetail() {
 
         /* ── BREADCRUMB ──────────────────────────────────────── */
         .detail-breadcrumb-bar {
-          background: #111844;
+          background: #11184452;
           padding: 1rem 2rem;
+          margin-top:-80px;
         }
 
         .detail-breadcrumb {
@@ -49,18 +48,18 @@ export default function ProductDetail() {
           font-size: 0.7rem;
           letter-spacing: 0.15em;
           text-transform: uppercase;
-          color: #7288AE;
+          color: #EAE0CF;
         }
 
         .detail-breadcrumb a {
-          color: #7288AE;
+          color: #EAE0CF;
           text-decoration: none;
           transition: color 0.2s;
         }
-
-        .detail-breadcrumb a:hover { color: #EAE0CF; }
-        .detail-breadcrumb span { color: rgba(114,136,174,0.4); }
-        .detail-breadcrumb .current { color: rgba(234,224,207,0.7); }
+        
+        .detail-breadcrumb a:hover { color: rgba(17,24,68,0.5); }
+        .detail-breadcrumb span { color: #EAE0CF; }
+        .detail-breadcrumb .current { color: #EAE0CF; }
 
         /* ── MAIN PRODUCT SECTION ────────────────────────────── */
         .detail-main {
@@ -159,7 +158,7 @@ export default function ProductDetail() {
         }
 
         .spec-box {
-          background: rgba(17,24,68,0.05);
+          background: #f1ebdf;
           border: 1px solid rgba(75,86,148,0.15);
           border-radius: 14px;
           padding: 1rem 1.2rem;
@@ -286,7 +285,7 @@ export default function ProductDetail() {
           color: #111844;
           border: 1px solid rgba(17,24,68,0.3);
           border-radius: 12px;
-          font-size: 0.78rem;
+          font-size:1.8rem;
           letter-spacing: 0.22em;
           text-transform: uppercase;
           cursor: pointer;
@@ -529,7 +528,7 @@ export default function ProductDetail() {
             {/* Actions */}
             <div className="detail-actions">
               <button className="detail-btn-primary">Add to Cart</button>
-              <button className="detail-btn-secondary">♡ Wishlist</button>
+              <button className="detail-btn-secondary">♡</button>
             </div>
           </div>
         </div>

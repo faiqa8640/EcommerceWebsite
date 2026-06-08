@@ -2,6 +2,11 @@ import { Link } from "react-router-dom";
 import { categories } from "../data/productsData";
 
 export default function Categories() {
+  const allowedCategories = ["men", "women", "unisex", "luxury"];
+
+  const filteredCategories = categories.filter((cat) =>
+    allowedCategories.includes(cat.slug)
+  );
   return (
     <>
       <style>{`
@@ -150,7 +155,7 @@ export default function Categories() {
           </h2>
 
           <div className="category-grid">
-            {categories.map((cat) => (
+            {filteredCategories.map((cat) => (
               <Link
                 key={cat.slug}
                 to={`/shop/${cat.slug}`}
