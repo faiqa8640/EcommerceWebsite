@@ -1,0 +1,579 @@
+// Product detail page — full info for a single product
+
+import { Link, useParams, Navigate } from "react-router-dom";
+import Header from "../components/header";
+import Footer from "../components/Footer";
+import {
+  getProductById,
+  getCategoryBySlug,
+  getProductsByCategory,
+} from "../data/productsData";
+
+export default function ProductDetail() {
+  const { category, productId } = useParams<{
+    category: string;
+    productId: string;
+  }>();
+
+  const product = getProductById(productId ?? "");
+  const cat = getCategoryBySlug(category ?? "");
+
+  if (!product || !cat) return <Navigate to="/shop" replace />;
+
+  // Related products — same category, excluding current
+  const related = getProductsByCategory(category ?? "")
+    .filter((p) => p.id !== productId)
+    .slice(0, 3);
+
+  return (
+    <>
+      <style>{`
+        .detail-page {
+          background: #EAE0CF;
+          min-height: 100vh;
+          font-family: 'Jost', sans-serif;
+        }
+
+        /* ── BREADCRUMB ──────────────────────────────────────── */
+        .detail-breadcrumb-bar {
+          background: #111844;
+          padding: 1rem 2rem;
+        }
+
+        .detail-breadcrumb {
+          max-width: 1200px;
+          margin: 0 auto;
+          display: flex;
+          align-items: center;
+          gap: 0.6rem;
+          font-size: 0.7rem;
+          letter-spacing: 0.15em;
+          text-transform: uppercase;
+          color: #7288AE;
+        }
+
+        .detail-breadcrumb a {
+          color: #7288AE;
+          text-decoration: none;
+          transition: color 0.2s;
+        }
+
+        .detail-breadcrumb a:hover { color: #EAE0CF; }
+        .detail-breadcrumb span { color: rgba(114,136,174,0.4); }
+        .detail-breadcrumb .current { color: rgba(234,224,207,0.7); }
+
+        /* ── MAIN PRODUCT SECTION ────────────────────────────── */
+        .detail-main {
+          max-width: 1200px;
+          margin: 0 auto;
+          padding: 4rem 2rem;
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 5rem;
+          align-items: start;
+        }
+
+        /* Left — Image */
+        .detail-img-wrap {
+          position: relative;
+          border-radius: 24px;
+          overflow: hidden;
+          height: 560px;
+          box-shadow: 0 30px 70px rgba(17,24,68,0.2);
+          background: linear-gradient(135deg, #1a245c, #111844);
+          position: sticky;
+          top: 100px;
+        }
+
+        .detail-img-wrap img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+
+        .detail-img-badge {
+          position: absolute;
+          top: 20px;
+          left: 20px;
+          background: rgba(17,24,68,0.88);
+          color: #EAE0CF;
+          font-size: 0.65rem;
+          letter-spacing: 0.2em;
+          text-transform: uppercase;
+          padding: 6px 14px;
+          border-radius: 999px;
+          border: 1px solid rgba(114,136,174,0.3);
+        }
+
+        /* Right — Info */
+        .detail-info {}
+
+        .detail-category-tag {
+          display: inline-block;
+          font-size: 0.65rem;
+          letter-spacing: 0.25em;
+          text-transform: uppercase;
+          color: #4B5694;
+          border: 1px solid rgba(75,86,148,0.35);
+          padding: 4px 14px;
+          border-radius: 999px;
+          margin-bottom: 1.2rem;
+        }
+
+        .detail-name {
+          font-family: 'Cormorant Garamond', serif;
+          font-size: clamp(2rem, 3.5vw, 3rem);
+          font-weight: 300;
+          color: #111844;
+          line-height: 1.15;
+          margin-bottom: 0.6rem;
+        }
+
+        .detail-price {
+          font-family: 'Cormorant Garamond', serif;
+          font-size: 1.8rem;
+          color: #4B5694;
+          font-weight: 400;
+          margin-bottom: 1.5rem;
+        }
+
+        .detail-divider {
+          height: 1px;
+          background: rgba(17,24,68,0.12);
+          margin: 1.5rem 0;
+        }
+
+        .detail-desc {
+          font-size: 0.92rem;
+          line-height: 1.9;
+          color: rgba(17,24,68,0.72);
+          margin-bottom: 2rem;
+        }
+
+        /* Specs row */
+        .detail-specs {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 1rem;
+          margin-bottom: 2rem;
+        }
+
+        .spec-box {
+          background: rgba(17,24,68,0.05);
+          border: 1px solid rgba(75,86,148,0.15);
+          border-radius: 14px;
+          padding: 1rem 1.2rem;
+        }
+
+        .spec-label {
+          font-size: 0.62rem;
+          letter-spacing: 0.22em;
+          text-transform: uppercase;
+          color: #7288AE;
+          margin-bottom: 0.3rem;
+        }
+
+        .spec-value {
+          font-family: 'Cormorant Garamond', serif;
+          font-size: 1rem;
+          color: #111844;
+          font-weight: 500;
+        }
+
+        /* Notes */
+        .detail-notes {
+          margin-bottom: 2rem;
+        }
+
+        .detail-notes h4 {
+          font-size: 0.68rem;
+          letter-spacing: 0.28em;
+          text-transform: uppercase;
+          color: #4B5694;
+          margin-bottom: 1rem;
+        }
+
+        .notes-row {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 0.8rem;
+        }
+
+        .note-group {
+          background: linear-gradient(135deg, #111844, #4B5694);
+          border-radius: 14px;
+          padding: 1rem;
+          color: #EAE0CF;
+        }
+
+        .note-group-title {
+          font-size: 0.6rem;
+          letter-spacing: 0.22em;
+          text-transform: uppercase;
+          color: rgba(234,224,207,0.6);
+          margin-bottom: 0.6rem;
+        }
+
+        .note-list {
+          list-style: none;
+          padding: 0;
+          margin: 0;
+        }
+
+        .note-list li {
+          font-size: 0.82rem;
+          color: rgba(234,224,207,0.9);
+          margin-bottom: 0.25rem;
+          padding-left: 0.6rem;
+          position: relative;
+        }
+
+        .note-list li::before {
+          content: '·';
+          position: absolute;
+          left: 0;
+          color: #7288AE;
+        }
+
+        /* Seasons */
+        .season-tags {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 0.5rem;
+          margin-bottom: 2rem;
+        }
+
+        .season-tag {
+          font-size: 0.68rem;
+          letter-spacing: 0.15em;
+          text-transform: uppercase;
+          padding: 5px 14px;
+          border-radius: 999px;
+          border: 1px solid rgba(75,86,148,0.3);
+          color: #4B5694;
+        }
+
+        /* CTA buttons */
+        .detail-actions {
+          display: flex;
+          gap: 1rem;
+          flex-wrap: wrap;
+        }
+
+        .detail-btn-primary {
+          flex: 1;
+          padding: 1rem 1.5rem;
+          background: linear-gradient(135deg, #111844, #4B5694);
+          color: #EAE0CF;
+          border: none;
+          border-radius: 12px;
+          font-size: 0.78rem;
+          letter-spacing: 0.22em;
+          text-transform: uppercase;
+          cursor: pointer;
+          transition: 0.3s;
+          box-shadow: 0 10px 28px rgba(17,24,68,0.22);
+        }
+
+        .detail-btn-primary:hover {
+          transform: translateY(-3px);
+          box-shadow: 0 16px 38px rgba(17,24,68,0.3);
+        }
+
+        .detail-btn-secondary {
+          padding: 1rem 1.5rem;
+          background: transparent;
+          color: #111844;
+          border: 1px solid rgba(17,24,68,0.3);
+          border-radius: 12px;
+          font-size: 0.78rem;
+          letter-spacing: 0.22em;
+          text-transform: uppercase;
+          cursor: pointer;
+          transition: 0.3s;
+        }
+
+        .detail-btn-secondary:hover {
+          background: rgba(17,24,68,0.06);
+          border-color: #111844;
+        }
+
+        /* ── RELATED PRODUCTS ────────────────────────────────── */
+        .related-section {
+          max-width: 1200px;
+          margin: 0 auto;
+          padding: 0 2rem 6rem;
+        }
+
+        .related-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: baseline;
+          margin-bottom: 2rem;
+        }
+
+        .related-header h3 {
+          font-family: 'Cormorant Garamond', serif;
+          font-size: 1.8rem;
+          font-weight: 300;
+          color: #111844;
+        }
+
+        .related-header h3 span { color: #4B5694; }
+
+        .related-see-all {
+          font-size: 0.7rem;
+          letter-spacing: 0.18em;
+          text-transform: uppercase;
+          color: #4B5694;
+          text-decoration: none;
+          transition: color 0.2s;
+        }
+
+        .related-see-all:hover { color: #111844; }
+
+        .related-grid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 1.4rem;
+        }
+
+        /* reuse product card styles from category page */
+        .product-card-link { text-decoration: none; display: block; }
+
+        .product-card {
+          background: rgba(255,255,255,0.6);
+          border: 1px solid rgba(75,86,148,0.18);
+          border-radius: 18px;
+          overflow: hidden;
+          transition: transform 0.32s ease, box-shadow 0.32s ease;
+        }
+
+        .product-card:hover {
+          transform: translateY(-8px);
+          box-shadow: 0 18px 45px rgba(17,24,68,0.16);
+        }
+
+        .product-card-img {
+          position: relative;
+          height: 200px;
+          overflow: hidden;
+          background: linear-gradient(135deg, #1a245c, #111844);
+        }
+
+        .product-card-img img {
+          width: 100%; height: 100%;
+          object-fit: cover;
+          transition: transform 0.4s ease;
+        }
+
+        .product-card:hover .product-card-img img { transform: scale(1.07); }
+
+        .product-card-badge {
+          position: absolute;
+          top: 12px; left: 12px;
+          background: rgba(17,24,68,0.82);
+          color: #EAE0CF;
+          font-size: 0.6rem;
+          letter-spacing: 0.18em;
+          text-transform: uppercase;
+          padding: 4px 10px;
+          border-radius: 999px;
+        }
+
+        .product-card-body { padding: 1.1rem 1.2rem 1.3rem; }
+
+        .product-card-name {
+          font-family: 'Cormorant Garamond', serif;
+          font-size: 1.1rem;
+          color: #111844;
+          margin-bottom: 0.4rem;
+        }
+
+        .product-card-desc {
+          font-size: 0.78rem;
+          color: rgba(17,24,68,0.62);
+          line-height: 1.6;
+          margin-bottom: 0.9rem;
+        }
+
+        .product-card-footer {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+
+        .product-card-price {
+          font-family: 'Cormorant Garamond', serif;
+          font-size: 1.05rem;
+          color: #4B5694;
+        }
+
+        .product-card-btn {
+          font-size: 0.62rem;
+          letter-spacing: 0.18em;
+          text-transform: uppercase;
+          color: #111844;
+          border: 1px solid rgba(17,24,68,0.28);
+          padding: 5px 12px;
+          border-radius: 999px;
+          transition: 0.25s;
+        }
+
+        .product-card:hover .product-card-btn {
+          background: #111844;
+          color: #EAE0CF;
+        }
+
+        /* ── RESPONSIVE ──────────────────────────────────────── */
+        @media (max-width: 900px) {
+          .detail-main {
+            grid-template-columns: 1fr;
+            gap: 2.5rem;
+          }
+          .detail-img-wrap {
+            position: relative;
+            top: 0;
+            height: 360px;
+          }
+          .related-grid { grid-template-columns: 1fr 1fr; }
+        }
+
+        @media (max-width: 600px) {
+          .notes-row { grid-template-columns: 1fr; }
+          .detail-specs { grid-template-columns: 1fr 1fr; }
+          .related-grid { grid-template-columns: 1fr; }
+        }
+      `}</style>
+
+      <Header />
+
+      <div className="detail-page">
+        {/* Breadcrumb */}
+        <div className="detail-breadcrumb-bar">
+          <div className="detail-breadcrumb">
+            <Link to="/shop">Shop</Link>
+            <span>/</span>
+            <Link to={`/shop/${category}`}>{cat.label}</Link>
+            <span>/</span>
+            <span className="current">{product.name}</span>
+          </div>
+        </div>
+
+        {/* Main */}
+        <div className="detail-main">
+          {/* Left — Image */}
+          <div className="detail-img-wrap">
+            <img src={product.img} alt={product.name} />
+            {product.badge && (
+              <span className="detail-img-badge">{product.badge}</span>
+            )}
+          </div>
+
+          {/* Right — Info */}
+          <div className="detail-info">
+            <span className="detail-category-tag">{cat.label}</span>
+            <h1 className="detail-name">{product.name}</h1>
+            <div className="detail-price">{product.price}</div>
+
+            <div className="detail-divider" />
+
+            <p className="detail-desc">{product.description}</p>
+
+            {/* Specs */}
+            <div className="detail-specs">
+              <div className="spec-box">
+                <div className="spec-label">Size</div>
+                <div className="spec-value">{product.size}</div>
+              </div>
+              <div className="spec-box">
+                <div className="spec-label">Longevity</div>
+                <div className="spec-value">{product.longevity}</div>
+              </div>
+              <div className="spec-box">
+                <div className="spec-label">Sillage</div>
+                <div className="spec-value">{product.sillage}</div>
+              </div>
+              <div className="spec-box">
+                <div className="spec-label">Best Season</div>
+                <div className="spec-value">{product.season.join(", ")}</div>
+              </div>
+            </div>
+
+            {/* Season tags */}
+            <div className="season-tags">
+              {product.season.map((s) => (
+                <span className="season-tag" key={s}>{s}</span>
+              ))}
+            </div>
+
+            {/* Fragrance Notes */}
+            <div className="detail-notes">
+              <h4>Fragrance Notes</h4>
+              <div className="notes-row">
+                {(["top", "heart", "base"] as const).map((layer) => (
+                  <div className="note-group" key={layer}>
+                    <div className="note-group-title">{layer} notes</div>
+                    <ul className="note-list">
+                      {product.notes[layer].map((n) => (
+                        <li key={n}>{n}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="detail-divider" />
+
+            {/* Actions */}
+            <div className="detail-actions">
+              <button className="detail-btn-primary">Add to Cart</button>
+              <button className="detail-btn-secondary">♡ Wishlist</button>
+            </div>
+          </div>
+        </div>
+
+        {/* Related Products */}
+        {related.length > 0 && (
+          <section className="related-section">
+            <div className="related-header">
+              <h3>You Might Also <span>Like</span></h3>
+              <Link to={`/shop/${category}`} className="related-see-all">
+                View All →
+              </Link>
+            </div>
+            <div className="related-grid">
+              {related.map((p) => (
+                <Link
+                  key={p.id}
+                  to={`/shop/${category}/${p.id}`}
+                  className="product-card-link"
+                >
+                  <div className="product-card">
+                    <div className="product-card-img">
+                      <img src={p.img} alt={p.name} />
+                      {p.badge && (
+                        <span className="product-card-badge">{p.badge}</span>
+                      )}
+                    </div>
+                    <div className="product-card-body">
+                      <div className="product-card-name">{p.name}</div>
+                      <div className="product-card-desc">{p.shortDesc}</div>
+                      <div className="product-card-footer">
+                        <span className="product-card-price">{p.price}</span>
+                        <span className="product-card-btn">View →</span>
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+      </div>
+
+      <Footer />
+    </>
+  );
+}

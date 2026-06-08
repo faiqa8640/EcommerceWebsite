@@ -1,40 +1,13 @@
-export default function Categories(){
-  type Category = {
-    title: string;
-    desc: string;
-    img: string;
-  };
+import { Link } from "react-router-dom";
+import { categories } from "../data/productsData";
 
-  const categories: Category[] = [
-    // array of the categories
-    {
-      title: "Women Perfumes",
-      desc: "Soft floral and elegant long-lasting fragrances.",
-      img: "/categories/women.jpg",
-    },
-    {
-      title: "Men Perfumes",
-      desc: "Bold, strong and luxury masculine scents.",
-      img: "/categories/men.jpg",
-    },
-    {
-      title: "Unisex Collection",
-      desc: "Balanced fragrances perfect for everyone.",
-      img: "/categories/unisex.jpg",
-    },
-    {
-      title: "Luxury Exclusive",
-      desc: "Premium rare perfumes for special occasions.",
-      img: "/categories/luxury.jpg",
-    },
-  ];
-
+export default function Categories() {
   return (
     <>
       <style>{`
         .category-section {
           background: #EAE0CF;
-          padding: 2rem 2rem;
+          padding: 2rem;
         }
 
         .container {
@@ -65,22 +38,14 @@ export default function Categories(){
         .category-card {
           position: relative;
           height: 320px;
-
           border-radius: 22px;
           overflow: hidden;
-
-          background: linear-gradient(
-            115deg,
-            #070f4ecc 8%,
-            #ffffffb5
-          );
-          
-
-          box-shadow: 0 18px 40px rgba(17,24,68,0.25);
-
           cursor: pointer;
-
+          text-decoration: none;
+          display: block;
           transition: all 0.4s ease;
+          box-shadow: 0 18px 40px rgba(17,24,68,0.25);
+          background: linear-gradient(135deg, #bfc1cd77, #1a245c);
         }
 
         .category-card:hover {
@@ -106,7 +71,6 @@ export default function Categories(){
         .overlay {
           position: absolute;
           inset: 0;
-
           background: linear-gradient(
             to top,
             rgba(17,24,68,0.9),
@@ -121,7 +85,6 @@ export default function Categories(){
           bottom: 20px;
           left: 20px;
           right: 20px;
-
           color: #EAE0CF;
         }
 
@@ -137,18 +100,32 @@ export default function Categories(){
           line-height: 1.5;
         }
 
+        .shop-cat-cta {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.5rem;
+          font-size: 0.7rem;
+          letter-spacing: 0.22em;
+          text-transform: uppercase;
+          color: #7288AE;
+          transition: gap 0.3s ease, color 0.3s ease;
+          margin-top: 10px;
+        }
+
+        .category-card:hover .shop-cat-cta {
+          gap: 0.9rem;
+          color: #ffffff;
+        }
+
         /* BADGE */
         .badge {
           position: absolute;
           top: 18px;
           left: 18px;
-
           background: rgba(234,224,207,0.15);
           color: #EAE0CF;
-
           padding: 6px 14px;
           border-radius: 999px;
-
           font-size: 0.75rem;
           letter-spacing: 0.2em;
           text-transform: uppercase;
@@ -173,29 +150,31 @@ export default function Categories(){
           </h2>
 
           <div className="category-grid">
-            {categories.map((cat: Category, i: number) => (
-              <div className="category-card" key={i}>
-                <img src={cat.img} alt={cat.title} />
+            {categories.map((cat) => (
+              <Link
+                key={cat.slug}
+                to={`/shop/${cat.slug}`}
+                className="category-card"
+              >
+                <img src={cat.img} alt={cat.label} />
 
                 <div className="overlay"></div>
 
                 <div className="badge">Explore</div>
 
                 <div className="content">
-                  <h3>{cat.title}</h3>
+                  <h3>{cat.label}</h3>
                   <p>{cat.desc}</p>
+
+                  <span className="shop-cat-cta">
+                    View Collection →
+                  </span>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         </div>
       </section>
-
-      {/* COMMENTS:
-      .map -> display all the boxes one after another including all the content 
-      linear-gradient -> it makes colors fade with each other 
-      overlay -> it is the dark layer on top of image
-      */}
     </>
   );
 }
