@@ -1,5 +1,6 @@
 import { Link, useParams, Navigate } from "react-router-dom";
 import {useRef } from "react";
+import { useState } from "react";
 import Header from "../components/header";
 import Footer from "../components/Footer";
 import {
@@ -28,6 +29,18 @@ export default function ProductDetail() {
         behavior: "smooth",
       });
     }
+  };
+  const [currentImage, setCurrentImage] = useState(0);// image carousel
+  const nextImage = () => {
+    setCurrentImage((prev) =>
+      Math.min(prev + 1, product.images.length - 1)
+    );
+  };
+
+  const prevImage = () => {
+    setCurrentImage((prev) =>
+      Math.max(prev - 1, 0)
+    );
   };
 
   // Related products — same category, excluding current
@@ -116,6 +129,57 @@ export default function ProductDetail() {
           border: 1px solid rgba(114,136,174,0.3);
         }
 
+        .carousel-btn {
+          position: absolute;
+          top: 50%;
+          transform: translateY(-50%);
+          background: #EAE0CF;
+          color: rgb(15, 30, 57);
+          border: none;
+          width: 40px;
+          height: 40px;
+          border-radius: 50%;
+          cursor: pointer;
+          font-size: 18px;
+          transition: 0.3s;
+        }
+
+        .carousel-btn:hover {
+          background: #111844;
+          color:#EAE0CF;
+        }
+
+        .carousel-btn.left {
+          left: 10px;
+        }
+
+        .carousel-btn.right {
+          right: 10px;
+        }
+
+        .carousel-btn:disabled {
+          opacity: 0.3;
+          cursor: not-allowed;
+          pointer-events: none;
+        }
+
+        .carousel-indicator {
+          position: absolute;
+          bottom: 16px;
+          left: 50%;
+          transform: translateX(-50%);
+          background: rgba(255,255,255,0.6);
+          color: rgb(15, 30, 57);
+
+          padding: 6px 14px;
+          border-radius: 999px;
+
+          font-size: 0.75rem;
+          letter-spacing: 0.12em;
+
+          backdrop-filter: blur(8px);
+        }
+
         /* Right — Info */
         .detail-info {}
 
@@ -170,7 +234,7 @@ export default function ProductDetail() {
         }
 
         .spec-box {
-          background: rgba(255,255,255,0.7);
+          background: rgba(255,255,255,0.5) ;
           border: 1px solid rgba(75,86,148,0.15);
           border-radius: 14px;
           padding: 1rem 1.2rem;
@@ -293,7 +357,7 @@ export default function ProductDetail() {
 
         .detail-btn-secondary {
           padding: 1rem 1.5rem;
-          background: rgba(255,255,255,0.7);
+          background: rgba(255,255,255,0.5);
           color: #111844;
           border: 1px solid rgba(17,24,68,0.3);
           border-radius: 12px;
@@ -343,7 +407,7 @@ export default function ProductDetail() {
 
         .review-card {
           min-width: 280px;
-          background: rgba(255,255,255,0.7);
+          background: rgba(255,255,255,0.5);
           border: 1px solid rgba(75,86,148,0.2);
           border-radius: 16px;
           padding: 1rem 1.2rem;
@@ -403,7 +467,7 @@ export default function ProductDetail() {
           padding: 8px 14px;
           border-radius: 999px;
           border: 1px solid rgba(75,86,148,0.4);
-          background: rgba(255,255,255,0.7);
+          background: rgba(255,255,255,0.5);
           color: #111844;
           font-size: 0.7rem;
           letter-spacing: 0.15em;
@@ -413,7 +477,7 @@ export default function ProductDetail() {
         }
 
         .add-review-btn:hover {
-          background: #111844;
+          background: #11184486;
           color: #EAE0CF;
           transform: translateY(-2px);
         }
@@ -607,10 +671,22 @@ export default function ProductDetail() {
         <div className="detail-main">
           {/* Left — Image */}
           <div className="detail-img-wrap">
-            <img src={product.img} alt={product.name} />
+            <img src=
+            {product.images[currentImage]} 
+            alt={product.name}/>
+            {/* controls */}
+            <button onClick={prevImage} 
+            disabled={currentImage === 0}
+            className="carousel-btn left">←</button>
+            <button onClick={nextImage} 
+            disabled={currentImage === product.images.length - 1}
+            className="carousel-btn right">→</button>
             {product.badge && (
               <span className="detail-img-badge">{product.badge}</span>
             )}
+            <div className="carousel-indicator">
+              {currentImage + 1} / {product.images.length}
+            </div>
           </div>
 
           {/* Right — Info */}
@@ -741,7 +817,7 @@ export default function ProductDetail() {
                 >
                   <div className="product-card">
                     <div className="product-card-img">
-                      <img src={p.img} alt={p.name} />
+                      <img src={p.images[0]} alt={p.name} />
                       {p.badge && (
                         <span className="product-card-badge">{p.badge}</span>
                       )}

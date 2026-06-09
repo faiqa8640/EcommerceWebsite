@@ -328,7 +328,7 @@ export default function CategoryPage() {
               >
                 <div className="product-card">
                   <div className="product-card-img">
-                    <img src={product.img} alt={product.name} />
+                    <img src={product.images[0]} alt={product.name} />
                     {product.badge && (
                       <span className="product-card-badge">{product.badge}</span>
                     )}
