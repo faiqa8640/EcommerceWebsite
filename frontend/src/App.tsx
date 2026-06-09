@@ -2,7 +2,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
-
 import Header from "./components/header";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
@@ -16,11 +15,13 @@ import About from "./pages/About";
 import Shop from "./pages/Shop";
 import CategoryPage from "./pages/CategoryPage";
 import ProductDetail from "./pages/ProductDetail";
+import ScrollToTop from "./components/ScrollToTop";
 
 function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
+        <ScrollToTop />
         <Header />
         <Routes>
           {/* ── Public Routes ─────────────────────────────────── */}

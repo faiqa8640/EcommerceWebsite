@@ -1,6 +1,8 @@
 // Category page — shows all products for a given category slug
 
 import { Link, useParams, Navigate } from "react-router-dom";
+import { useState } from "react"; // for the pagination
+import { useEffect } from "react";// used to reset the scroll
 import Header from "../components/header";
 import Footer from "../components/Footer";
 import {
@@ -11,8 +13,21 @@ import {
 export default function CategoryPage() {
   const { category } = useParams<{ category: string }>();
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
+
   const cat = getCategoryBySlug(category ?? "");
-  const items = getProductsByCategory(category ?? "");
+
+  const allItems = getProductsByCategory(category ?? "");
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const totalPages = Math.ceil(allItems.length / itemsPerPage); // count total pages
+  const paginatedItems = allItems.slice(
+  startIndex,
+  startIndex + itemsPerPage);
+
+  useEffect(() => {// whenever page is chnages it move the page to the top 
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}, [currentPage]);
 
   // Unknown category → back to shop
   if (!cat) return <Navigate to="/shop" replace />;
@@ -234,6 +249,33 @@ export default function CategoryPage() {
           border-color: #111844;
         }
 
+        .pagination {
+          display: flex;
+          justify-content: center;
+          gap: 10px;
+          margin-top: 3rem;
+        }
+
+        .pagination button {
+          padding: 8px 12px;
+          border-radius: 8px;
+          border: 1px solid rgba(75,86,148,0.4);
+          background: transparent;
+          cursor: pointer;
+          transition: 0.3s;
+          font-size: 0.8rem;
+        }
+
+        .pagination button:hover {
+          background: #111844;
+          color: #EAE0CF;
+        }
+
+        .pagination button.active {
+          background: #111844;
+          color: #EAE0CF;
+        }
+
         /* ── RESPONSIVE ──────────────────────────────────────── */
         @media (max-width: 1024px) {
           .product-grid { grid-template-columns: repeat(3, 1fr); }
@@ -272,32 +314,13 @@ export default function CategoryPage() {
                 <Link to={`/shop/${category}`}>{cat.label}</Link>
                 </div>
         </div>
-        {/* <section className="cat-banner"> */}
-        {/* <section className="cat-banner" style={{
-          backgroundImage: `
-          linear-gradient(
-          rgba(17,24,68,0.55),
-          rgba(17,24,68,0.55)
-          ),
-          url(${cat.bannerImg})`,
-          backgroundSize: "cover",backgroundPosition: "center",}}>
-          <div className="cat-banner-inner">
-            <div className="cat-breadcrumb">
-              <Link to="/shop">Shop</Link>
-              <span>/</span>
-              <span>{cat.label}</span>
-            </div>
-            <h1>{cat.label}</h1>
-            <p>{items.length} fragrances</p>
-          </div>
-        </section> */}
 
         {/* Products */}
         <section className="cat-body">
-          <p className="cat-count">{items.length} products found</p>
+          <p className="cat-count">{allItems.length} products found</p>
 
           <div className="product-grid">
-            {items.map((product) => (
+            {paginatedItems.map((product) => (
               <Link
                 key={product.id}
                 to={`/shop/${category}/${product.id}`}
@@ -320,6 +343,19 @@ export default function CategoryPage() {
                   </div>
                 </div>
               </Link>
+            ))}
+          </div>
+
+            {/* PAGINATION CONTROLS */}
+          <div className="pagination">
+            {Array.from({ length: totalPages }).map((_, index) => (
+              <button
+                key={index}
+                onClick={() => setCurrentPage(index + 1)}
+                className={currentPage === index + 1 ? "active" : ""}
+              >
+                {index + 1}
+              </button>
             ))}
           </div>
         </section>
