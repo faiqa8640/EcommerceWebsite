@@ -1,4 +1,5 @@
 import { Link, useParams, Navigate } from "react-router-dom";
+import {useRef } from "react";
 import Header from "../components/header";
 import Footer from "../components/Footer";
 import {
@@ -17,6 +18,17 @@ export default function ProductDetail() {
   const cat = getCategoryBySlug(category ?? "");
 
   if (!product || !cat) return <Navigate to="/shop" replace />;
+
+  const reviews = product.reviews ?? []; // reviews
+  const reviewScrollRef = useRef<HTMLDivElement | null>(null);
+  const scrollReviews = (direction: "left" | "right") => {
+    if (reviewScrollRef.current) {
+      reviewScrollRef.current.scrollBy({
+        left: direction === "left" ? -300 : 300,
+        behavior: "smooth",
+      });
+    }
+  };
 
   // Related products — same category, excluding current
   const related = getProductsByCategory(category ?? "")
@@ -158,7 +170,7 @@ export default function ProductDetail() {
         }
 
         .spec-box {
-          background: #f1ebdf;
+          background: rgba(255,255,255,0.7);
           border: 1px solid rgba(75,86,148,0.15);
           border-radius: 14px;
           padding: 1rem 1.2rem;
@@ -281,7 +293,7 @@ export default function ProductDetail() {
 
         .detail-btn-secondary {
           padding: 1rem 1.5rem;
-          background: transparent;
+          background: rgba(255,255,255,0.7);
           color: #111844;
           border: 1px solid rgba(17,24,68,0.3);
           border-radius: 12px;
@@ -295,6 +307,138 @@ export default function ProductDetail() {
         .detail-btn-secondary:hover {
           background: rgba(17,24,68,0.06);
           border-color: #111844;
+        }
+
+        /* ── REVIEWS SECTION ───────────────────────────── */
+
+        .reviews-section {
+          max-width: 1200px;
+          margin: 0 auto;
+          padding: 2rem 2rem 4rem;
+        }
+
+        .reviews-title {
+          font-family: 'Cormorant Garamond', serif;
+          font-size: 1.8rem;
+          font-weight: 300;
+          color: #111844;
+          margin-bottom: 1.5rem;
+        }
+
+        .reviews-title span {
+          color: #4B5694;
+        }
+
+        .reviews-row {
+          display: flex;
+          gap: 1.5rem;
+          overflow-x: auto;
+          padding-bottom: 1rem;
+          scroll-behavior: smooth;
+        }
+
+        .reviews-row::-webkit-scrollbar {
+          display: none;
+        }
+
+        .review-card {
+          min-width: 280px;
+          background: rgba(255,255,255,0.7);
+          border: 1px solid rgba(75,86,148,0.2);
+          border-radius: 16px;
+          padding: 1rem 1.2rem;
+          backdrop-filter: blur(8px);
+          transition: 0.3s;
+        }
+
+        .review-card:hover {
+          transform: translateY(-6px);
+          box-shadow: 0 15px 35px rgba(17,24,68,0.15);
+        }
+
+        .review-top {
+          display: flex;
+          justify-content: space-between;
+          margin-bottom: 0.6rem;
+        }
+
+        .review-user {
+          font-weight: 600;
+          color: #111844;
+        }
+
+        .review-rating {
+          color: #4B5694;
+          font-size: 0.9rem;
+        }
+
+        .review-comment {
+          font-size: 0.85rem;
+          color: rgba(17,24,68,0.75);
+          line-height: 1.6;
+          margin-bottom: 0.8rem;
+        }
+
+        .review-date {
+          font-size: 0.7rem;
+          color: rgba(114,136,174,0.8);
+        }
+
+        .reviews-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 1.5rem;
+        }
+
+        /* container for buttons */
+        .reviews-actions {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+
+        /* add review button */
+        .add-review-btn {
+          padding: 8px 14px;
+          border-radius: 999px;
+          border: 1px solid rgba(75,86,148,0.4);
+          background: rgba(255,255,255,0.7);
+          color: #111844;
+          font-size: 0.7rem;
+          letter-spacing: 0.15em;
+          text-transform: uppercase;
+          cursor: pointer;
+          transition: 0.3s;
+        }
+
+        .add-review-btn:hover {
+          background: #111844;
+          color: #EAE0CF;
+          transform: translateY(-2px);
+        }
+
+        .reviews-arrows {
+          display: flex;
+          gap: 10px;
+        }
+
+        .review-arrow {
+          width: 42px;
+          height: 42px;
+          border-radius: 50%;
+          border: 1px solid #4B5694;
+          background: transparent;
+          color: #111844;
+          cursor: pointer;
+          transition: 0.3s;
+          font-size: 18px;
+        }
+
+        .review-arrow:hover {
+          background: #4B5694;
+          color: #EAE0CF;
+          transform: scale(1.05);
         }
 
         /* ── RELATED PRODUCTS ────────────────────────────────── */
@@ -533,6 +677,52 @@ export default function ProductDetail() {
           </div>
         </div>
 
+        {/* ── REVIEWS SECTION ───────────────────────────── */}
+        {reviews.length > 0 && (
+          <section className="reviews-section">
+
+            <div className="reviews-header">
+              <h3 className="reviews-title">
+                Customer <span>Reviews</span>
+              </h3>
+
+              {/* RIGHT SIDE CONTROLS */}
+              <div className="reviews-actions">
+
+                {/* ⭐ ADD REVIEW BUTTON (LEFT of arrows) */}
+                <button className="add-review-btn">
+                  + Add Review
+                </button>
+
+                {/* ARROWS */}
+                <div className="reviews-arrows">
+                  <button onClick={() => scrollReviews("left")} className="review-arrow">
+                    ←
+                  </button>
+                  <button onClick={() => scrollReviews("right")} className="review-arrow">
+                    →
+                  </button>
+                </div>
+
+              </div>
+            </div>
+
+            <div className="reviews-row" ref={reviewScrollRef}>
+              {reviews.map((r, i) => (
+                <div className="review-card" key={i}>
+                  <div className="review-top">
+                    <div className="review-user">{r.user}</div>
+                    <div className="review-rating">⭐ {r.rating}</div>
+                  </div>
+
+                  <p className="review-comment">"{r.comment}"</p>
+
+                  <div className="review-date">{r.date}</div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
         {/* Related Products */}
         {related.length > 0 && (
           <section className="related-section">
