@@ -13,7 +13,7 @@ export default function BestSellers(){
   const products: Product[] = [
     // array of the products along with their prices
     { name: "Allure Homme", img: "/perfumes/p1-1.jpg", price: "PKR 8,500" },
-    { name: "Velvet Oud", img: "/perfumes/p2.jpg", price: "PKR 9,200" },
+    { name: "Irresistible", img: "/perfumes/p2-1.jpg", price: "PKR 9,200" },
     { name: "Amber Bloom", img: "/perfumes/p3.jpg", price: "PKR 7,800" },
     { name: "Rose Mystique", img: "/perfumes/p4.jpg", price: "PKR 8,000" },
     { name: "Golden Musk", img: "/perfumes/p5.jpg", price: "PKR 9,500" },
