@@ -714,8 +714,8 @@ export default function ProductDetail() {
                 <div className="spec-value">{product.sillage}</div>
               </div>
               <div className="spec-box">
-                <div className="spec-label">Best Season</div>
-                <div className="spec-value">{product.season.join(", ")}</div>
+                <div className="spec-label">Brand</div>
+                <div className="spec-value">{product.brand}</div>
               </div>
             </div>
 

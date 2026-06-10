@@ -13,6 +13,7 @@ export default function CategoryPage() {
   const { category } = useParams<{ category: string }>();
   const location = useLocation();
 
+
   // Read search query from URL (set by header search)
   const searchParams = new URLSearchParams(location.search);
   const searchQuery = searchParams.get("search") || "";
@@ -38,24 +39,40 @@ export default function CategoryPage() {
   // Get products for this category (getProductsByCategory handles "all" too)
   const baseItems = getProductsByCategory(category ?? "");
 
+  const [selectedBrands, setSelectedBrands] = useState<string[]>([]); // filter based on the brand
+  const allBrands = [...new Set(baseItems.map(p => p.brand))];
+
   const [maxPrice, setMaxPrice] = useState(100000); // keep track of max price
 
   // get the highest price from  the products 
   const highestPrice = Math.max(
   ...baseItems.map(p => p.priceNum));
 
-  const filteredItems = (searchQuery.trim()
-  ? baseItems.filter(
-      (p) =>
-        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.shortDesc.toLowerCase().includes(searchQuery.toLowerCase())
-    )
-  : baseItems
-).filter(
-  (p) =>
-    p.priceNum <= maxPrice
-);
+//   const filteredItems = (searchQuery.trim()
+//   ? baseItems.filter(
+//       (p) =>
+//         p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+//         p.shortDesc.toLowerCase().includes(searchQuery.toLowerCase())
+//     )
+//   : baseItems
+// ).filter(
+//   (p) =>
+//     p.priceNum <= maxPrice
+// );
 
+const filteredItems = baseItems
+  .filter(p =>
+    searchQuery.trim()
+      ? p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        p.shortDesc.toLowerCase().includes(searchQuery.toLowerCase())
+      : true
+  )
+  .filter(p => p.priceNum <= maxPrice)
+  .filter(p =>
+    selectedBrands.length === 0
+      ? true
+      : selectedBrands.includes(p.brand)
+  );
     //pagination
   const totalPages = Math.ceil(filteredItems.length / itemsPerPage);// tells us the total pages 
   const startIndex = (currentPage - 1) * itemsPerPage; // will give the starting index of each page
@@ -245,6 +262,22 @@ export default function CategoryPage() {
           background: #1118442f;
           color: #111844;
           transform: translateY(-1px);
+        }
+
+        .filter-bar input[type="checkbox"] {
+          appearance: none;
+          width: 12px;
+          height: 12px;
+          border: 2px solid #111844;
+          border-radius: 50%;
+          display: inline-block;
+          position: relative;
+          cursor: pointer;
+          
+        }
+
+        .filter-bar input[type="checkbox"]:checked {
+          background-color: #1118442f;
         }
         /* ── PRODUCT GRID ────────────────────────────────── */
         .cat-body {
@@ -506,7 +539,28 @@ export default function CategoryPage() {
               <button className= "filter-btn" onClick={() => setMaxPrice(10000)}>Under PKR 10000</button>
             </div>
 
-            {/* <p>Range: {minPrice} - {maxPrice}</p> */}
+            {/* brand filter */}
+
+            <h3 style={{ marginTop: "30px" }}>Select Brand</h3>
+            {allBrands.map((brand) => (
+              <label key={brand} style={{ display: "block", marginBottom: "6px" }}>
+                <input
+                  type="checkbox"
+                  checked={selectedBrands.includes(brand)}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setSelectedBrands([...selectedBrands, brand]);
+                    } else {
+                      setSelectedBrands(
+                        selectedBrands.filter((b) => b !== brand)
+                      );
+                    }
+                  }}
+                />
+                {" "}{brand}
+              </label>
+            ))}
+            
           </aside>
 
           {/* products */}
