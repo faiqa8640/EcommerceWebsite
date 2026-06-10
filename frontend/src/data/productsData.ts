@@ -106,11 +106,11 @@ export const products: Product[] = [
     sillage: "Moderate–Heavy",
     season: ["Spring", "Autumn"],
     reviews: [
-      { user: "Ali", rating: 5, comment: "Luxury smell, very long lasting.", date: "2026-06-01" },
-      { user: "Sara", rating: 4, comment: "Very premium feel, loved it.", date: "2026-06-03" },
-      { user: "Sarim", rating: 4, comment: "Very premium feel, loved it.", date: "2026-06-03" },
-      { user: "zara", rating: 4, comment: "Very premium feel, loved it.", date: "2026-06-03" },
-      { user: "zain", rating: 4, comment: "Very premium feel, loved it.", date: "2026-06-03" },
+      { user: "Ali", rating: 1, comment: "Luxury smell, very long lasting.", date: "2026-06-01" },
+      { user: "Sara", rating: 1, comment: "Very premium feel, loved it.", date: "2026-06-03" },
+      { user: "Sarim", rating: 1, comment: "Very premium feel, loved it.", date: "2026-06-03" },
+      { user: "zara", rating: 1, comment: "Very premium feel, loved it.", date: "2026-06-03" },
+      { user: "zain", rating: 1, comment: "Very premium feel, loved it.", date: "2026-06-03" },
     ],
   },
 
@@ -526,3 +526,17 @@ export const getCategoryBySlug = (slug: string): Category | undefined =>
 
 // return the product array 
 export const getAllProducts = (): Product[] => products;
+
+// getting the avg ranking of each product 
+export const getAverageRating = (product: Product) => {
+  if (!product.reviews || product.reviews.length === 0) {
+    return 0;
+  }
+
+  const total = product.reviews.reduce(
+    (sum, review) => sum + review.rating,
+    0
+  );
+
+  return total / product.reviews.length;
+};

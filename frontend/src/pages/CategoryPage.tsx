@@ -7,6 +7,7 @@ import Footer from "../components/Footer";
 import {
   getProductsByCategory,
   getCategoryBySlug,
+  getAverageRating,
 } from "../data/productsData";
 
 export default function CategoryPage() {
@@ -39,6 +40,9 @@ export default function CategoryPage() {
   // Get products for this category (getProductsByCategory handles "all" too)
   const baseItems = getProductsByCategory(category ?? "");
 
+  const [selectedRating, setSelectedRating] = useState(0);// ranking 
+
+
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]); // filter based on the brand
   const allBrands = [...new Set(baseItems.map(p => p.brand))];
 
@@ -63,15 +67,19 @@ export default function CategoryPage() {
 const filteredItems = baseItems
   .filter(p =>
     searchQuery.trim()
-      ? p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      ? p.name.toLowerCase().includes(searchQuery.toLowerCase()) || // based  on the search filter
         p.shortDesc.toLowerCase().includes(searchQuery.toLowerCase())
       : true
   )
-  .filter(p => p.priceNum <= maxPrice)
-  .filter(p =>
+  .filter(p => p.priceNum <= maxPrice) // based on the price
+  .filter(p => // based on the brand
     selectedBrands.length === 0
       ? true
       : selectedBrands.includes(p.brand)
+  )
+  .filter(p => // based on the ranking
+    selectedRating === 0 ||
+    getAverageRating(p) >= selectedRating
   );
     //pagination
   const totalPages = Math.ceil(filteredItems.length / itemsPerPage);// tells us the total pages 
@@ -278,6 +286,25 @@ const filteredItems = baseItems
 
         .filter-bar input[type="checkbox"]:checked {
           background-color: #1118442f;
+        }
+
+        .rating-option input[type="radio"] {
+          display: none;
+        }
+
+        .rating-option {
+          display: block;
+          padding: 8px 12px;
+          margin-bottom: 8px;
+          border: 1px solid rgba(75,86,148,0.2);
+          border-radius: 999px;
+          cursor: pointer;
+          transition: all 0.25s ease;
+        }
+
+        .rating-option:hover {
+          background: #111844;
+          color: #EAE0CF;
         }
         /* ── PRODUCT GRID ────────────────────────────────── */
         .cat-body {
@@ -560,7 +587,67 @@ const filteredItems = baseItems
                 {" "}{brand}
               </label>
             ))}
-            
+            {/* ranking filtering */}
+            <h3 className="filter-title">Rating</h3>
+            <label className="rating-option">
+              <input
+                type="radio"
+                name="rating"
+                checked={selectedRating === 4.5}
+                onChange={() => setSelectedRating(5)}
+              />
+              ⭐⭐⭐⭐⭐
+            </label>
+            <label className="rating-option">
+              <input
+                type="radio"
+                name="rating"
+                checked={selectedRating === 4}
+                onChange={() => setSelectedRating(4)}
+              />
+              ⭐⭐⭐⭐
+            </label>
+
+            <label className="rating-option">
+              <input
+                type="radio"
+                name="rating"
+                checked={selectedRating === 3}
+                onChange={() => setSelectedRating(3)}
+              />
+              ⭐⭐⭐
+            </label>
+
+            <label className="rating-option">
+              <input
+                type="radio"
+                name="rating"
+                checked={selectedRating === 2}
+                onChange={() => setSelectedRating(2)}
+              />
+              ⭐⭐
+            </label>
+
+            <label className="rating-option">
+              <input
+                type="radio"
+                name="rating"
+                checked={selectedRating === 1}
+                onChange={() => setSelectedRating(1)}
+              />
+              ⭐
+            </label>
+
+            <label className="rating-option">
+              <input
+                type="radio"
+                name="rating"
+                checked={selectedRating === 0}
+                onChange={() => setSelectedRating(0)}
+              />
+              All Ratings
+            </label>
+
           </aside>
 
           {/* products */}
@@ -630,76 +717,3 @@ const filteredItems = baseItems
     </>
   );
 }
-
-
-
-
-
-
-
-
-//         <section className="cat-body">
-//           <p className="cat-count">
-//             {filteredItems.length} product{filteredItems.length !== 1 ? "s" : ""} found
-//           </p>
-
-//           {filteredItems.length === 0 ? (
-//             <div className="no-results">
-//               <h3>No Fragrances Found</h3>
-//               <p>
-//                 No perfumes matched "{searchQuery}". Try a different search term.
-//               </p>
-//               <Link to="/shop/all">Browse All Collections</Link>
-//             </div>
-//           ) : (
-//             <>
-//               <div className="product-grid">
-//                 {paginatedItems.map((product) => (
-//                   <Link
-//                     key={product.id}
-//                     to={`/shop/${category}/${product.id}`}
-//                     className="product-card-link"
-//                   >
-//                     <div className="product-card">
-//                       <div className="product-card-img">
-//                         <img src={product.images[0]} alt={product.name} />
-//                         {product.badge && (
-//                           <span className="product-card-badge">{product.badge}</span>
-//                         )}
-//                       </div>
-//                       <div className="product-card-body">
-//                         <div className="product-card-name">{product.name}</div>
-//                         <div className="product-card-desc">{product.shortDesc}</div>
-//                         <div className="product-card-footer">
-//                           <span className="product-card-price">{product.price}</span>
-//                           <span className="product-card-btn">View →</span>
-//                         </div>
-//                       </div>
-//                     </div>
-//                   </Link>
-//                 ))}
-//               </div>
-
-//               {/* Pagination — only show if more than one page */}
-//               {totalPages > 1 && (
-//                 <div className="pagination">
-//                   {Array.from({ length: totalPages }).map((_, index) => (
-//                     <button
-//                       key={index}
-//                       onClick={() => setCurrentPage(index + 1)}
-//                       className={currentPage === index + 1 ? "active" : ""}
-//                     >
-//                       {index + 1}
-//                     </button>
-//                   ))}
-//                 </div>
-//               )}
-//             </>
-//           )}
-//         </section>
-//       </div>
-
-//       <Footer />
-//     </>
-//   );
-// }
