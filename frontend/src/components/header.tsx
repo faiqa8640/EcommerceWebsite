@@ -325,7 +325,7 @@ export default function Header() {
           background: transparent;
           color: var(--text);
           font-family: 'Jost', system-ui, sans-serif;
-          font-size: 1rem;
+          font-size: 0.9rem;
           letter-spacing: 0.05em;
           outline: none;
           transition: width 0.35s ease, opacity 0.35s ease, padding 0.35s ease, border 0.35s ease;
