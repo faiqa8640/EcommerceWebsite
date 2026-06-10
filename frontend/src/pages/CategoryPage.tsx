@@ -38,14 +38,23 @@ export default function CategoryPage() {
   // Get products for this category (getProductsByCategory handles "all" too)
   const baseItems = getProductsByCategory(category ?? "");
 
-  // Filter by search query (case-insensitive, searches name + shortDesc)
-  const filteredItems = searchQuery.trim() // used to filter the items 
-    ? baseItems.filter(
-        (p) =>
-          p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          p.shortDesc.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    : baseItems;
+  const [maxPrice, setMaxPrice] = useState(100000); // keep track of max price
+
+  // get the highest price from  the products 
+  const highestPrice = Math.max(
+  ...baseItems.map(p => p.priceNum));
+
+  const filteredItems = (searchQuery.trim()
+  ? baseItems.filter(
+      (p) =>
+        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        p.shortDesc.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+  : baseItems
+).filter(
+  (p) =>
+    p.priceNum <= maxPrice
+);
 
     //pagination
   const totalPages = Math.ceil(filteredItems.length / itemsPerPage);// tells us the total pages 
@@ -188,11 +197,61 @@ export default function CategoryPage() {
           border-color: #111844;
         }
 
+        
+        .cat-layout {
+          display: flex;
+          gap: 2rem;
+          align-items: stretch;
+        }
+
+        .filter-bar {
+          width: 220px;
+          padding: 1.5rem;
+          background: rgba(255,255,255,0.5);
+          border: 1px solid rgba(75,86,148,0.2);
+          position:relative;
+          font-family: 'Cormorant Garamond', serif
+        }
+
+        
+        .filter-bar input[type="range"] {
+          width: 100%;
+          accent-color: #111844;
+        }
+
+        .filter-bar h3 {
+          font-family: 'Cormorant Garamond', serif;
+          margin-bottom: 10px;
+          font-size: 14px;
+          letter-spacing: 2px;
+          color: #1a2779f6;
+          text-transform: uppercase;
+        }
+
+        .filter-btn{
+          background: #111844;
+          border: 1px solid rgba(75,86,148,0.2);
+          font-size: 0.8rem;
+          color: rgba(255,255,255,0.9);
+          padding-top: 8px;
+          padding-bottom: 8px;
+          border-radius: 1100px;
+          cursor: pointer;
+          transition: all 0.25s ease;
+ 
+        }
+
+        .filter-btn:hover {
+          background: #1118442f;
+          color: #111844;
+          transform: translateY(-1px);
+        }
         /* ── PRODUCT GRID ────────────────────────────────── */
         .cat-body {
           max-width: 1200px;
           margin: 0 auto;
           padding: 4rem 2rem 6rem;
+          flex: 1;
         }
 
         .cat-count {
@@ -426,69 +485,167 @@ export default function CategoryPage() {
           </div>
         )}
 
-        {/* Products */}
-        <section className="cat-body">
-          <p className="cat-count">
-            {filteredItems.length} product{filteredItems.length !== 1 ? "s" : ""} found
-          </p>
+        
+        {/* side bar for filters */}
+        <div className="cat-layout">
+          <aside className="filter-bar">
+            <h3>Select Your Budget</h3>
+            <p style={{ marginBottom: "10px" }}>Under: <b> PKR  {maxPrice}</b></p>
 
-          {filteredItems.length === 0 ? (
-            <div className="no-results">
-              <h3>No Fragrances Found</h3>
-              <p>
-                No perfumes matched "{searchQuery}". Try a different search term.
-              </p>
-              <Link to="/shop/all">Browse All Collections</Link>
+            <input
+              type="range"
+              min={0}
+              max={highestPrice}
+              value={maxPrice}
+              onChange={(e) => setMaxPrice(Number(e.target.value))}
+            />
+
+            <div style={{ marginTop: "15px", display: "flex", flexDirection: "column", gap: "8px" }}>
+              <button className= "filter-btn" onClick={() => setMaxPrice(2000)}>Under PKR 2000</button>
+              <button className= "filter-btn" onClick={() => setMaxPrice(5000)}>Under PKR 5000</button>
+              <button className= "filter-btn" onClick={() => setMaxPrice(10000)}>Under PKR 10000</button>
             </div>
-          ) : (
-            <>
-              <div className="product-grid">
-                {paginatedItems.map((product) => (
-                  <Link
-                    key={product.id}
-                    to={`/shop/${category}/${product.id}`}
-                    className="product-card-link"
-                  >
-                    <div className="product-card">
-                      <div className="product-card-img">
-                        <img src={product.images[0]} alt={product.name} />
-                        {product.badge && (
-                          <span className="product-card-badge">{product.badge}</span>
-                        )}
-                      </div>
-                      <div className="product-card-body">
-                        <div className="product-card-name">{product.name}</div>
-                        <div className="product-card-desc">{product.shortDesc}</div>
-                        <div className="product-card-footer">
-                          <span className="product-card-price">{product.price}</span>
-                          <span className="product-card-btn">View →</span>
+
+            {/* <p>Range: {minPrice} - {maxPrice}</p> */}
+          </aside>
+
+          {/* products */}
+          <section className="cat-body">
+            <p className="cat-count">
+              {filteredItems.length} product{filteredItems.length !== 1 ? "s" : ""} found
+            </p>
+            {filteredItems.length === 0 ? (
+              <div className="no-results">
+                <h3>No Fragrances Found</h3>
+                <p>
+                  No perfumes matched "{searchQuery}". Try a different search term.
+                </p>
+                <Link to="/shop/all">Browse All Collections</Link>
+              </div>
+            ) : (
+              <>
+                <div className="product-grid">
+                  {paginatedItems.map((product) => (
+                    <Link
+                      key={product.id}
+                      to={`/shop/${category}/${product.id}`}
+                      className="product-card-link"
+                    >
+                      <div className="product-card">
+                        <div className="product-card-img">
+                          <img src={product.images[0]} alt={product.name} />
+                          {product.badge && (
+                            <span className="product-card-badge">{product.badge}</span>
+                          )}
+                        </div>
+                        <div className="product-card-body">
+                          <div className="product-card-name">{product.name}</div>
+                          <div className="product-card-desc">{product.shortDesc}</div>
+                          <div className="product-card-footer">
+                            <span className="product-card-price">{product.price}</span>
+                            <span className="product-card-btn">View →</span>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </Link>
-                ))}
-              </div>
+                    </Link>
+                  ))}
+                </div>
 
-              {/* Pagination — only show if more than one page */}
-              {totalPages > 1 && (
-                <div className="pagination">
-                  {Array.from({ length: totalPages }).map((_, index) => (
-                    <button
+                {/* Pagination — only show if more than one page */}
+                {totalPages > 1 && (
+                  <div className="pagination">
+                    {Array.from({ length: totalPages }).map((_, index) => (
+                      <button
                       key={index}
                       onClick={() => setCurrentPage(index + 1)}
                       className={currentPage === index + 1 ? "active" : ""}
-                    >
-                      {index + 1}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </>
-          )}
-        </section>
-      </div>
+                      >
+                        {index + 1}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
 
+          </section>
+
+        </div>
+      </div>
       <Footer />
     </>
   );
 }
+
+
+
+
+
+
+
+
+//         <section className="cat-body">
+//           <p className="cat-count">
+//             {filteredItems.length} product{filteredItems.length !== 1 ? "s" : ""} found
+//           </p>
+
+//           {filteredItems.length === 0 ? (
+//             <div className="no-results">
+//               <h3>No Fragrances Found</h3>
+//               <p>
+//                 No perfumes matched "{searchQuery}". Try a different search term.
+//               </p>
+//               <Link to="/shop/all">Browse All Collections</Link>
+//             </div>
+//           ) : (
+//             <>
+//               <div className="product-grid">
+//                 {paginatedItems.map((product) => (
+//                   <Link
+//                     key={product.id}
+//                     to={`/shop/${category}/${product.id}`}
+//                     className="product-card-link"
+//                   >
+//                     <div className="product-card">
+//                       <div className="product-card-img">
+//                         <img src={product.images[0]} alt={product.name} />
+//                         {product.badge && (
+//                           <span className="product-card-badge">{product.badge}</span>
+//                         )}
+//                       </div>
+//                       <div className="product-card-body">
+//                         <div className="product-card-name">{product.name}</div>
+//                         <div className="product-card-desc">{product.shortDesc}</div>
+//                         <div className="product-card-footer">
+//                           <span className="product-card-price">{product.price}</span>
+//                           <span className="product-card-btn">View →</span>
+//                         </div>
+//                       </div>
+//                     </div>
+//                   </Link>
+//                 ))}
+//               </div>
+
+//               {/* Pagination — only show if more than one page */}
+//               {totalPages > 1 && (
+//                 <div className="pagination">
+//                   {Array.from({ length: totalPages }).map((_, index) => (
+//                     <button
+//                       key={index}
+//                       onClick={() => setCurrentPage(index + 1)}
+//                       className={currentPage === index + 1 ? "active" : ""}
+//                     >
+//                       {index + 1}
+//                     </button>
+//                   ))}
+//                 </div>
+//               )}
+//             </>
+//           )}
+//         </section>
+//       </div>
+
+//       <Footer />
+//     </>
+//   );
+// }
