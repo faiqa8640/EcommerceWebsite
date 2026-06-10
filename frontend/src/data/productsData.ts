@@ -6,6 +6,7 @@ export type Product = {
   price: string;
   priceNum: number;
   category: string;
+  brand: string;
   images: string[];
   badge?: string;
   shortDesc: string;
@@ -86,6 +87,7 @@ export const products: Product[] = [
     price: "PKR 8,500",
     priceNum: 8500,
     category: "men",
+    brand: "Chanel",
     images: [
       "/perfumes/p1-1.jpg",
       "/perfumes/p1-2.jfif",
@@ -118,6 +120,7 @@ export const products: Product[] = [
     price: "PKR 9,200",
     priceNum: 9200,
     category: "women",
+    brand: "Givenchy",
     images: [
       "/perfumes/p2-1.jpg",
       "/perfumes/p2-2.jfif",
@@ -148,6 +151,7 @@ export const products: Product[] = [
     price: "PKR 7,800",
     priceNum: 7800,
     category: "men",
+    brand: "Dior",
     images: ["/perfumes/p3.jpg"],
     shortDesc: "Fresh aquatic sport scent with a dark woody heart.",
     description:
@@ -173,6 +177,7 @@ export const products: Product[] = [
     price: "PKR 8,800",
     priceNum: 8800,
     category: "men",
+    brand: "Dior",
     images: ["/perfumes/p4.jpg"],
     badge: "Limited",
     shortDesc: "Warm amber and oriental spices for cooler evenings.",
@@ -200,6 +205,7 @@ export const products: Product[] = [
     price: "PKR 8,000",
     priceNum: 8000,
     category: "women",
+    brand: "Givenchy",
     images: ["/perfumes/p5.jpg"],
     badge: "Best Seller",
     shortDesc: "A romantic rose heart wrapped in soft musk and peach.",
@@ -225,6 +231,7 @@ export const products: Product[] = [
     price: "PKR 7,500",
     priceNum: 7500,
     category: "women",
+    brand: "Givenchy",
     images: ["/perfumes/p6.jpg"],
     shortDesc: "Airy white florals with a clean powdery finish.",
     description: "Fleur Blanc is the essence of understated femininity.",
@@ -249,6 +256,7 @@ export const products: Product[] = [
     price: "PKR 9,000",
     priceNum: 9000,
     category: "women",
+    brand: "Dior",
     images: ["/perfumes/p7.jpg"],
     shortDesc: "Dark rose meets smoky oud — sensual and mysterious.",
     description: "A bold feminine fragrance with oud and rose.",
@@ -273,6 +281,7 @@ export const products: Product[] = [
     price: "PKR 8,200",
     priceNum: 8200,
     category: "women",
+    brand: "Chanel",
     images: ["/perfumes/p8.jpg"],
     shortDesc: "Exotic orchid and vanilla for a warm glow.",
     description: "A soft floral sweet fragrance.",
@@ -299,6 +308,7 @@ export const products: Product[] = [
     price: "PKR 9,500",
     priceNum: 9500,
     category: "unisex",
+    brand: "Chanel",
     images: ["/perfumes/p9.jpg"],
     badge: "Best Seller",
     shortDesc: "Warm golden musk that becomes your second skin.",
@@ -324,6 +334,7 @@ export const products: Product[] = [
     price: "PKR 8,400",
     priceNum: 8400,
     category: "unisex",
+    brand: "Tom Ford",
     images: ["/perfumes/p10.jpg"],
     shortDesc: "Earthy sage and cedar — fresh and grounded.",
     description: "Nature inspired fragrance.",
@@ -348,6 +359,7 @@ export const products: Product[] = [
     price: "PKR 9,800",
     priceNum: 9800,
     category: "unisex",
+    brand: "Tom Ford",
     images: ["/perfumes/p11.jpg"],
     badge: "Limited",
     shortDesc: "Smoky incense meets silky musks.",
@@ -373,6 +385,7 @@ export const products: Product[] = [
     price: "PKR 7,600",
     priceNum: 7600,
     category: "unisex",
+    brand: "Tom Ford",
     images: ["/perfumes/p12.jpg"],
     shortDesc: "Clean green aquatic freshness.",
     description: "Fresh everyday fragrance.",
@@ -399,6 +412,7 @@ export const products: Product[] = [
     price: "PKR 18,500",
     priceNum: 18500,
     category: "luxury",
+    brand: "Creed",
     images: ["/perfumes/p13.jpg"],
     badge: "Exclusive",
     shortDesc: "Royal aged oud masterpiece.",
@@ -424,6 +438,7 @@ export const products: Product[] = [
     price: "PKR 16,000",
     priceNum: 16000,
     category: "luxury",
+    brand: "Creed",
     images: ["/perfumes/p14.jpg"],
     badge: "Limited",
     shortDesc: "Dark floral night elegance.",
@@ -449,6 +464,7 @@ export const products: Product[] = [
     price: "PKR 14,500",
     priceNum: 14500,
     category: "luxury",
+    brand: "Creed",
     images: ["/perfumes/p15.jpg"],
     badge: "Exclusive",
     shortDesc: "Golden amber richness.",
@@ -474,6 +490,7 @@ export const products: Product[] = [
     price: "PKR 15,000",
     priceNum: 15000,
     category: "luxury",
+    brand: "Versace",
     images: ["/perfumes/p16.jpg"],
     shortDesc: "Crystal white floral luxury.",
     description: "Elegant floral fragrance.",
