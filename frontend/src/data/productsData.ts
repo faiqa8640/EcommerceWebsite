@@ -188,6 +188,7 @@ export const products: Product[] = [
     season: ["Winter"],
     reviews: [
       { user: "Ali", rating: 5, comment: "Luxury smell, very long lasting.", date: "2026-06-01" },
+      { user: "zara", rating: 4, comment: "Very premium feel, loved it.", date: "2026-06-03" },
     ],
   },
 
@@ -238,6 +239,7 @@ export const products: Product[] = [
     season: ["Spring", "Summer"],
     reviews: [
       { user: "Ali", rating: 5, comment: "Luxury smell, very long lasting.", date: "2026-06-01" },
+      { user: "zara", rating: 4, comment: "Very premium feel, loved it.", date: "2026-06-03" },
     ],
   },
 
@@ -261,6 +263,7 @@ export const products: Product[] = [
     season: ["Autumn", "Winter"],
     reviews: [
       { user: "Ali", rating: 5, comment: "Luxury smell, very long lasting.", date: "2026-06-01" },
+      { user: "zara", rating: 4, comment: "Very premium feel, loved it.", date: "2026-06-03" },
     ],
   },
 
@@ -284,6 +287,7 @@ export const products: Product[] = [
     season: ["Spring", "Summer", "Autumn"],
     reviews: [
       { user: "Ali", rating: 5, comment: "Luxury smell, very long lasting.", date: "2026-06-01" },
+      { user: "zara", rating: 4, comment: "Very premium feel, loved it.", date: "2026-06-03" },
     ],
   },
 
@@ -310,6 +314,7 @@ export const products: Product[] = [
     season: ["All Seasons"],
     reviews: [
       { user: "Ali", rating: 5, comment: "Luxury smell, very long lasting.", date: "2026-06-01" },
+      { user: "zara", rating: 4, comment: "Very premium feel, loved it.", date: "2026-06-03" },
     ],
   },
 
@@ -333,6 +338,7 @@ export const products: Product[] = [
     season: ["Spring", "Summer", "Autumn"],
     reviews: [
       { user: "Ali", rating: 5, comment: "Luxury smell, very long lasting.", date: "2026-06-01" },
+      { user: "zara", rating: 4, comment: "Very premium feel, loved it.", date: "2026-06-03" },
     ],
   },
 
@@ -357,6 +363,7 @@ export const products: Product[] = [
     season: ["Autumn", "Winter"],
     reviews: [
       { user: "Ali", rating: 5, comment: "Luxury smell, very long lasting.", date: "2026-06-01" },
+      { user: "zara", rating: 4, comment: "Very premium feel, loved it.", date: "2026-06-03" },
     ],
   },
 
@@ -380,6 +387,7 @@ export const products: Product[] = [
     season: ["Spring", "Summer"],
     reviews: [
       { user: "Ali", rating: 5, comment: "Luxury smell, very long lasting.", date: "2026-06-01" },
+      { user: "zara", rating: 4, comment: "Very premium feel, loved it.", date: "2026-06-03" },
     ],
   },
 
@@ -406,6 +414,7 @@ export const products: Product[] = [
     season: ["Autumn", "Winter"],
     reviews: [
       { user: "Ali", rating: 5, comment: "Luxury smell, very long lasting.", date: "2026-06-01" },
+      { user: "zara", rating: 4, comment: "Very premium feel, loved it.", date: "2026-06-03" },
     ],
   },
 
@@ -430,6 +439,7 @@ export const products: Product[] = [
     season: ["Winter"],
     reviews: [
       { user: "Ali", rating: 5, comment: "Luxury smell, very long lasting.", date: "2026-06-01" },
+      { user: "zara", rating: 4, comment: "Very premium feel, loved it.", date: "2026-06-03" },
     ],
   },
 
@@ -454,6 +464,7 @@ export const products: Product[] = [
     season: ["Autumn", "Winter"],
     reviews: [
       { user: "Ali", rating: 5, comment: "Luxury smell, very long lasting.", date: "2026-06-01" },
+      { user: "zara", rating: 4, comment: "Very premium feel, loved it.", date: "2026-06-03" },
     ],
   },
 
@@ -477,6 +488,7 @@ export const products: Product[] = [
     season: ["Spring", "Autumn"],
     reviews: [
       { user: "Ali", rating: 5, comment: "Luxury smell, very long lasting.", date: "2026-06-01" },
+      { user: "zara", rating: 4, comment: "Very premium feel, loved it.", date: "2026-06-03" },
     ],
   },
 ];
