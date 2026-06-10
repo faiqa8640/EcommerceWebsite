@@ -1,25 +1,102 @@
 // Header with dynamic Login/Logout based on auth state
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 export default function Header() {
-  const [menuOpen, setMenuOpen] = useState<boolean>(false); // state that control the phone menu
-  const [scrolled, setScrolled] = useState<boolean>(false);// track if the user track down
-  const location = useLocation();// it is used for the active linking 
+  const [menuOpen, setMenuOpen] = useState<boolean>(false);
+  const [scrolled, setScrolled] = useState<boolean>(false);
+  const location = useLocation();
   const navigate = useNavigate();
-  const { user, logout } = useAuth(); // get auth state
+  const { user, logout } = useAuth();
 
-  useEffect(() => { // is used to handle the scrolling 
-    const handleScroll = (): void => setScrolled(window.scrollY > 20);// if scrolling >20 then true 
-    window.addEventListener("scroll", handleScroll);// if true then handle the scroll like dim opacity->header become smaller and dark
+  const searchRef = useRef<HTMLDivElement | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  // search variables
+  const [searchOpen, setSearchOpen] = useState(false); // store wheather the search is open or close
+  const [searchQuery, setSearchQuery] = useState("");// stores whatever the user eneters in the search bar 
+
+  //  check Are we already on the results page?
+  const isOnResultsPage = location.pathname === "/shop/all";
+
+  useEffect(() => {
+    const handleScroll = (): void => setScrolled(window.scrollY > 20);
+    window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  useEffect(() => {// it closes the mobile menu when user navigate
+  useEffect(() => {
     setMenuOpen(false);
   }, [location]);
+
+  // -----------------
+  // Step2
+  // -------------------
+  // Auto-focus input when search bar opens
+  useEffect(() => {
+    if (searchOpen && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [searchOpen]);
+
+  // Helper: run the search navigation
+    // -----------------
+  // Step4
+  // -------------------
+  const doSearch = (query: string) => {
+    navigate(`/shop/all?search=${encodeURIComponent(query.trim())}`);
+  };
+
+  // TWO MODES:
+  // - On /shop/all (results page): debounce — live filter as you type, bar stays open
+  // - On any other page (home, shop, about...): NO auto-navigate — user must press
+  //   Enter or click the search icon to submit. This way they can finish typing first.
+    // -----------------
+  // Step3
+  // -------------------
+  useEffect(() => {
+    if (!searchQuery.trim()) return;
+    if (!isOnResultsPage) return; // ← KEY: don't auto-navigate from other pages
+
+    const handler = setTimeout(() => {
+      doSearch(searchQuery);
+    }, 400);
+
+    return () => clearTimeout(handler);
+  }, [searchQuery, isOnResultsPage]);
+
+  // Close on click outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
+        setSearchOpen(false);
+        setSearchQuery("");
+      }
+    };
+    if (searchOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [searchOpen]);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeys = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setSearchOpen(false);
+        setSearchQuery("");
+      }
+      // Enter always submits immediately on any page
+      if (e.key === "Enter" && searchOpen && searchQuery.trim()) {
+        doSearch(searchQuery);
+        setSearchOpen(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeys);
+    return () => window.removeEventListener("keydown", handleKeys);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchOpen, searchQuery]);
 
   const navLinks: { label: string; to: string }[] = [
     { label: "Home", to: "/" },
@@ -33,6 +110,24 @@ export default function Header() {
   const handleLogout = () => {
     logout();
     navigate("/login");
+  };
+
+
+  // -----------------
+  // Step1
+  // -------------------
+  // Icon click: if bar is open and has text → submit; if bar is open and empty → close; if closed → open
+  const handleSearchIconClick = () => {
+    if (searchOpen) { //intionaliy the searchopen is false -> it set the searchopen as true
+      if (searchQuery.trim()) { // if user typed anything
+        doSearch(searchQuery); // search that 
+        setSearchOpen(false);// and after the set the searchopen as false
+      } else {
+        setSearchOpen(false);// if the  there is nothing set the searchopen as false
+      }
+    } else {
+      setSearchOpen(true); // setting the searchopen as true 
+    }
   };
 
   return (
@@ -140,7 +235,6 @@ export default function Header() {
         .eloura-nav-link:hover::after { width: 55%; }
         .eloura-nav-link:not(.active)::after { width: 0; }
 
-        /* Auth buttons area */
         .eloura-auth {
           display: flex;
           align-items: center;
@@ -200,6 +294,72 @@ export default function Header() {
           color: var(--text);
         }
 
+        /* ── SEARCH ──────────────────────────────────────────── */
+        .search-box {
+          display: flex;
+          align-items: center;
+          position: relative;
+        }
+
+        .search-icon-btn {
+          background: transparent;
+          border: none;
+          color: var(--text);
+          font-size: 1.4rem;
+          cursor: pointer;
+          padding: 6px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: color 0.3s;
+          line-height: 1;
+        }
+
+        .search-icon-btn:hover { color: var(--accent-light); }
+
+        .search-input {
+          width: 0;
+          opacity: 0;
+          padding: 0;
+          border: none;
+          background: transparent;
+          color: var(--text);
+          font-family: 'Jost', system-ui, sans-serif;
+          font-size: 1rem;
+          letter-spacing: 0.05em;
+          outline: none;
+          transition: width 0.35s ease, opacity 0.35s ease, padding 0.35s ease, border 0.35s ease;
+          border-radius: 6px;
+          box-sizing: border-box;
+        }
+
+        .search-input::placeholder { color: rgba(234,224,207,0.45); }
+
+        .search-input.open {
+          width: 190px;
+          opacity: 1;
+          padding: 6px 12px;
+          border: 1px solid rgba(114,136,174,0.45);
+          background: rgba(255,255,255,0.08);
+        }
+
+        /* hint text shown below input when not on results page */
+        .search-hint {
+          position: absolute;
+          top: calc(100% + 6px);
+          right: 0;
+          background: rgba(17,24,68,0.92);
+          color: rgba(234,224,207,0.65);
+          font-size: 0.65rem;
+          letter-spacing: 0.1em;
+          padding: 5px 10px;
+          border-radius: 6px;
+          white-space: nowrap;
+          pointer-events: none;
+          border: 1px solid rgba(114,136,174,0.2);
+        }
+
+        /* ── HAMBURGER ───────────────────────────────────────── */
         .eloura-hamburger {
           display: none;
           flex-direction: column;
@@ -224,6 +384,7 @@ export default function Header() {
         .eloura-hamburger.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
         .eloura-hamburger.open span:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
 
+        /* ── MOBILE MENU ─────────────────────────────────────── */
         .eloura-mobile {
           position: fixed;
           inset: 0;
@@ -284,9 +445,7 @@ export default function Header() {
       <header
         className="eloura-header"
         style={{
-          backgroundColor: scrolled
-            ? "rgba(17,24,68,0.97)"
-            : "rgba(17,24,68,0.85)",
+          backgroundColor: scrolled ? "rgba(17,24,68,0.97)" : "rgba(17,24,68,0.85)",
           padding: scrolled ? "0.75rem 0" : "1.1rem 0",
           boxShadow: scrolled ? "0 4px 40px rgba(0,0,0,0.4)" : "none",
         }}
@@ -309,19 +468,39 @@ export default function Header() {
             ))}
           </nav>
 
-          {/* Desktop auth area */}
+          {/* Desktop auth + search area */}
           <div className="eloura-auth">
+            <div className="search-box" ref={searchRef}>
+              <button
+                className="search-icon-btn"
+                onClick={handleSearchIconClick}
+                title="Search perfumes"
+              >
+                🔍︎
+              </button>
+
+              <input
+                ref={inputRef}
+                type="text"
+                placeholder="Search perfumes..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className={`search-input${searchOpen ? " open" : ""}`}
+              />
+
+              {/* Show hint when on a non-results page so user knows to press Enter */}
+              {searchOpen && !isOnResultsPage && searchQuery.trim().length > 0 && (
+                <span className="search-hint">Press Enter to search</span>
+              )}
+            </div>
+
             {user ? (
               <>
                 <span className="eloura-user-name">Hi, {user.name.split(" ")[0]}</span>
-                <button className="eloura-logout" onClick={handleLogout}>
-                  Logout
-                </button>
+                <button className="eloura-logout" onClick={handleLogout}>Logout</button>
               </>
             ) : (
-              <Link to="/login" className="eloura-login">
-                Login
-              </Link>
+              <Link to="/login" className="eloura-login">Login</Link>
             )}
           </div>
 
@@ -371,19 +550,7 @@ export default function Header() {
         )}
       </div>
 
-      <div
-        style={{
-          height: scrolled ? "60px" : "76px",
-          transition: "height 0.4s ease",
-        }}
-      />
-
-      {/* COMMENTS:
-      useAuth() → gets user and logout from AuthContext
-      user exists → show "Hi, Name" + Logout button
-      user is null → show Login link
-      handleLogout() → clears auth state + localStorage then redirects to /login
-      */}
+      <div style={{ height: scrolled ? "60px" : "76px", transition: "height 0.4s ease" }} />
     </>
   );
 }

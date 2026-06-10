@@ -1,8 +1,7 @@
 // Category page — shows all products for a given category slug
 
-import { Link, useParams, Navigate } from "react-router-dom";
-import { useState } from "react"; // for the pagination
-import { useEffect } from "react";// used to reset the scroll
+import { Link, useParams, Navigate, useLocation } from "react-router-dom";
+import { useState, useEffect } from "react";
 import Header from "../components/header";
 import Footer from "../components/Footer";
 import {
@@ -12,25 +11,46 @@ import {
 
 export default function CategoryPage() {
   const { category } = useParams<{ category: string }>();
+  const location = useLocation();
+
+  // Read search query from URL (set by header search)
+  const searchParams = new URLSearchParams(location.search);
+  const searchQuery = searchParams.get("search") || "";
 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
 
   const cat = getCategoryBySlug(category ?? "");
 
-  const allItems = getProductsByCategory(category ?? "");
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const totalPages = Math.ceil(allItems.length / itemsPerPage); // count total pages
-  const paginatedItems = allItems.slice(
-  startIndex,
-  startIndex + itemsPerPage);
+  // Reset to page 1 whenever the search query or category changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, category]);
 
-  useEffect(() => {// whenever page is chnages it move the page to the top 
-  window.scrollTo({ top: 0, behavior: "smooth" });
-}, [currentPage]);
+  // Scroll to top when page changes
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [currentPage]);
 
   // Unknown category → back to shop
   if (!cat) return <Navigate to="/shop" replace />;
+
+  // Get products for this category (getProductsByCategory handles "all" too)
+  const baseItems = getProductsByCategory(category ?? "");
+
+  // Filter by search query (case-insensitive, searches name + shortDesc)
+  const filteredItems = searchQuery.trim() // used to filter the items 
+    ? baseItems.filter(
+        (p) =>
+          p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          p.shortDesc.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : baseItems;
+
+    //pagination
+  const totalPages = Math.ceil(filteredItems.length / itemsPerPage);// tells us the total pages 
+  const startIndex = (currentPage - 1) * itemsPerPage; // will give the starting index of each page
+  const paginatedItems = filteredItems.slice(startIndex, startIndex + itemsPerPage); // slice the items in each page
 
   return (
     <>
@@ -40,9 +60,6 @@ export default function CategoryPage() {
           min-height: 100vh;
           font-family: 'Jost', sans-serif;
         }
-
-        /* ── BREADCRUMB BANNER ───────────────────────────────── */
-        
 
         .about-hero {
           position: relative;
@@ -126,9 +143,52 @@ export default function CategoryPage() {
 
         .detail-breadcrumb a:hover { color: rgba(17,24,68,0.5); }
         .detail-breadcrumb span { color: #EAE0CF; }
-        .detail-breadcrumb .current { color: rgba(17,24,68,0.5); }
 
-        /* ── PRODUCT GRID ────────────────────────────────────── */
+        /* ── SEARCH BANNER ───────────────────────────────── */
+        .search-result-banner {
+          background: rgba(17,24,68,0.07);
+          border-bottom: 1px solid rgba(75,86,148,0.15);
+          padding: 1rem 2rem;
+        }
+
+        .search-result-inner {
+          max-width: 1200px;
+          margin: 0 auto;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 1rem;
+        }
+
+        .search-result-text {
+          font-size: 0.82rem;
+          letter-spacing: 0.12em;
+          color: #4B5694;
+        }
+
+        .search-result-text strong {
+          color: #111844;
+        }
+
+        .search-clear-btn {
+          font-size: 0.72rem;
+          letter-spacing: 0.15em;
+          text-transform: uppercase;
+          color: #4B5694;
+          text-decoration: none;
+          border: 1px solid rgba(75,86,148,0.3);
+          padding: 5px 12px;
+          border-radius: 999px;
+          transition: 0.25s;
+        }
+
+        .search-clear-btn:hover {
+          background: #111844;
+          color: #EAE0CF;
+          border-color: #111844;
+        }
+
+        /* ── PRODUCT GRID ────────────────────────────────── */
         .cat-body {
           max-width: 1200px;
           margin: 0 auto;
@@ -143,13 +203,47 @@ export default function CategoryPage() {
           margin-bottom: 2.5rem;
         }
 
+        .no-results {
+          text-align: center;
+          padding: 5rem 2rem;
+          color: rgba(17,24,68,0.5);
+        }
+
+        .no-results h3 {
+          font-family: 'Cormorant Garamond', serif;
+          font-size: 1.8rem;
+          color: #111844;
+          margin-bottom: 0.8rem;
+        }
+
+        .no-results p {
+          font-size: 0.9rem;
+          margin-bottom: 1.5rem;
+        }
+
+        .no-results a {
+          display: inline-block;
+          padding: 10px 24px;
+          background: #111844;
+          color: #EAE0CF;
+          text-decoration: none;
+          border-radius: 8px;
+          font-size: 0.78rem;
+          letter-spacing: 0.15em;
+          text-transform: uppercase;
+          transition: 0.25s;
+        }
+
+        .no-results a:hover {
+          background: #4B5694;
+        }
+
         .product-grid {
           display: grid;
           grid-template-columns: repeat(4, 1fr);
           gap: 1.6rem;
         }
 
-        /* ── PRODUCT CARD ────────────────────────────────────── */
         .product-card-link {
           text-decoration: none;
           display: block;
@@ -249,6 +343,7 @@ export default function CategoryPage() {
           border-color: #111844;
         }
 
+        /* ── PAGINATION ──────────────────────────────────── */
         .pagination {
           display: flex;
           justify-content: center;
@@ -257,26 +352,29 @@ export default function CategoryPage() {
         }
 
         .pagination button {
-          padding: 8px 12px;
+          padding: 8px 14px;
           border-radius: 8px;
           border: 1px solid rgba(75,86,148,0.4);
           background: transparent;
           cursor: pointer;
           transition: 0.3s;
           font-size: 0.8rem;
+          color: #111844;
         }
 
         .pagination button:hover {
           background: #111844;
           color: #EAE0CF;
+          border-color: #111844;
         }
 
         .pagination button.active {
           background: #111844;
           color: #EAE0CF;
+          border-color: #111844;
         }
 
-        /* ── RESPONSIVE ──────────────────────────────────────── */
+        /* ── RESPONSIVE ──────────────────────────────────── */
         @media (max-width: 1024px) {
           .product-grid { grid-template-columns: repeat(3, 1fr); }
         }
@@ -299,65 +397,94 @@ export default function CategoryPage() {
           <div className="about-hero-overlay" />
           <div className="about-hero-text">
             <p className="about-hero-label">Collection</p>
-            <h1 className="about-hero-title">
-              {cat.label}
-            </h1>
-            <p>
-              {cat.desc}
-            </p>
+            <h1 className="about-hero-title">{cat.label}</h1>
+            <p>{cat.desc}</p>
           </div>
         </section>
+
+        {/* Breadcrumb */}
         <div className="detail-breadcrumb-bar">
-              <div className="detail-breadcrumb">
-                <Link to="/shop">Shop</Link>
-                <span>/</span>
-                <Link to={`/shop/${category}`}>{cat.label}</Link>
-                </div>
+          <div className="detail-breadcrumb">
+            <Link to="/shop">Shop</Link>
+            <span>/</span>
+            <span>{cat.label}</span>
+          </div>
         </div>
+
+        {/* Search result banner — only shown when searching */}
+        {searchQuery.trim() && (
+          <div className="search-result-banner">
+            <div className="search-result-inner">
+              <p className="search-result-text">
+                Showing results for <strong>"{searchQuery}"</strong>
+                {" "}— {filteredItems.length} item{filteredItems.length !== 1 ? "s" : ""} found
+              </p>
+              <Link to={`/shop/${category}`} className="search-clear-btn">
+                Clear Search
+              </Link>
+            </div>
+          </div>
+        )}
 
         {/* Products */}
         <section className="cat-body">
-          <p className="cat-count">{allItems.length} products found</p>
+          <p className="cat-count">
+            {filteredItems.length} product{filteredItems.length !== 1 ? "s" : ""} found
+          </p>
 
-          <div className="product-grid">
-            {paginatedItems.map((product) => (
-              <Link
-                key={product.id}
-                to={`/shop/${category}/${product.id}`}
-                className="product-card-link"
-              >
-                <div className="product-card">
-                  <div className="product-card-img">
-                    <img src={product.images[0]} alt={product.name} />
-                    {product.badge && (
-                      <span className="product-card-badge">{product.badge}</span>
-                    )}
-                  </div>
-                  <div className="product-card-body">
-                    <div className="product-card-name">{product.name}</div>
-                    <div className="product-card-desc">{product.shortDesc}</div>
-                    <div className="product-card-footer">
-                      <span className="product-card-price">{product.price}</span>
-                      <span className="product-card-btn">View →</span>
+          {filteredItems.length === 0 ? (
+            <div className="no-results">
+              <h3>No Fragrances Found</h3>
+              <p>
+                No perfumes matched "{searchQuery}". Try a different search term.
+              </p>
+              <Link to="/shop/all">Browse All Collections</Link>
+            </div>
+          ) : (
+            <>
+              <div className="product-grid">
+                {paginatedItems.map((product) => (
+                  <Link
+                    key={product.id}
+                    to={`/shop/${category}/${product.id}`}
+                    className="product-card-link"
+                  >
+                    <div className="product-card">
+                      <div className="product-card-img">
+                        <img src={product.images[0]} alt={product.name} />
+                        {product.badge && (
+                          <span className="product-card-badge">{product.badge}</span>
+                        )}
+                      </div>
+                      <div className="product-card-body">
+                        <div className="product-card-name">{product.name}</div>
+                        <div className="product-card-desc">{product.shortDesc}</div>
+                        <div className="product-card-footer">
+                          <span className="product-card-price">{product.price}</span>
+                          <span className="product-card-btn">View →</span>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
+                  </Link>
+                ))}
+              </div>
 
-            {/* PAGINATION CONTROLS */}
-          <div className="pagination">
-            {Array.from({ length: totalPages }).map((_, index) => (
-              <button
-                key={index}
-                onClick={() => setCurrentPage(index + 1)}
-                className={currentPage === index + 1 ? "active" : ""}
-              >
-                {index + 1}
-              </button>
-            ))}
-          </div>
+              {/* Pagination — only show if more than one page */}
+              {totalPages > 1 && (
+                <div className="pagination">
+                  {Array.from({ length: totalPages }).map((_, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setCurrentPage(index + 1)}
+                      className={currentPage === index + 1 ? "active" : ""}
+                    >
+                      {index + 1}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
         </section>
       </div>
 
