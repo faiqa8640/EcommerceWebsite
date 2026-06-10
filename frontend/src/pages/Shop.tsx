@@ -1,5 +1,4 @@
 // Shop page — shows 4 category cards, click to enter category
-
 import { Link } from "react-router-dom";
 import Header from "../components/header";
 import Footer from "../components/Footer";
@@ -14,12 +13,13 @@ export default function Shop() {
           min-height: 100vh;
           font-family: 'Jost', sans-serif;
         }
-          /* ── HERO ─────────────────────────────────────────────── */
+        
+        /* ── HERO ─────────────────────────────────────────────── */
         .about-hero {
-        position: relative;
-        margin-top: -160px;   /* must be on the FIRST child after Header */
-        padding-top: 15px;   /* so text inside still clears the navbar */
-        height: 120vh;
+          position: relative;
+          margin-top: -160px;   /* must be on the FIRST child after Header */
+          padding-top: 15px;   /* so text inside still clears the navbar */
+          height: 120vh;
         }
 
         .about-hero img {
@@ -46,6 +46,7 @@ export default function Shop() {
           position: absolute;
           bottom: 60px;
           left: 60px;
+          right: 60px; /* Prevents long text from jumping off-screen on smaller windows */
         }
 
         .about-hero-label {
@@ -206,10 +207,43 @@ export default function Shop() {
           color: #EAE0CF;
         }
 
-        /* ── RESPONSIVE ──────────────────────────────────────── */
+        /* ── RESPONSIVE RESPONSIVENESS FIXES (LOOK STAYS EXACTLY THE SAME) ── */
         @media (max-width: 768px) {
-          .shop-cat-grid { grid-template-columns: 1fr; }
-          .shop-cat-card { height: 280px; }
+          .about-hero {
+            height: 90vh; /* Prevents ultra-long empty spaces below hero background images on long screens */
+          }
+          .about-hero-text {
+            left: 24px;
+            right: 24px;
+            bottom: 40px;
+          }
+          .shop-categories {
+            padding: 3rem 1rem 4rem; /* Safely reduces page margins so cards stretch wider on tiny views */
+          }
+          .shop-section-label {
+            margin-bottom: 2.5rem;
+          }
+          .shop-cat-grid { 
+            grid-template-columns: 1fr; 
+            gap: 1.5rem; /* Slightly closer items for elegant mobile layout density */
+          }
+          .shop-cat-card { 
+            height: 280px; 
+          }
+        }
+
+        @media (max-width: 480px) {
+          .about-hero {
+            height: 80vh;
+          }
+          .shop-cat-content {
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+          }
+          .shop-cat-content h3 {
+            font-size: 1.4rem; /* Gently scales down font sizing so header text never squishes or clips wrapping boundaries */
+          }
         }
       `}</style>
 
