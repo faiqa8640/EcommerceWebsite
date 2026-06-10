@@ -14,7 +14,6 @@ export default function CategoryPage() {
   const { category } = useParams<{ category: string }>();
   const location = useLocation();
 
-
   // Read search query from URL (set by header search)
   const searchParams = new URLSearchParams(location.search);
   const searchQuery = searchParams.get("search") || "";
@@ -23,6 +22,9 @@ export default function CategoryPage() {
   const itemsPerPage = 8;
 
   const cat = getCategoryBySlug(category ?? "");
+
+  // State to handle mobile filter visibility
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   // Reset to page 1 whenever the search query or category changes
   useEffect(() => {
@@ -52,35 +54,23 @@ export default function CategoryPage() {
   const highestPrice = Math.max(
   ...baseItems.map(p => p.priceNum));
 
-//   const filteredItems = (searchQuery.trim()
-//   ? baseItems.filter(
-//       (p) =>
-//         p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-//         p.shortDesc.toLowerCase().includes(searchQuery.toLowerCase())
-//     )
-//   : baseItems
-// ).filter(
-//   (p) =>
-//     p.priceNum <= maxPrice
-// );
-
-const filteredItems = baseItems
-  .filter(p =>
-    searchQuery.trim()
-      ? p.name.toLowerCase().includes(searchQuery.toLowerCase()) || // based  on the search filter
-        p.shortDesc.toLowerCase().includes(searchQuery.toLowerCase())
-      : true
-  )
-  .filter(p => p.priceNum <= maxPrice) // based on the price
-  .filter(p => // based on the brand
-    selectedBrands.length === 0
-      ? true
-      : selectedBrands.includes(p.brand)
-  )
-  .filter(p => // based on the ranking
-    selectedRating === 0 ||
-    getAverageRating(p) >= selectedRating
-  );
+  const filteredItems = baseItems
+    .filter(p =>
+      searchQuery.trim()
+        ? p.name.toLowerCase().includes(searchQuery.toLowerCase()) || // based  on the search filter
+          p.shortDesc.toLowerCase().includes(searchQuery.toLowerCase())
+        : true
+    )
+    .filter(p => p.priceNum <= maxPrice) // based on the price
+    .filter(p => // based on the brand
+      selectedBrands.length === 0
+        ? true
+        : selectedBrands.includes(p.brand)
+    )
+    .filter(p => // based on the ranking
+      selectedRating === 0 ||
+      getAverageRating(p) >= selectedRating
+    );
     //pagination
   const totalPages = Math.ceil(filteredItems.length / itemsPerPage);// tells us the total pages 
   const startIndex = (currentPage - 1) * itemsPerPage; // will give the starting index of each page
@@ -222,11 +212,17 @@ const filteredItems = baseItems
           border-color: #111844;
         }
 
+        /* ── LAYOUT CONTENT CONTAINER ────────────────────── */
+        .cat-main-wrapper {
+          max-width: 1200px;
+          margin: 0 auto;
+          padding: 0 2rem;
+        }
         
         .cat-layout {
           display: flex;
           gap: 2rem;
-          align-items: stretch;
+          align-items: flex-start;
         }
 
         .filter-bar {
@@ -234,10 +230,10 @@ const filteredItems = baseItems
           padding: 1.5rem;
           background: rgba(255,255,255,0.5);
           border: 1px solid rgba(75,86,148,0.2);
-          position:relative;
-          font-family: 'Cormorant Garamond', serif
+          position: relative;
+          font-family: 'Cormorant Garamond', serif;
+          flex-shrink: 0;
         }
-
         
         .filter-bar input[type="range"] {
           width: 100%;
@@ -253,7 +249,7 @@ const filteredItems = baseItems
           text-transform: uppercase;
         }
 
-        .filter-btn{
+        .filter-btn {
           background: #111844;
           border: 1px solid rgba(75,86,148,0.2);
           font-size: 0.8rem;
@@ -263,7 +259,8 @@ const filteredItems = baseItems
           border-radius: 1100px;
           cursor: pointer;
           transition: all 0.25s ease;
- 
+          width: 100%;
+          text-align: center;
         }
 
         .filter-btn:hover {
@@ -281,7 +278,8 @@ const filteredItems = baseItems
           display: inline-block;
           position: relative;
           cursor: pointer;
-          
+          vertical-align: middle;
+          margin-top: -2px;
         }
 
         .filter-bar input[type="checkbox"]:checked {
@@ -300,18 +298,29 @@ const filteredItems = baseItems
           border-radius: 999px;
           cursor: pointer;
           transition: all 0.25s ease;
+          background: transparent;
         }
 
         .rating-option:hover {
           background: #111844;
           color: #EAE0CF;
         }
+
+        /* Mobile specific close block inside the filter bar */
+        .mobile-close-container {
+          display: none;
+        }
+
+        /* Mobile filter floating button style */
+        .mobile-filter-trigger {
+          display: none;
+        }
+
         /* ── PRODUCT GRID ────────────────────────────────── */
         .cat-body {
-          max-width: 1200px;
-          margin: 0 auto;
-          padding: 4rem 2rem 6rem;
           flex: 1;
+          padding: 4rem 0 6rem;
+          min-width: 0;
         }
 
         .cat-count {
@@ -375,6 +384,7 @@ const filteredItems = baseItems
           overflow: hidden;
           backdrop-filter: blur(10px);
           transition: transform 0.32s ease, box-shadow 0.32s ease;
+          height: 100%;
         }
 
         .product-card:hover {
@@ -493,17 +503,107 @@ const filteredItems = baseItems
           border-color: #111844;
         }
 
-        /* ── RESPONSIVE ──────────────────────────────────── */
+        /* ── BREAKPOINTS FOR RESPONSIVE SLIDE MODAL ── */
+        @media (min-width: 768px) {
+          .filter-bar {
+            position: sticky;
+            top: 20px;
+            height: fit-content;
+          }
+        }
+
         @media (max-width: 1024px) {
           .product-grid { grid-template-columns: repeat(3, 1fr); }
         }
 
         @media (max-width: 768px) {
+          .cat-main-wrapper { padding: 0 1rem; }
+          .cat-layout {
+            flex-direction: column;
+            gap: 0rem;
+          }
+          
+          /* Display sticky container for "Apply Filters" on mobile */
+          .mobile-filter-trigger {
+            display: block;
+            padding: 1rem 0;
+            text-align: center;
+          }
+          
+          .mobile-filter-trigger button {
+            background: #111844;
+            color: #EAE0CF;
+            border: 1px solid #111844;
+            padding: 10px 24px;
+            border-radius: 999px;
+            font-size: 0.8rem;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            font-family: 'Jost', sans-serif;
+            cursor: pointer;
+            width: 100%;
+          }
+
+          /* Convert your original filter-bar into a slide up action tray */
+          .filter-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            max-height: 80vh;
+            background: #EAE0CF; /* Matches background */
+            border-top: 1px solid rgba(75,86,148,0.3);
+            border-left: none;
+            border-right: none;
+            border-bottom: none;
+            z-index: 1000;
+            box-sizing: border-box;
+            overflow-y: auto;
+            padding: 2rem 1.5rem;
+            
+            /* Toggle functionality handling */
+            transform: translateY(${isFilterOpen ? "0%" : "100%"});
+            transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            box-shadow: 0 -10px 30px rgba(17,24,68,0.15);
+          }
+
+          .mobile-close-container {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 1rem;
+          }
+
+          .mobile-close-btn {
+            background: transparent;
+            border: none;
+            font-size: 1.2rem;
+            color: #111844;
+            cursor: pointer;
+            font-family: 'Jost', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+          }
+
+          .cat-body {
+            padding: 1rem 0 4rem;
+          }
           .product-grid { grid-template-columns: repeat(2, 1fr); }
+          .about-hero-text {
+            left: 20px;
+            bottom: 40px;
+          }
+          .search-result-inner {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.8rem;
+          }
         }
 
         @media (max-width: 480px) {
           .product-grid { grid-template-columns: 1fr; }
+          .about-hero {
+            height: 80vh;
+          }
         }
       `}</style>
 
@@ -530,7 +630,7 @@ const filteredItems = baseItems
           </div>
         </div>
 
-        {/* Search result banner — only shown when searching */}
+        {/* Search result banner */}
         {searchQuery.trim() && (
           <div className="search-result-banner">
             <div className="search-result-inner">
@@ -545,172 +645,186 @@ const filteredItems = baseItems
           </div>
         )}
 
-        
-        {/* side bar for filters */}
-        <div className="cat-layout">
-          <aside className="filter-bar">
-            <h3>Select Your Budget</h3>
-            <p style={{ marginBottom: "10px" }}>Under: <b> PKR  {maxPrice}</b></p>
+        <div className="cat-main-wrapper">
+          
+          {/* Apply Filters mobile toggle button block */}
+          <div className="mobile-filter-trigger">
+            <button onClick={() => setIsFilterOpen(true)}>
+              Apply Filters
+            </button>
+          </div>
 
-            <input
-              type="range"
-              min={0}
-              max={highestPrice}
-              value={maxPrice}
-              onChange={(e) => setMaxPrice(Number(e.target.value))}
-            />
-
-            <div style={{ marginTop: "15px", display: "flex", flexDirection: "column", gap: "8px" }}>
-              <button className= "filter-btn" onClick={() => setMaxPrice(2000)}>Under PKR 2000</button>
-              <button className= "filter-btn" onClick={() => setMaxPrice(5000)}>Under PKR 5000</button>
-              <button className= "filter-btn" onClick={() => setMaxPrice(10000)}>Under PKR 10000</button>
-            </div>
-
-            {/* brand filter */}
-
-            <h3 style={{ marginTop: "30px" }}>Select Brand</h3>
-            {allBrands.map((brand) => (
-              <label key={brand} style={{ display: "block", marginBottom: "6px" }}>
-                <input
-                  type="checkbox"
-                  checked={selectedBrands.includes(brand)}
-                  onChange={(e) => {
-                    if (e.target.checked) {
-                      setSelectedBrands([...selectedBrands, brand]);
-                    } else {
-                      setSelectedBrands(
-                        selectedBrands.filter((b) => b !== brand)
-                      );
-                    }
-                  }}
-                />
-                {" "}{brand}
-              </label>
-            ))}
-            {/* ranking filtering */}
-            <h3 className="filter-title">Rating</h3>
-            <label className="rating-option">
-              <input
-                type="radio"
-                name="rating"
-                checked={selectedRating === 4.5}
-                onChange={() => setSelectedRating(5)}
-              />
-              ⭐⭐⭐⭐⭐
-            </label>
-            <label className="rating-option">
-              <input
-                type="radio"
-                name="rating"
-                checked={selectedRating === 4}
-                onChange={() => setSelectedRating(4)}
-              />
-              ⭐⭐⭐⭐
-            </label>
-
-            <label className="rating-option">
-              <input
-                type="radio"
-                name="rating"
-                checked={selectedRating === 3}
-                onChange={() => setSelectedRating(3)}
-              />
-              ⭐⭐⭐
-            </label>
-
-            <label className="rating-option">
-              <input
-                type="radio"
-                name="rating"
-                checked={selectedRating === 2}
-                onChange={() => setSelectedRating(2)}
-              />
-              ⭐⭐
-            </label>
-
-            <label className="rating-option">
-              <input
-                type="radio"
-                name="rating"
-                checked={selectedRating === 1}
-                onChange={() => setSelectedRating(1)}
-              />
-              ⭐
-            </label>
-
-            <label className="rating-option">
-              <input
-                type="radio"
-                name="rating"
-                checked={selectedRating === 0}
-                onChange={() => setSelectedRating(0)}
-              />
-              All Ratings
-            </label>
-
-          </aside>
-
-          {/* products */}
-          <section className="cat-body">
-            <p className="cat-count">
-              {filteredItems.length} product{filteredItems.length !== 1 ? "s" : ""} found
-            </p>
-            {filteredItems.length === 0 ? (
-              <div className="no-results">
-                <h3>No Fragrances Found</h3>
-                <p>
-                  No perfumes matched "{searchQuery}". Try a different search term.
-                </p>
-                <Link to="/shop/all">Browse All Collections</Link>
+          <div className="cat-layout">
+            
+            {/* Filter Bar with Mobile Slide Modal Toggle Logic */}
+            <aside className="filter-bar">
+              <div className="mobile-close-container">
+                <button className="mobile-close-btn" onClick={() => setIsFilterOpen(false)}>
+                  ✕
+                </button>
               </div>
-            ) : (
-              <>
-                <div className="product-grid">
-                  {paginatedItems.map((product) => (
-                    <Link
-                      key={product.id}
-                      to={`/shop/${category}/${product.id}`}
-                      className="product-card-link"
-                    >
-                      <div className="product-card">
-                        <div className="product-card-img">
-                          <img src={product.images[0]} alt={product.name} />
-                          {product.badge && (
-                            <span className="product-card-badge">{product.badge}</span>
-                          )}
-                        </div>
-                        <div className="product-card-body">
-                          <div className="product-card-name">{product.name}</div>
-                          <div className="product-card-desc">{product.shortDesc}</div>
-                          <div className="product-card-footer">
-                            <span className="product-card-price">{product.price}</span>
-                            <span className="product-card-btn">View →</span>
+
+              <h3>Select Your Budget</h3>
+              <p style={{ marginBottom: "10px" }}>Under: <b> PKR  {maxPrice}</b></p>
+
+              <input
+                type="range"
+                min={0}
+                max={highestPrice}
+                value={maxPrice}
+                onChange={(e) => setMaxPrice(Number(e.target.value))}
+              />
+
+              <div style={{ marginTop: "15px", display: "flex", flexDirection: "column", gap: "8px" }}>
+                <button className="filter-btn" onClick={() => { setMaxPrice(2000); setIsFilterOpen(false); }}>Under PKR 2000</button>
+                <button className="filter-btn" onClick={() => { setMaxPrice(5000); setIsFilterOpen(false); }}>Under PKR 5000</button>
+                <button className="filter-btn" onClick={() => { setMaxPrice(10000); setIsFilterOpen(false); }}>Under PKR 10000</button>
+              </div>
+
+              {/* brand filter */}
+              <h3 style={{ marginTop: "30px" }}>Select Brand</h3>
+              {allBrands.map((brand) => (
+                <label key={brand} style={{ display: "block", marginBottom: "6px", cursor: "pointer" }}>
+                  <input
+                    type="checkbox"
+                    checked={selectedBrands.includes(brand)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedBrands([...selectedBrands, brand]);
+                      } else {
+                        setSelectedBrands(
+                          selectedBrands.filter((b) => b !== brand)
+                        );
+                      }
+                    }}
+                  />
+                  {" "}{brand}
+                </label>
+              ))}
+
+              {/* ranking filtering */}
+              <h3 className="filter-title">Rating</h3>
+              <label className="rating-option">
+                <input
+                  type="radio"
+                  name="rating"
+                  checked={selectedRating === 4.5}
+                  onChange={() => { setSelectedRating(5); setIsFilterOpen(false); }}
+                />
+                ⭐⭐⭐⭐⭐
+              </label>
+              <label className="rating-option">
+                <input
+                  type="radio"
+                  name="rating"
+                  checked={selectedRating === 4}
+                  onChange={() => { setSelectedRating(4); setIsFilterOpen(false); }}
+                />
+                ⭐⭐⭐⭐
+              </label>
+
+              <label className="rating-option">
+                <input
+                  type="radio"
+                  name="rating"
+                  checked={selectedRating === 3}
+                  onChange={() => { setSelectedRating(3); setIsFilterOpen(false); }}
+                />
+                ⭐⭐⭐
+              </label>
+
+              <label className="rating-option">
+                <input
+                  type="radio"
+                  name="rating"
+                  checked={selectedRating === 2}
+                  onChange={() => { setSelectedRating(2); setIsFilterOpen(false); }}
+                />
+                ⭐⭐
+              </label>
+
+              <label className="rating-option">
+                <input
+                  type="radio"
+                  name="rating"
+                  checked={selectedRating === 1}
+                  onChange={() => { setSelectedRating(1); setIsFilterOpen(false); }}
+                />
+                ⭐
+              </label>
+
+              <label className="rating-option">
+                <input
+                  type="radio"
+                  name="rating"
+                  checked={selectedRating === 0}
+                  onChange={() => { setSelectedRating(0); setIsFilterOpen(false); }}
+                />
+                All Ratings
+              </label>
+            </aside>
+
+            {/* products */}
+            <section className="cat-body">
+              <p className="cat-count">
+                {filteredItems.length} product{filteredItems.length !== 1 ? "s" : ""} found
+              </p>
+              {filteredItems.length === 0 ? (
+                <div className="no-results">
+                  <h3>No Fragrances Found</h3>
+                  <p>
+                    No perfumes matched "{searchQuery}". Try a different search term.
+                  </p>
+                  <Link to="/shop/all">Browse All Collections</Link>
+                </div>
+              ) : (
+                <>
+                  <div className="product-grid">
+                    {paginatedItems.map((product) => (
+                      <Link
+                        key={product.id}
+                        to={`/shop/${category}/${product.id}`}
+                        className="product-card-link"
+                      >
+                        <div className="product-card">
+                          <div className="product-card-img">
+                            <img src={product.images[0]} alt={product.name} />
+                            {product.badge && (
+                              <span className="product-card-badge">{product.badge}</span>
+                            )}
+                          </div>
+                          <div className="product-card-body">
+                            <div className="product-card-name">{product.name}</div>
+                            <div className="product-card-desc">{product.shortDesc}</div>
+                            <div className="product-card-footer">
+                              <span className="product-card-price">{product.price}</span>
+                              <span className="product-card-btn">View →</span>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-
-                {/* Pagination — only show if more than one page */}
-                {totalPages > 1 && (
-                  <div className="pagination">
-                    {Array.from({ length: totalPages }).map((_, index) => (
-                      <button
-                      key={index}
-                      onClick={() => setCurrentPage(index + 1)}
-                      className={currentPage === index + 1 ? "active" : ""}
-                      >
-                        {index + 1}
-                      </button>
+                      </Link>
                     ))}
                   </div>
-                )}
-              </>
-            )}
 
-          </section>
+                  {/* Pagination */}
+                  {totalPages > 1 && (
+                    <div className="pagination">
+                      {Array.from({ length: totalPages }).map((_, index) => (
+                        <button
+                          key={index}
+                          onClick={() => setCurrentPage(index + 1)}
+                          className={currentPage === index + 1 ? "active" : ""}
+                        >
+                          {index + 1}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
+            </section>
 
+          </div>
         </div>
       </div>
       <Footer />

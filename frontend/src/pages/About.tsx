@@ -608,6 +608,8 @@ export default function About() {
 
         /* ── RESPONSIVE ───────────────────────────────────────── */
         @media (max-width: 900px) {
+          .about-hero {
+            height: 80vh;}
           .about-hero-text { left: 28px; bottom: 36px; }
           .mission-grid,
           .philosophy-grid { grid-template-columns: 1fr; gap: 2.5rem; }
