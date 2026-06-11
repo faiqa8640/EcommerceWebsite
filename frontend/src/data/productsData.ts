@@ -30,7 +30,7 @@ export type Product = {
 };
 
 export type Category = {
-  slug: string;
+  slug: string;//name
   label: string;
   desc: string;
   img: string;
@@ -513,22 +513,22 @@ export const products: Product[] = [
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 // Returns all products when slug is "all", otherwise filters by category
-export const getProductsByCategory = (slug: string): Product[] => {
+export const getProductsByCategory = (slug: string): Product[] => { // return the products based on the category
   if (slug === "all") return products;
   return products.filter((p) => p.category === slug);
 };
 
-export const getProductById = (id: string): Product | undefined =>
+export const getProductById = (id: string): Product | undefined => // return the object based on the id
   products.find((p) => p.id === id);
 
-export const getCategoryBySlug = (slug: string): Category | undefined =>
+export const getCategoryBySlug = (slug: string): Category | undefined =>// get the category based on the name/slug
   categories.find((c) => c.slug === slug);
 
 // return the product array 
-export const getAllProducts = (): Product[] => products;
+export const getAllProducts = (): Product[] => products; //
 
 // getting the avg ranking of each product 
-export const getAverageRating = (product: Product) => {
+export const getAverageRating = (product: Product) => { // calculate avg rating of the product
   if (!product.reviews || product.reviews.length === 0) {
     return 0;
   }

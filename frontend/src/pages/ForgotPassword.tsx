@@ -10,21 +10,21 @@ export default function ForgotPassword() {
   const [submitted, setSubmitted] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault(); // stop the refreshing 
     setLoading(true);
-    setMessage("");
+    setMessage(""); // clear old messages
 
     try {
-      const res = await fetch(
+      const res = await fetch( //api-> sending request to backend
         "http://localhost:5000/api/auth/forgot-password",
         {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email }),
+          method: "POST",// coz sending email
+          headers: { "Content-Type": "application/json" }, //data->json
+          body: JSON.stringify({ email }), // coverted into json
         }
       );
 
-      const data = await res.json();
+      const data = await res.json();// convert the json repsonse into js object
       setMessage(data.message);
       setSubmitted(true);
     } catch (err: unknown) {

@@ -11,20 +11,26 @@ import {
 } from "../data/productsData";
 
 export default function CategoryPage() {
-  const { category } = useParams<{ category: string }>();
-  const location = useLocation();
+  const { category } = useParams<{ category: string }>(); // getting the category from url
+  const location = useLocation(); // current page
 
+  // --------------
+  // FOR SEARCH 
+  // --------------
   // Read search query from URL (set by header search)
-  const searchParams = new URLSearchParams(location.search);
-  const searchQuery = searchParams.get("search") || "";
+  const searchParams = new URLSearchParams(location.search); // serch query will contain whatever in thr url -> search? -> if allure then search query contain allure
+  const searchQuery = searchParams.get("search") || "";// i.e search query= allure
 
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 8;
+  // --------------
+  // FOR PAGINATION 
+  // --------------
+  const [currentPage, setCurrentPage] = useState(1); // stores the currt page
+  const itemsPerPage = 8; // items pr page
 
-  const cat = getCategoryBySlug(category ?? "");
+  const cat = getCategoryBySlug(category ?? "");// get the category data
 
   // State to handle mobile filter visibility
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isFilterOpen, setIsFilterOpen] = useState(false); //  control wheather the filer panel is open in phone or not
 
   // Reset to page 1 whenever the search query or category changes
   useEffect(() => {
@@ -42,8 +48,14 @@ export default function CategoryPage() {
   // Get products for this category (getProductsByCategory handles "all" too)
   const baseItems = getProductsByCategory(category ?? "");
 
-  const [selectedRating, setSelectedRating] = useState(0);// ranking 
+  // --------------
+  // FOR RATING
+  // --------------
+  const [selectedRating, setSelectedRating] = useState(0);// rating 
 
+  // --------------
+  // FOR BRANDS 
+  // --------------
 
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]); // filter based on the brand
   const allBrands = [...new Set(baseItems.map(p => p.brand))];
@@ -54,8 +66,12 @@ export default function CategoryPage() {
   const highestPrice = Math.max(
   ...baseItems.map(p => p.priceNum));
 
+
+  // --------------
+  // FILTERS
+  // --------------
   const filteredItems = baseItems
-    .filter(p =>
+    .filter(p => // SEARCH -> ON THE BASIS OF NAME AND DESC
       searchQuery.trim()
         ? p.name.toLowerCase().includes(searchQuery.toLowerCase()) || // based  on the search filter
           p.shortDesc.toLowerCase().includes(searchQuery.toLowerCase())
@@ -63,7 +79,7 @@ export default function CategoryPage() {
     )
     .filter(p => p.priceNum <= maxPrice) // based on the price
     .filter(p => // based on the brand
-      selectedBrands.length === 0
+      selectedBrands.length === 0// if no brand choose then show all else show only that brands products
         ? true
         : selectedBrands.includes(p.brand)
     )
@@ -709,7 +725,7 @@ export default function CategoryPage() {
                   type="radio"
                   name="rating"
                   checked={selectedRating === 4.5}
-                  onChange={() => { setSelectedRating(5); setIsFilterOpen(false); }}
+                  onChange={() => { setSelectedRating(4.5); setIsFilterOpen(false); }}
                 />
                 ⭐⭐⭐⭐⭐
               </label>
