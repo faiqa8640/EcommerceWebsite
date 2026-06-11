@@ -8,19 +8,19 @@ type Stats = {
 
 export default function AdminDashboard() {
   const { user, token, logout } = useAuth();
-  const navigate = useNavigate();
-  const [stats, setStats] = useState<Stats | null>(null);
+  const navigate = useNavigate(); // used to redirect user properly
+  const [stats, setStats] = useState<Stats | null>(null); // stores the admin data from backend
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchAdminData = async () => {
+    const fetchAdminData = async () => { //api function
       try {
-        const res = await fetch(
+        const res = await fetch( // send request to the backend->admin api
           "http://localhost:5000/api/user/admin-only",
           {
             headers: {
-              Authorization: `Bearer ${token}`,
+              Authorization: `Bearer ${token}`, // sending the json token to backend
             },
           }
         );
@@ -32,7 +32,7 @@ export default function AdminDashboard() {
           return;
         }
 
-        if (res.status === 403) {
+        if (res.status === 403) { // user is login not admin
           navigate("/", { replace: true });
           return;
         }
@@ -42,7 +42,7 @@ export default function AdminDashboard() {
           return;
         }
 
-        setStats(data);
+        setStats(data); // store admin data
       } catch {
         setError("Could not connect to server.");
       } finally {
@@ -50,7 +50,7 @@ export default function AdminDashboard() {
       }
     };
 
-    if (token) fetchAdminData();
+    if (token) fetchAdminData(); // if user is login then call tha api
   }, [token, logout, navigate]);
 
   return (

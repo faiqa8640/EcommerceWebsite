@@ -17,7 +17,7 @@ export default function Login() {
   const [notVerified, setNotVerified] = useState<boolean>(false);
   const [sessionExpired, setSessionExpired] = useState<boolean>(false);
 
-  const { login } = useAuth();
+  const { login } = useAuth();//login() does:stores JWT tokenstores user dataupdates global state
   const navigate = useNavigate();
 
   // Check if user was auto-logged out due to token expiry
@@ -28,7 +28,7 @@ export default function Login() {
     }
   }, []);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>): void => { // update form state when user type
     setUserData({ ...userData, [e.target.name]: e.target.value });
     setNotVerified(false);
     setSessionExpired(false);
@@ -40,10 +40,10 @@ export default function Login() {
     e.preventDefault();
     setError("");
     setNotVerified(false);
-    setLoading(true);
+    setLoading(true); //Clears old errors when user starts typing again
 
     try {
-      const response = await fetch("http://localhost:5000/api/auth/signin", {
+      const response = await fetch("http://localhost:5000/api/auth/signin", {//api
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(userData),

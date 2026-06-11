@@ -10,8 +10,8 @@ connectDB();
 
 const app = express();
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json());// covert the json to the js object
+app.use(express.urlencoded({ extended: true })); // covert the html data into the js object
 app.use(
   cors({
     origin: process.env.CLIENT_URL || "http://localhost:5173",

@@ -30,6 +30,9 @@ export default function ProductDetail() {
       });
     }
   };
+  // ------------
+  // image carousel
+  // -------------
   const [currentImage, setCurrentImage] = useState(0);// image carousel
   const nextImage = () => {
     setCurrentImage((prev) =>

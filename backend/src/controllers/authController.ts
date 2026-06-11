@@ -107,7 +107,7 @@ export const signIn = async (req: Request, res: Response) => {
 
     const token = generateToken(user._id.toString()); // generate the token -> used for login token-> jwt the frontend save the token in localstorage or cookies
 
-    res.status(200).json({
+    res.status(200).json({ // if success
       success: true,
       message: "Signed in successfully",
       token,

@@ -10,10 +10,9 @@ export default function VerifyEmail() {
   const { token } = useParams<{ token: string }>();
   const [status, setStatus] = useState<Status>("loading");
   const [message, setMessage] = useState<string>("");
-  const hasCalled = useRef(false); // ← prevents double-call in StrictMode
+  const hasCalled = useRef(false); // ← only allow one verification attempt
 
   useEffect(() => {
-    // StrictMode mounts twice in dev — this ref ensures we only call once
     if (hasCalled.current) return;
     hasCalled.current = true;
 
