@@ -1,4 +1,4 @@
-// frontend/src/types.ts
+
 
 export type Product = {
   id: string;

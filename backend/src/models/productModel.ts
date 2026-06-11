@@ -1,6 +1,6 @@
 import mongoose, { Schema, Document } from "mongoose";
 
-// review
+// review -> for typescript it tells that the our review objectc model have these changes
 export interface IReview {
   user: string;
   rating: number;

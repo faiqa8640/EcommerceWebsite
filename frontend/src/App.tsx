@@ -16,6 +16,7 @@ import Shop from "./pages/Shop";
 import CategoryPage from "./pages/CategoryPage";
 import ProductDetail from "./pages/ProductDetail";
 import ScrollToTop from "./components/ScrollToTop";
+// import AddReviewModal from "./components/AddReviewModal";
 
 function App() {
   return (
@@ -36,6 +37,7 @@ function App() {
           <Route path="/shop" element={<Shop />} />
           <Route path="/shop/:category" element={<CategoryPage />} />
           <Route path="/shop/:category/:productId" element={<ProductDetail />} />
+
 
           {/* ── Protected: any logged-in user ─────────────────── */}
           {/*

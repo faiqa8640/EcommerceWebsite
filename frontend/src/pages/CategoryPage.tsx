@@ -2,52 +2,67 @@ import { Link, useParams, Navigate, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import Header from "../components/header";
 import Footer from "../components/Footer";
-import { Product, Category } from "../types"; // Updated to use your unified central blueprint types file
-import { fetchProducts, fetchCategories } from "../data/apiService"; // Pulling our live database endpoints
+import { Product, Category } from "../types"; 
+import { fetchProducts, fetchCategories } from "../data/apiService"; 
 
 export default function CategoryPage() {
-  const { category } = useParams<{ category: string }>(); 
-  const location = useLocation(); 
+  const { category } = useParams<{ category: string }>();  // get the category from url 
+  const location = useLocation();  // give the correct location
 
-  // ------------------
-  // LIVE DATA STATES
-  // ------------------
-  const [currentCategoryInfo, setCurrentCategoryInfo] = useState<Category | null>(null);
-  const [baseItems, setBaseItems] = useState<Product[]>([]);
+  const [currentCategoryInfo, setCurrentCategoryInfo] = useState<Category | null>(null); //get the current category information
+  const [baseItems, setBaseItems] = useState<Product[]>([]); //  get the products in that category 
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [hasCheckedData, setHasCheckedData] = useState<boolean>(false);
 
   // ------------------
-  // CLIENT FILTERS STATE
+  // FILTERS info
   // ------------------
-  const [currentPage, setCurrentPage] = useState(1); 
-  const itemsPerPage = 8; 
-  const [isFilterOpen, setIsFilterOpen] = useState(false); 
-  const [selectedRating, setSelectedRating] = useState(0);
-  const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
-  const [maxPrice, setMaxPrice] = useState(100000);
+  const [currentPage, setCurrentPage] = useState(1);  // it just store the current page
+  const itemsPerPage = 8; // on one page the total 8 products will be visible
+  const [isFilterOpen, setIsFilterOpen] = useState(false);  //for the mobile 
+  const [selectedRating, setSelectedRating] = useState(0);// for rating 
+  const [selectedBrands, setSelectedBrands] = useState<string[]>([]);// for selected brand
+  const [maxPrice, setMaxPrice] = useState(100000);// storing the max price
 
-  // Read search query from URL (set by header search)
+  // ── NEW DEBOUNCE Search ───────────────────
   const searchParams = new URLSearchParams(location.search); 
-  const searchQuery = searchParams.get("search") || "";
+  const urlSearchQuery = searchParams.get("search") || "";
 
-  // 🔄 FETCH DATA FROM BACKEND WHEN CATEGORY SLUG CHANGES
+  // 1. Tracks what's in the URL immediately
+  const [localSearch, setLocalSearch] = useState<string>(urlSearchQuery); // 
+  const [debouncedSearch, setDebouncedSearch] = useState<string>(urlSearchQuery); // the final search value is saved
+
+  // Sync local search when URL changes directly (e.g. clearing search or navigating)
+  useEffect(() => {
+    setLocalSearch(urlSearchQuery);
+  }, [urlSearchQuery]);
+
+  // Handle the Debounce search timer
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(localSearch);
+    }, 300); // 300ms delay window
+
+    return () => {
+      clearTimeout(handler); // Clears timer if user types another key within 300ms
+    };
+  }, [localSearch]);
+  // ──────────────────────────────────────────────────
+
+  // FETCH DATA FROM BACKEND WHEN CATEGORY changes
   useEffect(() => {
     const loadCategoryPageData = async () => {
       try {
         setIsLoading(true);
         
-        // 1. Fetch matching category meta details for banners
         const allCategories = await fetchCategories();
         const matchedCat = allCategories.find(c => c.slug === category);
-        setCurrentCategoryInfo(matchedCat || null);
+        setCurrentCategoryInfo(matchedCat || null); 
 
-        // 2. Fetch inventory items under this category context from MongoDB
-        const categoryProducts = await fetchProducts(category);
+        const categoryProducts = await fetchProducts(category); 
         setBaseItems(categoryProducts);
 
-        // 3. Set standard initial dynamic high boundary limit for budget range slider
-        if (categoryProducts.length > 0) {
+        if (categoryProducts.length > 0) { 
           const highest = Math.max(...categoryProducts.map(p => p.priceNum));
           setMaxPrice(highest);
         } else {
@@ -65,43 +80,40 @@ export default function CategoryPage() {
     loadCategoryPageData();
   }, [category]);
 
-  // Reset to page 1 whenever the search query or category changes
+  // Reset to page 1 when the debounced search terms or category changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, category]);
+  }, [debouncedSearch, category]);
 
   // Scroll to top when page changes
-  useEffect(() => {
+  useEffect(() => { 
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [currentPage]);
 
-  // Helper utility function to calculate product rating (replaces getAverageRating)
-  const calculateAverageRating = (product: Product): number => {
+  const calculateAverageRating = (product: Product): number => { 
     if (!product.reviews || product.reviews.length === 0) return 0;
     const sum = product.reviews.reduce((acc, rev) => acc + rev.rating, 0);
     return sum / product.reviews.length;
   };
 
-  // Safe Guard Route verification check once async responses resolve
   if (hasCheckedData && !currentCategoryInfo) {
-    return <Navigate to="/shop" replace />;
+    return <Navigate to="/shop" replace />; 
   }
 
-  // Extract unique brands list from currently active database products payload mapping
   const allBrands = [...new Set(baseItems.map(p => p.brand))];
   const highestPrice = baseItems.length > 0 ? Math.max(...baseItems.map(p => p.priceNum)) : 100000;
 
-  // ── LIVE FILTERS PIPELINE ────────────────────────────
+  // ── FILTERS (Now using debouncedSearch instead of immediate URL checks) ──
   const filteredItems = baseItems
     .filter(p => 
-      searchQuery.trim()
-        ? p.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-          p.shortDesc.toLowerCase().includes(searchQuery.toLowerCase())
+      debouncedSearch.trim() 
+        ? p.name.toLowerCase().includes(debouncedSearch.toLowerCase()) || 
+          p.shortDesc.toLowerCase().includes(debouncedSearch.toLowerCase())
         : true
     )
     .filter(p => p.priceNum <= maxPrice) 
     .filter(p => 
-      selectedBrands.length === 0
+      selectedBrands.length === 0 
         ? true
         : selectedBrands.includes(p.brand)
     )
@@ -110,12 +122,11 @@ export default function CategoryPage() {
       calculateAverageRating(p) >= selectedRating
     );
 
-  // Pagination Math calculations
+    //pagination
   const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage; 
   const paginatedItems = filteredItems.slice(startIndex, startIndex + itemsPerPage); 
 
-  // Show general aesthetic page component shell loader if data stream isn't finalized
   if (isLoading && !currentCategoryInfo) {
     return (
       <div style={{ background: "#EAE0CF", minHeight: "100vh", display: "flex", justifyContent: "center", alignItems: "center", fontFamily: "Cormorant Garamond", fontSize: "2rem", color: "#111844" }}>
@@ -124,7 +135,6 @@ export default function CategoryPage() {
     );
   }
 
-  // Fallback structural initialization check layer
   const cat = currentCategoryInfo!;
 
   return (
@@ -676,11 +686,11 @@ export default function CategoryPage() {
         </div>
 
         {/* Search result banner */}
-        {searchQuery.trim() && (
+        {debouncedSearch.trim() && (
           <div className="search-result-banner">
             <div className="search-result-inner">
               <p className="search-result-text">
-                Showing results for <strong>"{searchQuery}"</strong>
+                Showing results for <strong>"{debouncedSearch}"</strong>
                 {" "}— {filteredItems.length} item{filteredItems.length !== 1 ? "s" : ""} found
               </p>
               <Link to={`/shop/${category}`} className="search-clear-btn">
@@ -853,5 +863,4 @@ export default function CategoryPage() {
     </>
   );
 }
-
 

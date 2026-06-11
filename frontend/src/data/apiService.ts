@@ -1,5 +1,4 @@
-import { Product, Category } from "./productsData";
-
+;import { Product, Category } from "../types";
 const API_BASE_URL = "http://localhost:5000/api";
 
 // Fetch all products or filter by category directly from MongoDB
@@ -9,7 +8,7 @@ export const fetchProducts = async (categorySlug?: string): Promise<Product[]> =
       ? `${API_BASE_URL}/products?category=${categorySlug}`
       : `${API_BASE_URL}/products`;
       
-    const response = await fetch(url);
+    const response = await fetch(url);// fetching the object 
     if (!response.ok) throw new Error("Failed to fetch products");
     return await response.json();
   } catch (error) {
