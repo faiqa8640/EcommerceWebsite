@@ -1,10 +1,34 @@
-// Shop page — shows 4 category cards, click to enter category
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import Header from "../components/header";
 import Footer from "../components/Footer";
-import { categories } from "../data/productsData";
+import { Category } from "../types"; // Using your unified central blueprint types file
+import { fetchCategories } from "../data/apiService"; // Pulling your live API function
 
 export default function Shop() {
+  // Initialize state array to store real database categories
+  const [liveCategories, setLiveCategories] = useState<Category[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    const getCollections = async () => {
+      try {
+        setIsLoading(true);
+        const data = await fetchCategories();
+        
+        // Retain all categories from your MongoDB (including 'all') 
+        // so it renders seamlessly in your storefront layout grid
+        setLiveCategories(data);
+      } catch (error) {
+        console.error("Failed to update collections layout:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    getCollections();
+  }, []);
+
   return (
     <>
       <style>{`
@@ -46,7 +70,7 @@ export default function Shop() {
           position: absolute;
           bottom: 60px;
           left: 60px;
-          right: 60px; /* Prevents long text from jumping off-screen on smaller windows */
+          right: 60px; 
         }
 
         .about-hero-label {
@@ -105,7 +129,6 @@ export default function Shop() {
           font-style: italic;
         }
 
-        /* same 2×2 grid as home Categories */
         .shop-cat-grid {
           display: grid;
           grid-template-columns: repeat(2, 1fr);
@@ -207,10 +230,10 @@ export default function Shop() {
           color: #EAE0CF;
         }
 
-        /* ── RESPONSIVE RESPONSIVENESS FIXES (LOOK STAYS EXACTLY THE SAME) ── */
+        /* ── RESPONSIVE DESIGN BREAKPOINTS ── */
         @media (max-width: 768px) {
           .about-hero {
-            height: 90vh; /* Prevents ultra-long empty spaces below hero background images on long screens */
+            height: 90vh;
           }
           .about-hero-text {
             left: 24px;
@@ -218,14 +241,14 @@ export default function Shop() {
             bottom: 40px;
           }
           .shop-categories {
-            padding: 3rem 1rem 4rem; /* Safely reduces page margins so cards stretch wider on tiny views */
+            padding: 3rem 1rem 4rem;
           }
           .shop-section-label {
             margin-bottom: 2.5rem;
           }
           .shop-cat-grid { 
             grid-template-columns: 1fr; 
-            gap: 1.5rem; /* Slightly closer items for elegant mobile layout density */
+            gap: 1.5rem;
           }
           .shop-cat-card { 
             height: 280px; 
@@ -242,7 +265,7 @@ export default function Shop() {
             right: 20px;
           }
           .shop-cat-content h3 {
-            font-size: 1.4rem; /* Gently scales down font sizing so header text never squishes or clips wrapping boundaries */
+            font-size: 1.4rem;
           }
         }
       `}</style>
@@ -250,7 +273,7 @@ export default function Shop() {
       <Header />
 
       <div className="shop-page">
-        {/* Banner */}
+        {/* Banner Section */}
         <section className="about-hero">
           <img src="/about-shop.jpg" alt="Eloura — Our Story" />
           <div className="about-hero-overlay" />
@@ -264,33 +287,40 @@ export default function Shop() {
           </div>
         </section>
 
-        {/* Category Grid */}
+        {/* Category Grid Section */}
         <section className="shop-categories">
           <div className="shop-section-label">
             <p className="eyebrow">Browse by Collection</p>
             <h2>Choose Your <span>Category</span></h2>
           </div>
 
-          <div className="shop-cat-grid">
-            {categories.map((cat) => (
-              <Link
-                key={cat.slug}
-                to={`/shop/${cat.slug}`}
-                className="shop-cat-card"
-              >
-                <img src={cat.img} alt={cat.label} />
-                <div className="shop-cat-overlay" />
-                <div className="shop-cat-badge">Explore</div>
-                <div className="shop-cat-content">
-                  <h3>{cat.label}</h3>
-                  <p>{cat.desc}</p>
-                  <span className="shop-cat-cta">
-                    View Collection →
-                  </span>
-                </div>
-              </Link>
-            ))}
-          </div>
+          {isLoading ? (
+            <div style={{ textAlign: "center", padding: "3rem", fontFamily: "Cormorant Garamond", fontSize: "1.5rem", color: "#111844" }}>
+              Loading Collections...
+            </div>
+          ) : (
+            <div className="shop-cat-grid">
+              {liveCategories.map((cat) => (
+                <Link
+                  key={cat.slug}
+                  to={`/shop/${cat.slug}`}
+                  className="shop-cat-card"
+                >
+                  {/* Pulls bannerImg or img matching backend fields */}
+                  <img src={cat.bannerImg || cat.img} alt={cat.label} />
+                  <div className="shop-cat-overlay" />
+                  <div className="shop-cat-badge">Explore</div>
+                  <div className="shop-cat-content">
+                    <h3>{cat.label}</h3>
+                    <p>{cat.desc}</p>
+                    <span className="shop-cat-cta">
+                      View Collection →
+                    </span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
         </section>
       </div>
 

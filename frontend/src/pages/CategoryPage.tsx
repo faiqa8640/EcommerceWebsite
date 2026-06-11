@@ -1,36 +1,69 @@
-// Category page — shows all products for a given category slug
-
 import { Link, useParams, Navigate, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import Header from "../components/header";
 import Footer from "../components/Footer";
-import {
-  getProductsByCategory,
-  getCategoryBySlug,
-  getAverageRating,
-} from "../data/productsData";
+import { Product, Category } from "../types"; // Updated to use your unified central blueprint types file
+import { fetchProducts, fetchCategories } from "../data/apiService"; // Pulling our live database endpoints
 
 export default function CategoryPage() {
-  const { category } = useParams<{ category: string }>(); // getting the category from url
-  const location = useLocation(); // current page
+  const { category } = useParams<{ category: string }>(); 
+  const location = useLocation(); 
 
-  // --------------
-  // FOR SEARCH 
-  // --------------
+  // ------------------
+  // LIVE DATA STATES
+  // ------------------
+  const [currentCategoryInfo, setCurrentCategoryInfo] = useState<Category | null>(null);
+  const [baseItems, setBaseItems] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [hasCheckedData, setHasCheckedData] = useState<boolean>(false);
+
+  // ------------------
+  // CLIENT FILTERS STATE
+  // ------------------
+  const [currentPage, setCurrentPage] = useState(1); 
+  const itemsPerPage = 8; 
+  const [isFilterOpen, setIsFilterOpen] = useState(false); 
+  const [selectedRating, setSelectedRating] = useState(0);
+  const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
+  const [maxPrice, setMaxPrice] = useState(100000);
+
   // Read search query from URL (set by header search)
-  const searchParams = new URLSearchParams(location.search); // serch query will contain whatever in thr url -> search? -> if allure then search query contain allure
-  const searchQuery = searchParams.get("search") || "";// i.e search query= allure
+  const searchParams = new URLSearchParams(location.search); 
+  const searchQuery = searchParams.get("search") || "";
 
-  // --------------
-  // FOR PAGINATION 
-  // --------------
-  const [currentPage, setCurrentPage] = useState(1); // stores the currt page
-  const itemsPerPage = 8; // items pr page
+  // 🔄 FETCH DATA FROM BACKEND WHEN CATEGORY SLUG CHANGES
+  useEffect(() => {
+    const loadCategoryPageData = async () => {
+      try {
+        setIsLoading(true);
+        
+        // 1. Fetch matching category meta details for banners
+        const allCategories = await fetchCategories();
+        const matchedCat = allCategories.find(c => c.slug === category);
+        setCurrentCategoryInfo(matchedCat || null);
 
-  const cat = getCategoryBySlug(category ?? "");// get the category data
+        // 2. Fetch inventory items under this category context from MongoDB
+        const categoryProducts = await fetchProducts(category);
+        setBaseItems(categoryProducts);
 
-  // State to handle mobile filter visibility
-  const [isFilterOpen, setIsFilterOpen] = useState(false); //  control wheather the filer panel is open in phone or not
+        // 3. Set standard initial dynamic high boundary limit for budget range slider
+        if (categoryProducts.length > 0) {
+          const highest = Math.max(...categoryProducts.map(p => p.priceNum));
+          setMaxPrice(highest);
+        } else {
+          setMaxPrice(100000);
+        }
+
+      } catch (err) {
+        console.error("Error setting up dynamic category page layout stream:", err);
+      } finally {
+        setIsLoading(false);
+        setHasCheckedData(true);
+      }
+    };
+
+    loadCategoryPageData();
+  }, [category]);
 
   // Reset to page 1 whenever the search query or category changes
   useEffect(() => {
@@ -42,55 +75,57 @@ export default function CategoryPage() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [currentPage]);
 
-  // Unknown category → back to shop
-  if (!cat) return <Navigate to="/shop" replace />;
+  // Helper utility function to calculate product rating (replaces getAverageRating)
+  const calculateAverageRating = (product: Product): number => {
+    if (!product.reviews || product.reviews.length === 0) return 0;
+    const sum = product.reviews.reduce((acc, rev) => acc + rev.rating, 0);
+    return sum / product.reviews.length;
+  };
 
-  // Get products for this category (getProductsByCategory handles "all" too)
-  const baseItems = getProductsByCategory(category ?? "");
+  // Safe Guard Route verification check once async responses resolve
+  if (hasCheckedData && !currentCategoryInfo) {
+    return <Navigate to="/shop" replace />;
+  }
 
-  // --------------
-  // FOR RATING
-  // --------------
-  const [selectedRating, setSelectedRating] = useState(0);// rating 
-
-  // --------------
-  // FOR BRANDS 
-  // --------------
-
-  const [selectedBrands, setSelectedBrands] = useState<string[]>([]); // filter based on the brand
+  // Extract unique brands list from currently active database products payload mapping
   const allBrands = [...new Set(baseItems.map(p => p.brand))];
+  const highestPrice = baseItems.length > 0 ? Math.max(...baseItems.map(p => p.priceNum)) : 100000;
 
-  const [maxPrice, setMaxPrice] = useState(100000); // keep track of max price
-
-  // get the highest price from  the products 
-  const highestPrice = Math.max(
-  ...baseItems.map(p => p.priceNum));
-
-
-  // --------------
-  // FILTERS
-  // --------------
+  // ── LIVE FILTERS PIPELINE ────────────────────────────
   const filteredItems = baseItems
-    .filter(p => // SEARCH -> ON THE BASIS OF NAME AND DESC
+    .filter(p => 
       searchQuery.trim()
-        ? p.name.toLowerCase().includes(searchQuery.toLowerCase()) || // based  on the search filter
+        ? p.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
           p.shortDesc.toLowerCase().includes(searchQuery.toLowerCase())
         : true
     )
-    .filter(p => p.priceNum <= maxPrice) // based on the price
-    .filter(p => // based on the brand
-      selectedBrands.length === 0// if no brand choose then show all else show only that brands products
+    .filter(p => p.priceNum <= maxPrice) 
+    .filter(p => 
+      selectedBrands.length === 0
         ? true
         : selectedBrands.includes(p.brand)
     )
-    .filter(p => // based on the ranking
+    .filter(p => 
       selectedRating === 0 ||
-      getAverageRating(p) >= selectedRating
+      calculateAverageRating(p) >= selectedRating
     );
-    //pagination
-  const totalPages = Math.ceil(filteredItems.length / itemsPerPage);// tells us the total pages 
-  const startIndex = (currentPage - 1) * itemsPerPage; // will give the starting index of each page
-  const paginatedItems = filteredItems.slice(startIndex, startIndex + itemsPerPage); // slice the items in each page
+
+  // Pagination Math calculations
+  const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage; 
+  const paginatedItems = filteredItems.slice(startIndex, startIndex + itemsPerPage); 
+
+  // Show general aesthetic page component shell loader if data stream isn't finalized
+  if (isLoading && !currentCategoryInfo) {
+    return (
+      <div style={{ background: "#EAE0CF", minHeight: "100vh", display: "flex", justifyContent: "center", alignItems: "center", fontFamily: "Cormorant Garamond", fontSize: "2rem", color: "#111844" }}>
+        Loading Fragrance Collection...
+      </div>
+    );
+  }
+
+  // Fallback structural initialization check layer
+  const cat = currentCategoryInfo!;
 
   return (
     <>
@@ -322,12 +357,10 @@ export default function CategoryPage() {
           color: #EAE0CF;
         }
 
-        /* Mobile specific close block inside the filter bar */
         .mobile-close-container {
           display: none;
         }
 
-        /* Mobile filter floating button style */
         .mobile-filter-trigger {
           display: none;
         }
@@ -519,7 +552,7 @@ export default function CategoryPage() {
           border-color: #111844;
         }
 
-        /* ── BREAKPOINTS FOR RESPONSIVE SLIDE MODAL ── */
+        /* ── RESPONSIVE STYLES ── */
         @media (min-width: 768px) {
           .filter-bar {
             position: sticky;
@@ -539,7 +572,6 @@ export default function CategoryPage() {
             gap: 0rem;
           }
           
-          /* Display sticky container for "Apply Filters" on mobile */
           .mobile-filter-trigger {
             display: block;
             padding: 1rem 0;
@@ -560,14 +592,13 @@ export default function CategoryPage() {
             width: 100%;
           }
 
-          /* Convert your original filter-bar into a slide up action tray */
           .filter-bar {
             position: fixed;
             bottom: 0;
             left: 0;
             width: 100%;
             max-height: 80vh;
-            background: #EAE0CF; /* Matches background */
+            background: #EAE0CF; 
             border-top: 1px solid rgba(75,86,148,0.3);
             border-left: none;
             border-right: none;
@@ -576,8 +607,6 @@ export default function CategoryPage() {
             box-sizing: border-box;
             overflow-y: auto;
             padding: 2rem 1.5rem;
-            
-            /* Toggle functionality handling */
             transform: translateY(${isFilterOpen ? "0%" : "100%"});
             transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
             box-shadow: 0 -10px 30px rgba(17,24,68,0.15);
@@ -663,7 +692,7 @@ export default function CategoryPage() {
 
         <div className="cat-main-wrapper">
           
-          {/* Apply Filters mobile toggle button block */}
+          {/* Mobile filter toggle */}
           <div className="mobile-filter-trigger">
             <button onClick={() => setIsFilterOpen(true)}>
               Apply Filters
@@ -672,7 +701,7 @@ export default function CategoryPage() {
 
           <div className="cat-layout">
             
-            {/* Filter Bar with Mobile Slide Modal Toggle Logic */}
+            {/* Filter Side Panel */}
             <aside className="filter-bar">
               <div className="mobile-close-container">
                 <button className="mobile-close-btn" onClick={() => setIsFilterOpen(false)}>
@@ -681,7 +710,7 @@ export default function CategoryPage() {
               </div>
 
               <h3>Select Your Budget</h3>
-              <p style={{ marginBottom: "10px" }}>Under: <b> PKR  {maxPrice}</b></p>
+              <p style={{ marginBottom: "10px" }}>Under: <b> PKR {maxPrice}</b></p>
 
               <input
                 type="range"
@@ -697,77 +726,45 @@ export default function CategoryPage() {
                 <button className="filter-btn" onClick={() => { setMaxPrice(10000); setIsFilterOpen(false); }}>Under PKR 10000</button>
               </div>
 
-              {/* brand filter */}
-              <h3 style={{ marginTop: "30px" }}>Select Brand</h3>
-              {allBrands.map((brand) => (
-                <label key={brand} style={{ display: "block", marginBottom: "6px", cursor: "pointer" }}>
+              {/* Dynamic brand filters derived from active inventory payload */}
+              {allBrands.length > 0 && (
+                <>
+                  <h3 style={{ marginTop: "30px" }}>Select Brand</h3>
+                  {allBrands.map((brand) => (
+                    <label key={brand} style={{ display: "block", marginBottom: "6px", cursor: "pointer" }}>
+                      <input
+                        type="checkbox"
+                        checked={selectedBrands.includes(brand)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedBrands([...selectedBrands, brand]);
+                          } else {
+                            setSelectedBrands(
+                              selectedBrands.filter((b) => b !== brand)
+                            );
+                          }
+                        }}
+                      />
+                      {" "}{brand}
+                    </label>
+                  ))}
+                </>
+              )}
+
+              {/* Star Rating Sorting */}
+              <h3 className="filter-title" style={{ marginTop: "30px" }}>Rating</h3>
+              {[4.5, 4, 3, 2, 1].map((stars) => (
+                <label key={stars} className="rating-option">
                   <input
-                    type="checkbox"
-                    checked={selectedBrands.includes(brand)}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        setSelectedBrands([...selectedBrands, brand]);
-                      } else {
-                        setSelectedBrands(
-                          selectedBrands.filter((b) => b !== brand)
-                        );
-                      }
-                    }}
+                    type="radio"
+                    name="rating"
+                    checked={selectedRating === stars}
+                    onChange={() => { setSelectedRating(stars); setIsFilterOpen(false); }}
                   />
-                  {" "}{brand}
+                  {"⭐".repeat(Math.floor(stars))}
+                  {stars === 4.5 ? "½" : ""} & Up
                 </label>
               ))}
-
-              {/* ranking filtering */}
-              <h3 className="filter-title">Rating</h3>
-              <label className="rating-option">
-                <input
-                  type="radio"
-                  name="rating"
-                  checked={selectedRating === 4.5}
-                  onChange={() => { setSelectedRating(4.5); setIsFilterOpen(false); }}
-                />
-                ⭐⭐⭐⭐⭐
-              </label>
-              <label className="rating-option">
-                <input
-                  type="radio"
-                  name="rating"
-                  checked={selectedRating === 4}
-                  onChange={() => { setSelectedRating(4); setIsFilterOpen(false); }}
-                />
-                ⭐⭐⭐⭐
-              </label>
-
-              <label className="rating-option">
-                <input
-                  type="radio"
-                  name="rating"
-                  checked={selectedRating === 3}
-                  onChange={() => { setSelectedRating(3); setIsFilterOpen(false); }}
-                />
-                ⭐⭐⭐
-              </label>
-
-              <label className="rating-option">
-                <input
-                  type="radio"
-                  name="rating"
-                  checked={selectedRating === 2}
-                  onChange={() => { setSelectedRating(2); setIsFilterOpen(false); }}
-                />
-                ⭐⭐
-              </label>
-
-              <label className="rating-option">
-                <input
-                  type="radio"
-                  name="rating"
-                  checked={selectedRating === 1}
-                  onChange={() => { setSelectedRating(1); setIsFilterOpen(false); }}
-                />
-                ⭐
-              </label>
 
               <label className="rating-option">
                 <input
@@ -780,61 +777,70 @@ export default function CategoryPage() {
               </label>
             </aside>
 
-            {/* products */}
+            {/* Products Grid Column */}
             <section className="cat-body">
-              <p className="cat-count">
-                {filteredItems.length} product{filteredItems.length !== 1 ? "s" : ""} found
-              </p>
-              {filteredItems.length === 0 ? (
-                <div className="no-results">
-                  <h3>No Fragrances Found</h3>
-                  <p>
-                    No perfumes matched "{searchQuery}". Try a different search term.
-                  </p>
-                  <Link to="/shop/all">Browse All Collections</Link>
+              {isLoading ? (
+                <div style={{ textAlign: "center", padding: "5rem", fontFamily: "Cormorant Garamond", fontSize: "1.5rem" }}>
+                  Updating products...
                 </div>
               ) : (
                 <>
-                  <div className="product-grid">
-                    {paginatedItems.map((product) => (
-                      <Link
-                        key={product.id}
-                        to={`/shop/${category}/${product.id}`}
-                        className="product-card-link"
-                      >
-                        <div className="product-card">
-                          <div className="product-card-img">
-                            <img src={product.images[0]} alt={product.name} />
-                            {product.badge && (
-                              <span className="product-card-badge">{product.badge}</span>
-                            )}
-                          </div>
-                          <div className="product-card-body">
-                            <div className="product-card-name">{product.name}</div>
-                            <div className="product-card-desc">{product.shortDesc}</div>
-                            <div className="product-card-footer">
-                              <span className="product-card-price">{product.price}</span>
-                              <span className="product-card-btn">View →</span>
-                            </div>
-                          </div>
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
-
-                  {/* Pagination */}
-                  {totalPages > 1 && (
-                    <div className="pagination">
-                      {Array.from({ length: totalPages }).map((_, index) => (
-                        <button
-                          key={index}
-                          onClick={() => setCurrentPage(index + 1)}
-                          className={currentPage === index + 1 ? "active" : ""}
-                        >
-                          {index + 1}
-                        </button>
-                      ))}
+                  <p className="cat-count">
+                    {filteredItems.length} product{filteredItems.length !== 1 ? "s" : ""} found
+                  </p>
+                  
+                  {filteredItems.length === 0 ? (
+                    <div className="no-results">
+                      <h3>No Fragrances Found</h3>
+                      <p>
+                        No perfumes matched your filtering options. Try resetting your bounds.
+                      </p>
+                      <Link to="/shop/all">Browse All Collections</Link>
                     </div>
+                  ) : (
+                    <>
+                      <div className="product-grid">
+                        {paginatedItems.map((product) => (
+                          <Link
+                            key={product.id} // Bind to MongoDB unique _id string field identifier representation
+                            to={`/shop/${category}/${product.id}`}
+                            className="product-card-link"
+                          >
+                            <div className="product-card">
+                              <div className="product-card-img">
+                                <img src={product.images[0]} alt={product.name} />
+                                {product.badge && (
+                                  <span className="product-card-badge">{product.badge}</span>
+                                )}
+                              </div>
+                              <div className="product-card-body">
+                                <div className="product-card-name">{product.name}</div>
+                                <div className="product-card-desc">{product.shortDesc}</div>
+                                <div className="product-card-footer">
+                                  <span className="product-card-price">{product.price}</span>
+                                  <span className="product-card-btn">View →</span>
+                                </div>
+                              </div>
+                            </div>
+                          </Link>
+                        ))}
+                      </div>
+
+                      {/* Pagination UI Controls */}
+                      {totalPages > 1 && (
+                        <div className="pagination">
+                          {Array.from({ length: totalPages }).map((_, index) => (
+                            <button
+                              key={index}
+                              onClick={() => setCurrentPage(index + 1)}
+                              className={currentPage === index + 1 ? "active" : ""}
+                            >
+                              {index + 1}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </>
                   )}
                 </>
               )}
@@ -847,3 +853,5 @@ export default function CategoryPage() {
     </>
   );
 }
+
+

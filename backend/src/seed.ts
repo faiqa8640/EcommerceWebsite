@@ -1,44 +1,11 @@
-// ── Central product data — imported by Shop, CategoryPage, ProductDetail ──────
+import mongoose from "mongoose";
+import dotenv from "dotenv";
+import Product from "./models/productModel";
+import Category from "./models/categoryModel";
 
-export type Product = {
-  id: string;
-  name: string;
-  price: string;
-  priceNum: number;
-  category: string;
-  brand: string;
-  images: string[];
-  badge?: string;
-  shortDesc: string;
-  description: string;
-  notes: {
-    top: string[];
-    heart: string[];
-    base: string[];
-  };
-  size: string;
-  longevity: string;
-  sillage: string;
-  season: string[];
-
-  reviews?: {
-    user: string;
-    rating: number;
-    comment: string;
-    date: string;
-  }[];
-};
-
-export type Category = {
-  slug: string;//name
-  label: string;
-  desc: string;
-  img: string;
-  bannerImg: string;
-};
-
-// ── Categories ────────────────────────────────────────────────────────────────
-export const categories: Category[] = [
+// Load environmental variables for MONGO_URI
+dotenv.config();
+const seedCategories = [
   {
     slug: "all",
     label: "All Perfumes",
@@ -76,11 +43,8 @@ export const categories: Category[] = [
   },
 ];
 
-// ── Products ──────────────────────────────────────────────────────────────────
-export const products: Product[] = [
-
-  // ───────── MEN ─────────
-
+// Copy-pasted your exact frontend Products data array
+const seedProducts = [
   {
     id: "allure",
     name: "Allure Homme",
@@ -88,10 +52,7 @@ export const products: Product[] = [
     priceNum: 8500,
     category: "men",
     brand: "Chanel",
-    images: [
-      "/perfumes/p1-1.jpg",
-      "/perfumes/p1-2.jfif",
-      "/perfumes/p1-3.jfif"],
+    images: ["/perfumes/p1-1.jpg", "/perfumes/p1-2.jfif", "/perfumes/p1-3.jfif"],
     badge: "Best Seller",
     shortDesc: "A timeless masculine with warm woods and fresh citrus.",
     description:
@@ -106,14 +67,13 @@ export const products: Product[] = [
     sillage: "Moderate–Heavy",
     season: ["Spring", "Autumn"],
     reviews: [
-      { user: "Ali", rating: 1, comment: "Luxury smell, very long lasting.", date: "2026-06-01" },
-      { user: "Sara", rating: 1, comment: "Very premium feel, loved it.", date: "2026-06-03" },
-      { user: "Sarim", rating: 1, comment: "Very premium feel, loved it.", date: "2026-06-03" },
-      { user: "zara", rating: 1, comment: "Very premium feel, loved it.", date: "2026-06-03" },
-      { user: "zain", rating: 1, comment: "Very premium feel, loved it.", date: "2026-06-03" },
+      { user: "Ali", rating: 5, comment: "Luxury smell, very long lasting.", date: "2026-06-01" },
+      { user: "Sara", rating: 5, comment: "Very premium feel, loved it.", date: "2026-06-03" },
+      { user: "Sarim", rating: 4, comment: "Very premium feel, loved it.", date: "2026-06-03" },
+      { user: "zara", rating: 5, comment: "Very premium feel, loved it.", date: "2026-06-03" },
+      { user: "zain", rating: 4, comment: "Very premium feel, loved it.", date: "2026-06-03" },
     ],
   },
-
   {
     id: "Irresistible",
     name: "Irresistible",
@@ -121,11 +81,7 @@ export const products: Product[] = [
     priceNum: 9200,
     category: "women",
     brand: "Givenchy",
-    images: [
-      "/perfumes/p2-1.jpg",
-      "/perfumes/p2-2.jfif",
-      "/perfumes/p2-3.jfif",
-    ],
+    images: ["/perfumes/p2-1.jpg", "/perfumes/p2-2.jfif", "/perfumes/p2-3.jfif"],
     badge: "New",
     shortDesc: "Deep, smoky oud with a velvety leather finish.",
     description:
@@ -144,7 +100,6 @@ export const products: Product[] = [
       { user: "Ali", rating: 5, comment: "Luxury smell, very long lasting.", date: "2026-06-01" },
     ],
   },
-
   {
     id: "noir-sport",
     name: "Noir Sport",
@@ -170,7 +125,6 @@ export const products: Product[] = [
       { user: "Ali", rating: 5, comment: "Luxury smell, very long lasting.", date: "2026-06-01" },
     ],
   },
-
   {
     id: "amber-bloom-men",
     name: "Amber Spice",
@@ -196,9 +150,6 @@ export const products: Product[] = [
       { user: "zara", rating: 4, comment: "Very premium feel, loved it.", date: "2026-06-03" },
     ],
   },
-
-  // ───────── WOMEN ─────────
-
   {
     id: "rose-mystique",
     name: "Rose Mystique",
@@ -224,7 +175,6 @@ export const products: Product[] = [
       { user: "Ali", rating: 5, comment: "Luxury smell, very long lasting.", date: "2026-06-01" },
     ],
   },
-
   {
     id: "fleur-blanc",
     name: "Fleur Blanc",
@@ -249,7 +199,6 @@ export const products: Product[] = [
       { user: "zara", rating: 4, comment: "Very premium feel, loved it.", date: "2026-06-03" },
     ],
   },
-
   {
     id: "velvet-rose",
     name: "Velvet Rose Noir",
@@ -274,7 +223,6 @@ export const products: Product[] = [
       { user: "zara", rating: 4, comment: "Very premium feel, loved it.", date: "2026-06-03" },
     ],
   },
-
   {
     id: "golden-orchid",
     name: "Golden Orchid",
@@ -299,9 +247,6 @@ export const products: Product[] = [
       { user: "zara", rating: 4, comment: "Very premium feel, loved it.", date: "2026-06-03" },
     ],
   },
-
-  // ───────── UNISEX ─────────
-
   {
     id: "golden-musk",
     name: "Golden Musk",
@@ -327,7 +272,6 @@ export const products: Product[] = [
       { user: "zara", rating: 4, comment: "Very premium feel, loved it.", date: "2026-06-03" },
     ],
   },
-
   {
     id: "cedar-sage",
     name: "Cedar & Sage",
@@ -352,7 +296,6 @@ export const products: Product[] = [
       { user: "zara", rating: 4, comment: "Very premium feel, loved it.", date: "2026-06-03" },
     ],
   },
-
   {
     id: "smoke-and-silk",
     name: "Smoke & Silk",
@@ -378,7 +321,6 @@ export const products: Product[] = [
       { user: "zara", rating: 4, comment: "Very premium feel, loved it.", date: "2026-06-03" },
     ],
   },
-
   {
     id: "aqua-verde",
     name: "Aqua Verde",
@@ -403,9 +345,6 @@ export const products: Product[] = [
       { user: "zara", rating: 4, comment: "Very premium feel, loved it.", date: "2026-06-03" },
     ],
   },
-
-  // ───────── LUXURY ─────────
-
   {
     id: "oud-royal",
     name: "Oud Royal",
@@ -431,7 +370,6 @@ export const products: Product[] = [
       { user: "zara", rating: 4, comment: "Very premium feel, loved it.", date: "2026-06-03" },
     ],
   },
-
   {
     id: "la-nuit-absolute",
     name: "La Nuit Absolue",
@@ -457,7 +395,6 @@ export const products: Product[] = [
       { user: "zara", rating: 4, comment: "Very premium feel, loved it.", date: "2026-06-03" },
     ],
   },
-
   {
     id: "imperial-amber",
     name: "Imperial Amber",
@@ -483,7 +420,6 @@ export const products: Product[] = [
       { user: "zara", rating: 4, comment: "Very premium feel, loved it.", date: "2026-06-03" },
     ],
   },
-
   {
     id: "white-diamond",
     name: "White Diamond",
@@ -510,33 +446,34 @@ export const products: Product[] = [
   },
 ];
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+const runSeeder = async () => {
+  try {
+    if (!process.env.MONGO_URI) {
+      throw new Error("MONGO_URI is missing from your environmental variables (.env)");
+    }
 
-// Returns all products when slug is "all", otherwise filters by category
-export const getProductsByCategory = (slug: string): Product[] => { // return the products based on the category
-  if (slug === "all") return products;
-  return products.filter((p) => p.category === slug);
-};
+    console.log("Connecting to MongoDB for seeding...");
+    await mongoose.connect(process.env.MONGO_URI);
+    console.log("Database connection successful.");
 
-export const getProductById = (id: string): Product | undefined => // return the object based on the id
-  products.find((p) => p.id === id);
+    // Clear out existing datasets to maintain pristine records
+    console.log("Clearing old products and categories collection details...");
+    await Product.deleteMany({});
+    await Category.deleteMany({});
 
-export const getCategoryBySlug = (slug: string): Category | undefined =>// get the category based on the name/slug
-  categories.find((c) => c.slug === slug);
+    // Perform operations
+    console.log("Inserting new Categories collection data...");
+    await Category.insertMany(seedCategories);
 
-// return the product array 
-export const getAllProducts = (): Product[] => products; //
+    console.log("Inserting new Products collection data...");
+    await Product.insertMany(seedProducts);
 
-// getting the avg ranking of each product 
-export const getAverageRating = (product: Product) => { // calculate avg rating of the product
-  if (!product.reviews || product.reviews.length === 0) {
-    return 0;
+    console.log("Database Successfully Seeded with luxury inventory!");
+    process.exit(0);
+  } catch (error) {
+    console.error("Seeding Operation Failed Error:", error);
+    process.exit(1);
   }
-
-  const total = product.reviews.reduce(
-    (sum, review) => sum + review.rating,
-    0
-  );
-
-  return total / product.reviews.length;
 };
+
+runSeeder();

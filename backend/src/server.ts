@@ -4,6 +4,8 @@ import cors from "cors";
 import connectDB from "./config/db";
 import authRoutes from "./routes/authRoutes";
 import userRoutes from "./routes/userRoutes";
+import productRoutes from "./routes/productRoutes";
+import categoryRoutes from "./routes/categoryRoutes";
 
 dotenv.config();
 connectDB();
@@ -21,6 +23,8 @@ app.use(
 
 app.use("/api/auth", authRoutes);
 app.use("/api/user", userRoutes);
+app.use("/api/products", productRoutes);
+app.use("/api/categories", categoryRoutes);
 
 app.get("/", (_req: Request, res: Response) => {
   res.json({ message: "Eloura API is running", status: "ok" });

@@ -1,29 +1,42 @@
-import {useRef } from "react";
+import { useRef, useState, useEffect } from "react";
+import { Link } from "react-router-dom";
+import { Product } from "../types"; // Core Data Blueprint interface
+import { fetchProducts } from "../data/apiService"; // API stream layer
 
-type Product = {
-  name: string;
-  img: string;
-  price: string;
-};
+export default function BestSellers() {
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
-export default function BestSellers(){
-  const scrollRef = useRef<HTMLDivElement | null>(null); 
-  // is used to scroll the object row -> as we need scrolling of the object 
+  useEffect(() => {
+    const getLiveBestSellers = async () => {
+      try {
+        setIsLoading(true);
+        // Passing an empty string pulls all store items across every category
+        const allItems = await fetchProducts("");
+        
+        // Filter down to show products marked as best sellers in MongoDB
+        const filteredBestsellers = allItems.filter(p => 
+          p.badge?.toLowerCase().includes("best") || 
+          p.badge?.toLowerCase().includes("popular") ||
+          ["Allure Homme", "Irresistible", "Amber Bloom"].includes(p.name) // Fallback matching your favorites list
+        );
 
-  const products: Product[] = [
-    // array of the products along with their prices
-    { name: "Allure Homme", img: "/perfumes/p1-1.jpg", price: "PKR 8,500" },
-    { name: "Irresistible", img: "/perfumes/p2-1.jpg", price: "PKR 9,200" },
-    { name: "Amber Bloom", img: "/perfumes/p3.jpg", price: "PKR 7,800" },
-    { name: "Rose Mystique", img: "/perfumes/p4.jpg", price: "PKR 8,000" },
-    { name: "Golden Musk", img: "/perfumes/p5.jpg", price: "PKR 9,500" },
-  ];
+        // If your database seeds don't have badges yet, fall back gracefully to the first 5 entries
+        setProducts(filteredBestsellers.length > 0 ? filteredBestsellers : allItems.slice(0, 6));
+      } catch (err) {
+        console.error("Failed to fetch live trending collection items:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    getLiveBestSellers();
+  }, []);
 
   const scroll = (direction: "left" | "right"): void => {
-    // the product row is moved horizontally
     if (scrollRef.current) {
       scrollRef.current.scrollBy({
-        // if left is clicked then move -300px else +300px
         left: direction === "left" ? -300 : 300,
         behavior: "smooth",
       });
@@ -97,14 +110,23 @@ export default function BestSellers(){
           display: none;
         }
 
+        .best-card-link {
+          text-decoration: none;
+          color: inherit;
+          display: block;
+        }
+
         .product-card {
           min-width: 240px;
+          max-width: 240px;
           background: rgba(255,255,255,0.6);
           border: 1px solid rgba(75,86,148,0.2);
           border-radius: 18px;
           padding: 1rem;
           backdrop-filter: blur(10px);
           transition: 0.3s;
+          height: 100%;
+          box-sizing: border-box;
         }
 
         .product-card:hover {
@@ -125,6 +147,9 @@ export default function BestSellers(){
           font-size: 1rem;
           font-weight: 500;
           letter-spacing: 0.05em;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
         }
 
         .product-price {
@@ -152,25 +177,31 @@ export default function BestSellers(){
             </div>
           </div>
 
-          {/* Products */}
-          <div className="products-row" ref={scrollRef}>
-            {products.map((p: Product, i: number) => (
-              <div className="product-card" key={i}>
-                <img src={p.img} alt={p.name} className="product-img" />
-                <div className="product-name">{p.name}</div>
-                <div className="product-price">{p.price}</div>
-              </div>
-            ))}
-          </div>
+          {/* Products Row Slider */}
+          {isLoading ? (
+            <div style={{ textAlign: "center", padding: "2rem", fontFamily: "Cormorant Garamond", fontSize: "1.2rem", color: "#4B5694" }}>
+              Polling current store favorites...
+            </div>
+          ) : (
+            <div className="products-row" ref={scrollRef}>
+              {products.map((p: Product) => (
+                <Link 
+                  key={p.id} 
+                  to={`/shop/all/${p.id}`} 
+                  className="best-card-link"
+                >
+                  <div className="product-card">
+                    {/* Maps image arrays from MongoDB correctly */}
+                    <img src={p.images?.[0] } alt={p.name} className="product-img" />
+                    <div className="product-name">{p.name}</div>
+                    <div className="product-price">{p.price}</div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
       </section>
-
-      {/* COMMENTS:
-      overflow-x:auto -> it enables horizontal scrolling
-      .products-row::-webkit-scrollbar-> display none-> it hide the ugly scrollbar
-      transform :->it is used to lift up the cards
-      .map-> loop on the array and it display each flex box one by one this is BestSellers.tsx
-      */}
     </>
   );
 }
