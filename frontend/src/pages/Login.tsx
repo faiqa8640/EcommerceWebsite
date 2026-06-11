@@ -1,5 +1,4 @@
 // Login form — uses AuthContext to store auth state globally
-// Shows "session expired" banner when redirected from auto-logout
 
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";// link is used for navigation without page reload
