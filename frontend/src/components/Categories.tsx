@@ -1,12 +1,38 @@
 import { Link } from "react-router-dom";
-import { categories } from "../data/productsData";
+import { useState, useEffect } from "react";
+import { Category } from "../types";
+import { fetchCategories } from "../data/apiService";
 
 export default function Categories() {
+  const [liveCategories, setLiveCategories] = useState<Category[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const allowedCategories = ["men", "women", "unisex", "luxury"];
 
-  const filteredCategories = categories.filter((cat) =>
-    allowedCategories.includes(cat.slug)
-  );
+  useEffect(() => {
+    const getLiveCollections = async () => {
+      try {
+        setIsLoading(true);
+        const data = await fetchCategories();
+
+        // Filter collections matching your homepage display configuration list
+        const filtered = data.filter((cat) =>
+          allowedCategories.includes(cat.slug)
+        );
+        
+        setLiveCategories(filtered);
+      } catch (error) {
+        console.error("Failed to gather homepage category items:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    getLiveCollections();
+  }, []);
+
+  // const filteredCategories = categories.filter((cat) =>
+  //   allowedCategories.includes(cat.slug)
+  // );
   return (
     <>
       <style>{`
@@ -147,37 +173,44 @@ export default function Categories() {
           }
         }
       `}</style>
+      
+      
+       <section className="category-section">
+         <div className="container">
+           <h2 className="title">
+             Perfume <span>Categories</span>
+           </h2>
 
-      <section className="category-section">
-        <div className="container">
-          <h2 className="title">
-            Perfume <span>Categories</span>
-          </h2>
+           {isLoading ? (
+            <div style={{ textAlign: "center", padding: "3rem", fontFamily: "Cormorant Garamond", fontSize: "1.5rem", color: "#111844" }}>
+              Loading Collections Catalogue...
+            </div>
+          ) : (
+            <div className="category-grid">
+              {liveCategories.map((cat) => (
+                <Link
+                  key={cat.slug}
+                  to={`/shop/${cat.slug}`}
+                  className="category-card"
+                >
+                  <img src={cat.bannerImg || cat.img} alt={cat.label} />
 
-          <div className="category-grid">
-            {filteredCategories.map((cat) => (
-              <Link
-                key={cat.slug}
-                to={`/shop/${cat.slug}`}
-                className="category-card"
-              >
-                <img src={cat.img} alt={cat.label} />
+                  <div className="overlay"></div>
 
-                <div className="overlay"></div>
+                  <div className="badge">Explore</div>
 
-                <div className="badge">Explore</div>
+                  <div className="content">
+                    <h3>{cat.label}</h3>
+                    <p>{cat.desc}</p>
 
-                <div className="content">
-                  <h3>{cat.label}</h3>
-                  <p>{cat.desc}</p>
-
-                  <span className="shop-cat-cta">
-                    View Collection →
-                  </span>
-                </div>
-              </Link>
-            ))}
-          </div>
+                    <span className="shop-cat-cta">
+                      View Collection →
+                    </span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
       </section>
     </>
