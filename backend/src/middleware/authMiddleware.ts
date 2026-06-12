@@ -48,6 +48,8 @@ export const protect = async ( // prtect middle ware -> this run before protect 
     // Verify token and decode payload
     const decoded = jwt.verify(token, secret) as { id: string }; // it verify the token
     // is it created by sever, has expired? or is modifed?
+    // JWT secret is the private key (a long random string) used to sign and verify JSON Web Tokens
+    
 
 
     // IF VALID TOKEN -> find the user 

@@ -25,8 +25,8 @@ export default function CategoryPage() {
   const [maxPrice, setMaxPrice] = useState(100000);// storing the max price
 
   // ── NEW DEBOUNCE Search ───────────────────
-  const searchParams = new URLSearchParams(location.search); 
-  const urlSearchQuery = searchParams.get("search") || "";
+  const searchParams = new URLSearchParams(location.search);  // create an object that read the query parameter
+  const urlSearchQuery = searchParams.get("search") || "";//if search?allure -> the it contain allure
 
   // 1. Tracks what's in the URL immediately
   const [localSearch, setLocalSearch] = useState<string>(urlSearchQuery); // lword by word storing 
