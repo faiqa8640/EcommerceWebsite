@@ -108,3 +108,35 @@ export const getCategories = async (req: Request, res: Response): Promise<void> 
     res.status(500).json({ message: "Error fetching categories", error: error.message });
   }
 };
+
+
+
+// // @desc    Create a new product with an externally hosted Firebase image URL
+// // @route   POST /api/products
+// export const createProduct = async (req: Request, res: Response): Promise<void> => {
+//   try {
+//     const { name, priceNum, brand, category, description, imageUrl } = req.body;
+
+//     // Check if the frontend forgot to pass the cloud image url string
+//     if (!imageUrl) {
+//       res.status(400).json({ message: "Product imageUrl text field is required" });
+//       return;
+//     }
+
+//     // Instantiating a clean database model structure matching your current MongoDB arrangement
+//     const newProduct = new Product({
+//       name,
+//       priceNum: Number(priceNum),
+//       brand,
+//       category,
+//       description,
+//       imageUrl: imageUrl, // Directly saves the permanent 'https://firebasestorage...' URL link string
+//       averageRating: 0    // New products start clean with 0 reviews
+//     });
+
+//     const savedProduct = await newProduct.save();
+//     res.status(201).json(savedProduct);
+//   } catch (error: any) {
+//     res.status(500).json({ message: "Database server error creating product resource", error: error.message });
+//   }
+// };
