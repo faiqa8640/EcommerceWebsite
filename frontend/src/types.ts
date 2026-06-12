@@ -29,7 +29,7 @@ export type Product = {
   sillage: string;
   season: string[];
   reviews?: Review[];
-  averageRating?: number; // pre-stored in MongoDB, updated on each review
+  averageRating?: number;
 };
 
 export type Category = {

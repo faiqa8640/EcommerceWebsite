@@ -5,8 +5,8 @@ import Footer from "../components/Footer";
 import ReviewFormModal from "../components/ReviewFormModal"; 
 import { Product, Category , Review} from "../types"; 
 
-// ── CUSTOM DYNAMIC STAR RENDERER ──────────────────
-function DynamicStars({ rating }: { rating: number }) {
+// ── Star rating  ──────────────────
+function DynamicStars({ rating }: { rating: number }) { // in this we create the 2 start one is not fill then is in button and the overone  is filled and it is on the top
   return (
     <>
       <style>{`
@@ -52,23 +52,23 @@ function DynamicStars({ rating }: { rating: number }) {
 }
 
 export default function ProductDetail() {
-  const { category, productId } = useParams<{
-    category: string;
+  const { category, productId } = useParams<{// getting the product and category from the url
+    category: string; 
     productId: string;
   }>();
 
   // State managers to store data coming live from MongoDB
-  const [product, setProduct] = useState<Product | null>(null); 
-  const [cat, setCat] = useState<Category | null>(null); 
+  const [product, setProduct] = useState<Product | null>(null); //store product
+  const [cat, setCat] = useState<Category | null>(null); //store current category 
   const [related, setRelated] = useState<Product[]>([]);
   
   // Loading and Error states
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState<boolean>(true); // it control the loadin screen
   const [redirect, setRedirect] = useState<boolean>(false);
 
   // UI States
   const [currentImage, setCurrentImage] = useState(0);
-  const [isModalOpen, setIsModalOpen] = useState(false); 
+  const [isModalOpen, setIsModalOpen] = useState(false); // for the review -> when you click wrte review then the model is open
   const reviewScrollRef = useRef<HTMLDivElement | null>(null);
 
   // FETCH DATA FROM BACKEND API
@@ -80,13 +80,13 @@ export default function ProductDetail() {
         // 1. Fetch Main Product Details
         const productRes = await fetch(`http://localhost:5000/api/products/${productId}`);
         if (!productRes.ok) throw new Error("Product not found");
-        const productData: Product = await productRes.json();
+        const productData: Product = await productRes.json();// convert into the js element
 
         // 2. Fetch All Categories to find the current active category
         const categoryRes = await fetch(`http://localhost:5000/api/categories`);
         if (!categoryRes.ok) throw new Error("Categories not found");
         const categoriesData: Category[] = await categoryRes.json();
-        const currentCat = categoriesData.find((c) => c.slug === category);
+        const currentCat = categoriesData.find((c) => c.slug === category);// get the current category
 
         // 3. Fetch Related Products (Filtering by the same category)
         const relatedRes = await fetch(`http://localhost:5000/api/products?category=${category}`);
@@ -111,6 +111,7 @@ export default function ProductDetail() {
     }
   }, [category, productId]);
 
+  // HANDLS THE NEW REVIEW
   const handleNewReview = (newReview: Review) => {
   if (product) {
     setProduct({
@@ -126,6 +127,7 @@ export default function ProductDetail() {
 
   const reviews = product.reviews ?? [];
 
+  // AVG RATING
   // Calculate Average Rating Summary
   const averageRating = reviews.length > 0 
     ? (reviews.reduce((acc, curr) => acc + curr.rating, 0) / reviews.length).toFixed(1) 
