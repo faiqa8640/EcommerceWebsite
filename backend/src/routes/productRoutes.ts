@@ -2,7 +2,8 @@ import express from "express";
 import { 
   getProducts, 
   getProductById, 
-  addProductReview 
+  addProductReview ,
+  // createProduct
 } from "../controllers/productController";
 
 const router = express.Router();
@@ -15,5 +16,7 @@ router.get("/:id", getProductById);
 
 // @route   POST /api/products/:productId/reviews (Adds a standalone review & updates averageRating)
 router.post("/:productId/reviews", addProductReview);
+
+// router.post("/", createProduct);
 
 export default router;

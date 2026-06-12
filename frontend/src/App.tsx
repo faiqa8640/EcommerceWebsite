@@ -16,6 +16,7 @@ import Shop from "./pages/Shop";
 import CategoryPage from "./pages/CategoryPage";
 import ProductDetail from "./pages/ProductDetail";
 import ScrollToTop from "./components/ScrollToTop";
+import Contact from "./pages/Contact"
 // import AddReviewModal from "./components/AddReviewModal";
 
 function App() {
@@ -37,6 +38,8 @@ function App() {
           <Route path="/shop" element={<Shop />} />
           <Route path="/shop/:category" element={<CategoryPage />} />
           <Route path="/shop/:category/:productId" element={<ProductDetail />} />
+          <Route path="/contact" element={<Contact />} />
+
 
 
           {/* ── Protected: any logged-in user ─────────────────── */}
