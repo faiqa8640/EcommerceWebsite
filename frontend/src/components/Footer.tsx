@@ -182,7 +182,7 @@ export default function Footer(){
               <h3 className="footer-heading">Contact</h3>
 
               <div className="footer-contact">
-                <p>eloura@gmail.com</p>
+                <p>eloura.fragrance@gmail.com</p>
                 <p>+92 3447175455</p>
                 <p>Lahore, Pakistan</p>
               </div>

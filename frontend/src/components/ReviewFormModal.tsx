@@ -1,15 +1,11 @@
 import React, { useState } from "react";
+import { Review } from "../types"; 
 
 interface ReviewFormModalProps {
   isOpen: boolean;
   onClose: () => void;
   productId: string;
-  onReviewSubmitted: (newReview: {
-    user: string;
-    rating: number;
-    comment: string;
-    date: string;
-  }) => void;
+  onReviewSubmitted: (newReview: Review) => void; // Updated to use the comprehensive global type
 }
 
 export default function ReviewFormModal({
@@ -44,6 +40,7 @@ export default function ReviewFormModal({
         day: "numeric",
       });
 
+      // Local API payload for your MongoDB POST request
       const reviewPayload = { user, rating, comment, date: formattedDate };
 
       // Make API call to MongoDB backend
@@ -57,9 +54,21 @@ export default function ReviewFormModal({
       );
 
       if (!response.ok) throw new Error("Failed to submit review");
+      
+      const savedData = await response.json();
 
-      // Pass the new review back to parent to instantly update UI
-      onReviewSubmitted(reviewPayload);
+      // Construct the complete Review type containing the necessary productId state link
+      const completedReview: Review = {
+        _id: savedData._id || undefined, // Capture database ID if returned, otherwise fallback safely
+        productId: productId,
+        user: user,
+        rating: rating,
+        comment: comment,
+        date: formattedDate,
+      };
+
+      // Pass the fully typed review back to parent to instantly update UI
+      onReviewSubmitted(completedReview);
       
       // Reset form and close
       setUser("");
