@@ -3,9 +3,9 @@ import { useRef, useState, useEffect } from "react";
 import Header from "../components/header";
 import Footer from "../components/Footer";
 import ReviewFormModal from "../components/ReviewFormModal"; 
-import { Product, Category } from "../types"; 
+import { Product, Category , Review} from "../types"; 
 
-// ── CUSTOM DYNAMIC STAR RENDERER (APP STORE STYLE) ──────────────────
+// ── CUSTOM DYNAMIC STAR RENDERER ──────────────────
 function DynamicStars({ rating }: { rating: number }) {
   return (
     <>
@@ -112,15 +112,23 @@ export default function ProductDetail() {
   }, [category, productId]);
 
   // Appends newly submitted review locally so UI updates without page reload
-  const handleNewReview = (newReview: { user: string; rating: number; comment: string; date: string }) => {
-    if (product) {
-      setProduct({
-        ...product,
-        reviews: [newReview, ...(product.reviews || [])], 
-      });
-    }
-  };
+  // const handleNewReview = (newReview: { user: string; rating: number; comment: string; date: string }) => {
+  //   if (product) {
+  //     setProduct({
+  //       ...product,
+  //       reviews: [newReview, ...(product.reviews || [])], 
+  //     });
+  //   }
+  // };
 
+  const handleNewReview = (newReview: Review) => {
+  if (product) {
+    setProduct({
+      ...product,
+      reviews: [newReview, ...(product.reviews || [])],
+    });
+  }
+};
   // Handle redirects safely
   if (redirect) return <Navigate to="/shop" replace />;
   if (loading) return <div className="text-center py-20 bg-[#EAE0CF] min-height-100vh text-[#111844]">Loading luxury fragrance...</div>;
