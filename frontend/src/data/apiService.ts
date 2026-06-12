@@ -29,7 +29,7 @@ export const fetchProductById = async (id: string): Promise<Product | undefined>
   }
 };
 
-// Fetch all categories dynamically from MongoDB
+// Fetch all categories from MongoDB
 export const fetchCategories = async (): Promise<Category[]> => {
   try {
     const response = await fetch(`${API_BASE_URL}/categories`);
