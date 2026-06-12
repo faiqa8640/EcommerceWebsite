@@ -1,16 +1,7 @@
 import mongoose, { Schema, Document } from "mongoose";
 
-// review -> for typescript it tells that the our review objectc model have these changes
-// export interface IReview {
-//   user: string;
-//   rating: number;
-//   comment: string;
-//   date: string;
-// }
-
-// product
 export interface IProduct extends Document {
-  id: string; // Custom string ID matching your frontend data (e.g., 'allure')
+  id: string;
   name: string;
   price: string;
   priceNum: number;
@@ -29,17 +20,9 @@ export interface IProduct extends Document {
   longevity: string;
   sillage: string;
   season: string[];
+  averageRating: number; // ← NEW: stored and updated whenever a review is submitted
 }
 
-// schemas -> 1) review
-// const reviewSchema = new Schema<IReview>({
-//   user: { type: String, required: true },
-//   rating: { type: Number, required: true, min: 1, max: 5 },
-//   comment: { type: String, required: true },
-//   date: { type: String, required: true }
-// });
-
-// 2)product schema
 const productSchema = new Schema<IProduct>({
   id: { type: String, required: true, unique: true },
   name: { type: String, required: true },
@@ -60,6 +43,7 @@ const productSchema = new Schema<IProduct>({
   longevity: { type: String, required: true },
   sillage: { type: String, required: true },
   season: { type: [String], required: true },
+  averageRating: { type: Number, default: 0 }, // ← NEW
 }, { timestamps: true });
 
 export default mongoose.model<IProduct>("Product", productSchema);

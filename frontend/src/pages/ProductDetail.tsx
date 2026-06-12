@@ -111,16 +111,6 @@ export default function ProductDetail() {
     }
   }, [category, productId]);
 
-  // Appends newly submitted review locally so UI updates without page reload
-  // const handleNewReview = (newReview: { user: string; rating: number; comment: string; date: string }) => {
-  //   if (product) {
-  //     setProduct({
-  //       ...product,
-  //       reviews: [newReview, ...(product.reviews || [])], 
-  //     });
-  //   }
-  // };
-
   const handleNewReview = (newReview: Review) => {
   if (product) {
     setProduct({
