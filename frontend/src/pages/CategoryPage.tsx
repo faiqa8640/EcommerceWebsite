@@ -29,7 +29,7 @@ export default function CategoryPage() {
   const urlSearchQuery = searchParams.get("search") || "";
 
   // 1. Tracks what's in the URL immediately
-  const [localSearch, setLocalSearch] = useState<string>(urlSearchQuery); // 
+  const [localSearch, setLocalSearch] = useState<string>(urlSearchQuery); // lword by word storing 
   const [debouncedSearch, setDebouncedSearch] = useState<string>(urlSearchQuery); // the final search value is saved
 
   // Sync local search when URL changes directly (e.g. clearing search or navigating)
@@ -103,7 +103,9 @@ export default function CategoryPage() {
   const allBrands = [...new Set(baseItems.map(p => p.brand))];
   const highestPrice = baseItems.length > 0 ? Math.max(...baseItems.map(p => p.priceNum)) : 100000;
 
-  // ── FILTERS (Now using debouncedSearch instead of immediate URL checks) ──
+  // -------------------------
+  // ── FILTERS ──
+  // -------------------------
   const filteredItems = baseItems
     .filter(p => 
       debouncedSearch.trim() 
