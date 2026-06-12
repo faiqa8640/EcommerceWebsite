@@ -90,12 +90,6 @@ export default function CategoryPage() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [currentPage]);
 
-  const calculateAverageRating = (product: Product): number => { 
-    if (!product.reviews || product.reviews.length === 0) return 0;
-    const sum = product.reviews.reduce((acc, rev) => acc + rev.rating, 0);
-    return sum / product.reviews.length;
-  };
-
   if (hasCheckedData && !currentCategoryInfo) {
     return <Navigate to="/shop" replace />; 
   }
@@ -121,7 +115,7 @@ export default function CategoryPage() {
     )
     .filter(p => 
       selectedRating === 0 ||
-      calculateAverageRating(p) >= selectedRating
+      (p.averageRating ?? 0) >= selectedRating
     );
 
     //pagination
