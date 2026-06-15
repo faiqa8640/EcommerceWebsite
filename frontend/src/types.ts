@@ -9,6 +9,7 @@ export type Review = {
 };
 
 export type Product = {
+  _id: string;
   id: string;
   name: string;
   price: string;

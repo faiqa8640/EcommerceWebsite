@@ -1,13 +1,12 @@
-//  this check that weather the user if login or admin
-// Protects routes — verifies JWT and attaches user to request
 import { Request, Response, NextFunction } from "express";
-import jwt from "jsonwebtoken"; // used to verify token
+import jwt from "jsonwebtoken";
 import User from "../models/userModel";
 
-// Extend Express Request to carry the authenticated user
+// Extend Express Request structure to hold the authenticated user context object safely
 export interface AuthRequest extends Request {
-  user?: { // after login we want req.user so for that purpose  so after it the typescript understand req.user
+  user?: {
     id: string;
+    _id: string; // 👈 CRITICAL: Added this so your orderController.ts can read ._id without breaking!
     name: string;
     email: string;
     role: string;
@@ -15,56 +14,53 @@ export interface AuthRequest extends Request {
   };
 }
 
-//  check ->are you login?
 // ─── protect: require valid JWT ───────────────────────────────────────────────
-export const protect = async ( // prtect middle ware -> this run before protect routes
+export const protect = async (
   req: AuthRequest,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    let token: string | undefined; // get the token
+    console.log(" [protect] Headers:", req.headers.authorization);
+    let token: string | undefined;
     
-    // this check that the fronent send the token with a request 
-    // Token expected in Authorization header: "Bearer <token>"
-    if ( // get the authentication header
+    // Check for Authorization token in request headers
+    if (
       req.headers.authorization &&
       req.headers.authorization.startsWith("Bearer")
     ) {
-      token = req.headers.authorization.split(" ")[1]; // extract the token from the header
+      token = req.headers.authorization.split(" ")[1];
     }
 
-    if (!token) { // if token not found
+    if (!token) {
+      console.error("🔒 [AUTH MIDDLEWARE]: Request blocked. No Bearer token provided in headers.");
       return res
         .status(401)
         .json({ message: "Not authorized — no token provided" });
     }
 
     const secret = process.env.JWT_SECRET;
-    if (!secret) { // check jwt secret 
-      return res.status(500).json({ message: "JWT secret not configured" });
+    if (!secret) {
+      console.error("❌ [AUTH MIDDLEWARE CRITICAL]: Environment configuration error. JWT_SECRET variable is missing from your .env file.");
+      return res.status(500).json({ message: "JWT secret configuration mismatch on server" });
     }
 
-    // Verify token and decode payload
-    const decoded = jwt.verify(token, secret) as { id: string }; // it verify the token
-    // is it created by sever, has expired? or is modifed?
-    // JWT secret is the private key (a long random string) used to sign and verify JSON Web Tokens
-    
+    // Verify token validity against signature secret
+    const decoded = jwt.verify(token, secret) as { id: string };
 
-
-    // IF VALID TOKEN -> find the user 
-    // Fetch fresh user data from DB (ensures token isn't from a deleted account)
-    const user = await User.findById(decoded.id).select("-password"); //
+    // Fetch account from database to verify profile status
+    const user = await User.findById(decoded.id).select("-password");
     if (!user) {
+      console.error(`❌ [AUTH MIDDLEWARE]: Token is valid, but no account exists in MongoDB for User ID: ${decoded.id}`);
       return res
         .status(401)
-        .json({ message: "Not authorized — user not found" });
+        .json({ message: "Not authorized — user account no longer exists" });
     }
 
-    //  in simple words we are storing the user in the middleware so that we dont neend to do findone etc we can directly assess the user 
-    // Attach user to request for use in route handlers -> now after it we can use the req.user.name etc in the controlleretc 
+    // Attach complete unified profile payload properties to the request object
     req.user = {
       id: user._id.toString(),
+      _id: user._id.toString(), // 👈 Satisfies your controller's (req as any).user?._id check
       name: user.name,
       email: user.email,
       role: user.role,
@@ -72,32 +68,29 @@ export const protect = async ( // prtect middle ware -> this run before protect 
     };
 
     next();
-  } catch (error) {
-    res.status(401).json({ message: "Not authorized — invalid or expired token" });
+  } catch (error: any) {
+    // 👈 CRITICAL LOG: This will print the exact reason your token fails right into your backend terminal console!
+    console.error("❌ [AUTH MIDDLEWARE JWT EXCEPTION]:", error.message);
+
+    res.status(401).json({ 
+      message: "Not authorized — invalid or expired token signature",
+      error: error.message 
+    });
   }
 };
 
-// ─── adminOnly: require admin role ───────────────────────────────────────────
+// ─── adminOnly: require admin privileges ────────────────────────────────────
 export const adminOnly = (
   req: AuthRequest,
   res: Response,
   next: NextFunction
 ) => {
-  if (req.user?.role !== "admin") { // if the admin has login or not 
-    return res.status(403).json({ message: "Admin access required" });
+  if (req.user?.role !== "admin") {
+    console.warn(`⚠️ [AUTH MIDDLEWARE]: Access denied. User ${req.user?.email} attempted admin action without required permissions.`);
+    return res.status(403).json({ message: "Admin access privileges required" });
   }
   next();
 };
-
-
-
-
-
-
-
-
-
-
 
 
 

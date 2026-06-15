@@ -40,3 +40,31 @@ export const fetchCategories = async (): Promise<Category[]> => {
     return [];
   }
 };
+
+
+
+
+export const createOrder = async (orderPayload: any): Promise<any> => {
+  try {
+    const token = localStorage.getItem('token'); 
+    
+    const response = await fetch('http://localhost:5000/api/orders', { 
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+      },
+      body: JSON.stringify(orderPayload),
+    });
+
+    if (!response.ok) {
+      const errorBody = await response.json().catch(() => ({}));
+      throw new Error(errorBody.message || `Server Error: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error: any) {
+    console.error("Error inside apiService.ts:", error.message);
+    throw error;
+  }
+};

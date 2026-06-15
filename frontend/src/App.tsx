@@ -1,6 +1,7 @@
 // Main router — public + protected + admin-only routes
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
+import { CartProvider } from "./context/CartContext"
 import ProtectedRoute from "./components/ProtectedRoute";
 import Header from "./components/header";
 import Home from "./pages/Home";
@@ -17,10 +18,12 @@ import CategoryPage from "./pages/CategoryPage";
 import ProductDetail from "./pages/ProductDetail";
 import ScrollToTop from "./components/ScrollToTop";
 import Contact from "./pages/Contact"
-// import AddReviewModal from "./components/AddReviewModal";
+import { Cart } from './pages/Cart';
+import { Checkout } from './pages/Checkout';
 
 function App() {
   return (
+    <CartProvider>
     <AuthProvider>
       <BrowserRouter>
         <ScrollToTop />
@@ -39,6 +42,9 @@ function App() {
           <Route path="/shop/:category" element={<CategoryPage />} />
           <Route path="/shop/:category/:productId" element={<ProductDetail />} />
           <Route path="/contact" element={<Contact />} />
+
+          <Route path="/cart" element={<Cart />} />
+          <Route path="/checkout" element={<Checkout />} />
 
 
 
@@ -66,6 +72,7 @@ function App() {
         </Routes>
       </BrowserRouter>
     </AuthProvider>
+    </CartProvider>
   );
 }
 
