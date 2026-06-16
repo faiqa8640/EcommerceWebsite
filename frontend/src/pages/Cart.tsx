@@ -22,260 +22,58 @@ export const Cart: React.FC = () => {
   const shippingCost = subtotal > 50000 || subtotal === 0 ? 0 : 500; 
   const totalCost = subtotal + shippingCost;
 
-  // Premium Brand Palette Theme Objects
-  const theme = {
-    primary: '#1b234a',      
-    background: '#f4efe6',   
-    cardBg: '#fcfaf7',       
-    textMuted: '#6b6661',    
-    border: 'rgba(27, 35, 74, 0.15)', 
-  };
-
-  // Inline Style Structural Configurations
-  const styles = {
-    pageContainer: {
-      backgroundColor: theme.background,
-      color: theme.primary,
-      minHeight: '100vh',
-      padding: '12px 24px 64px 24px',
-      fontFamily: 'serif',
-      boxSizing: 'border-box' as const,
-    },
-    innerWrapper: {
-      maxWidth: '1200px',
-      margin: '0 auto',
-    },
-    heading: {
-      fontSize: '28px',
-      letterSpacing: '0.15em',
-      textTransform: 'uppercase' as const,
-      marginBottom: '40px',
-      fontWeight: '600' as const,
-    },
-    layoutGrid: {
-      display: 'grid',
-      gridTemplateColumns: '2fr 1fr',
-      gap: '40px',
-      alignItems: 'start',
-    },
-    itemList: {
-      display: 'flex',
-      flexDirection: 'column' as const,
-      gap: '20px',
-    },
-    cartItemCard: {
-      backgroundColor: theme.cardBg,
-      padding: '24px',
-      borderRadius: '12px',
-      border: `1px solid ${theme.border}`,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      gap: '24px',
-    },
-    productMeta: {
-      display: 'flex',
-      alignItems: 'center',
-      gap: '24px',
-    },
-    imageContainer: {
-      width: '96px',
-      height: '112px',
-      borderRadius: '8px',
-      overflow: 'hidden',
-      flexShrink: 0,
-      border: `1px solid rgba(27, 35, 74, 0.05)`,
-    },
-    productImg: {
-      width: '100%',
-      height: '100%',
-      objectFit: 'cover' as const,
-    },
-    detailsBlock: {
-      fontFamily: 'serif',
-    },
-    categoryTag: {
-      fontFamily: 'sans-serif',
-      fontSize: '10px',
-      textTransform: 'uppercase' as const,
-      letterSpacing: '0.15em',
-      color: theme.textMuted,
-      marginBottom: '4px',
-      display: 'block',
-    },
-    itemName: {
-      fontSize: '18px',
-      margin: '0 0 6px 0',
-      textTransform: 'capitalize' as const,
-      color: theme.primary,
-      letterSpacing: '0.02em',
-    },
-    itemSize: {
-      fontFamily: 'sans-serif',
-      fontSize: '13px',
-      color: theme.textMuted,
-      margin: '0 0 8px 0',
-    },
-    itemPrice: {
-      fontFamily: 'sans-serif',
-      fontSize: '14px',
-      fontWeight: '600' as const,
-      margin: 0,
-    },
-    actionControlGroup: {
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      gap: '32px',
-    },
-    quantitySelector: {
-      display: 'flex',
-      alignItems: 'center',
-      border: `1px solid ${theme.border}`,
-      borderRadius: '8px',
-      backgroundColor: theme.background,
-      overflow: 'hidden',
-    },
-    quantityBtn: {
-      background: 'none',
-      border: 'none',
-      width: '36px',
-      height: '36px',
-      cursor: 'pointer',
-      fontSize: '16px',
-      color: theme.primary,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    quantityVal: {
-      fontFamily: 'sans-serif',
-      fontSize: '14px',
-      fontWeight: '600' as const,
-      width: '32px',
-      textAlign: 'center' as const,
-    },
-    priceWrapper: {
-      display: 'flex',
-      alignItems: 'center',
-      gap: '20px',
-    },
-    totalLinePrice: {
-      fontFamily: 'sans-serif',
-      fontSize: '15px',
-      fontWeight: '700' as const,
-      minWidth: '100px',
-      textAlign: 'right' as const,
-    },
-    removeBtn: {
-      background: 'none',
-      border: 'none',
-      color: theme.textMuted,
-      cursor: 'pointer',
-      padding: '4px',
-      fontSize: '18px',
-    },
-    sidebarCard: {
-      backgroundColor: theme.cardBg,
-      padding: '32px',
-      borderRadius: '12px',
-      border: `1px solid ${theme.border}`,
-      position: 'sticky' as const,
-      top: '120px',
-    },
-    sidebarTitle: {
-      fontSize: '20px',
-      margin: '0 0 24px 0',
-      borderBottom: `1px solid ${theme.border}`,
-      paddingBottom: '12px',
-      letterSpacing: '0.05em',
-    },
-    promoBox: {
-      display: 'flex',
-      gap: '8px',
-      marginBottom: '24px',
-    },
-    promoInput: {
-      flex: 1,
-      height: '40px',
-      padding: '0 12px',
-      backgroundColor: theme.background,
-      border: `1px solid ${theme.border}`,
-      borderRadius: '6px',
-      fontSize: '13px',
-      color: theme.primary,
-      fontFamily: 'sans-serif',
-    },
-    promoBtn: {
-      height: '40px',
-      padding: '0 16px',
-      backgroundColor: 'transparent',
-      border: `1px solid ${theme.border}`,
-      borderRadius: '6px',
-      cursor: 'pointer',
-      fontFamily: 'sans-serif',
-      fontSize: '12px',
-      textTransform: 'uppercase' as const,
-      letterSpacing: '0.1em',
-    },
-    summaryRows: {
-      fontFamily: 'sans-serif',
-      fontSize: '14px',
-      display: 'flex',
-      flexDirection: 'column' as const,
-      gap: '16px',
-      paddingBottom: '20px',
-      borderBottom: `1px solid ${theme.border}`,
-      color: theme.textMuted,
-    },
-    rowSpace: {
-      display: 'flex',
-      justifyContent: 'space-between',
-    },
-    grandTotalBlock: {
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'baseline',
-      padding: '24px 0',
-    },
-    checkoutBtn: {
-      width: '100%',
-      height: '50px',
-      backgroundColor: theme.primary,
-      color: '#ffffff',
-      border: 'none',
-      borderRadius: '6px',
-      fontFamily: 'sans-serif',
-      fontSize: '12px',
-      textTransform: 'uppercase' as const,
-      letterSpacing: '0.2em',
-      fontWeight: '600' as const,
-      cursor: 'pointer',
-      boxShadow: '0 4px 12px rgba(27, 35, 74, 0.15)',
-    },
-    emptyState: {
-      backgroundColor: theme.background,
-      color: theme.primary,
-      minHeight: '100vh',
-      display: 'flex',
-      flexDirection: 'column' as const,
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '24px',
-      boxSizing: 'border-box' as const,
-    }
-  };
-
   if (cartItems.length === 0) {
     return (
       <>
-        <div style={styles.emptyState}>
-          <h2 style={{ fontSize: '28px', letterSpacing: '0.15em', marginBottom: '12px', textTransform: 'uppercase' }}>Your Cart is Empty</h2>
-          <p style={{ fontFamily: 'sans-serif', fontSize: '13px', color: theme.textMuted, marginBottom: '32px', letterSpacing: '0.1em' }}>
-            Discover your signature essence.
-          </p>
+        <style>{`
+          .empty-state-container {
+            background-color: #f4efe6;
+            color: #1b234a;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            box-sizing: border-box;
+          }
+          .empty-heading {
+            font-size: 28px; 
+            letter-spacing: 0.15em; 
+            margin-bottom: 12px; 
+            text-transform: uppercase;
+            font-family: serif;
+          }
+          .empty-text {
+            font-family: sans-serif; 
+            font-size: 13px; 
+            color: #6b6661; 
+            margin-bottom: 32px; 
+            letter-spacing: 0.1em;
+          }
+          .continue-shopping-btn {
+            height: 50px;
+            background-color: #1b234a;
+            color: #ffffff;
+            border: none;
+            border-radius: 6px;
+            font-family: sans-serif;
+            fontSize: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(27, 35, 74, 0.15);
+            width: auto; 
+            padding: 0 32px;
+          }
+        `}</style>
+
+        <div className="empty-state-container">
+          <h2 className="empty-heading">Your Cart is Empty</h2>
+          <p className="empty-text">Discover your signature essence.</p>
           <Link to="/shop">
-            <button style={{ ...styles.checkoutBtn, width: 'auto', padding: '0 32px' }}>
+            <button className="continue-shopping-btn">
               Continue Shopping
             </button>
           </Link>
@@ -287,28 +85,317 @@ export const Cart: React.FC = () => {
 
   return (
     <>
-      <div style={styles.pageContainer}>
-        <div style={styles.innerWrapper}>
-          <h1 style={styles.heading}>Shopping Cart</h1>
+      {/* Premium Luxury Stylesheet Tag Injection */}
+      <style>{`
+        .cart-page {
+          background-color: #f4efe6;
+          color: #1b234a;
+          min-height: 100vh;
+          padding: 12px 24px 64px 24px;
+          font-family: serif;
+          box-sizing: border-box;
+        }
+        .cart-wrapper {
+          max-width: 1200px;
+          margin: 0 auto;
+        }
+        .cart-heading {
+          font-size: 28px;
+          letter-spacing: 0.15em;
+          text-transform: uppercase;
+          margin-bottom: 40px;
+          font-weight: 600;
+        }
+        .cart-layout-grid {
+          display: grid;
+          grid-template-columns: 2fr 1fr;
+          gap: 40px;
+          align-items: start;
+        }
+        .item-list-container {
+          display: flex;
+          flex-direction: column;
+          gap: 20px;
+        }
+        .cart-item-card {
+          background-color: #fcfaf7;
+          padding: 24px;
+          border-radius: 12px;
+          border: 1px solid rgba(27, 35, 74, 0.15);
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 24px;
+        }
+        .product-meta-block {
+          display: flex;
+          align-items: center;
+          gap: 24px;
+        }
+        .image-container-frame {
+          width: 96px;
+          height: 112px;
+          border-radius: 8px;
+          overflow: hidden;
+          flex-shrink: 0;
+          border: 1px solid rgba(27, 35, 74, 0.05);
+        }
+        .product-card-img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+        .details-text-block {
+          font-family: serif;
+        }
+        .category-tag-label {
+          font-family: sans-serif;
+          font-size: 10px;
+          text-transform: uppercase;
+          letter-spacing: 0.15em;
+          color: #6b6661;
+          margin-bottom: 4px;
+          display: block;
+        }
+        .item-name-heading {
+          font-size: 18px;
+          margin: 0 0 6px 0;
+          text-transform: capitalize;
+          color: #1b234a;
+          letter-spacing: 0.02em;
+        }
+        .item-size-spec {
+          font-family: sans-serif;
+          font-size: 13px;
+          color: #6b6661;
+          margin: 0 0 8px 0;
+        }
+        .highlighted-size {
+          font-weight: 600;
+          color: #1b234a;
+        }
+        .item-base-price {
+          font-family: sans-serif;
+          font-size: 14px;
+          font-weight: 600;
+          margin: 0;
+        }
+        .action-control-group {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 32px;
+        }
+        .quantity-selector-matrix {
+          display: flex;
+          align-items: center;
+          border: 1px solid rgba(27, 35, 74, 0.15);
+          border-radius: 8px;
+          background-color: #f4efe6;
+          overflow: hidden;
+        }
+        .quantity-control-btn {
+          background: none;
+          border: none;
+          width: 36px;
+          height: 36px;
+          cursor: pointer;
+          font-size: 16px;
+          color: #1b234a;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .quantity-current-val {
+          font-family: sans-serif;
+          font-size: 14px;
+          font-weight: 600;
+          width: 32px;
+          text-align: center;
+        }
+        .price-wrapper-block {
+          display: flex;
+          align-items: center;
+          gap: 20px;
+        }
+        .total-line-price-display {
+          font-family: sans-serif;
+          font-size: 15px;
+          font-weight: 700;
+          min-width: 100px;
+          text-align: right;
+        }
+        .remove-cross-btn {
+          background: none;
+          border: none;
+          color: #6b6661;
+          cursor: pointer;
+          padding: 4px;
+          font-size: 18px;
+        }
+        .continue-shopping-link-wrap {
+          margin-top: 12px;
+        }
+        .continue-shopping-text-btn {
+          font-family: sans-serif;
+          font-size: 12px;
+          text-transform: uppercase;
+          letter-spacing: 0.1em;
+          color: #1b234a;
+          font-weight: 600;
+        }
+        .summary-sidebar-card {
+          background-color: #fcfaf7;
+          padding: 32px;
+          border-radius: 12px;
+          border: 1px solid rgba(27, 35, 74, 0.15);
+          position: sticky;
+          top: 120px;
+        }
+        .sidebar-title-heading {
+          font-size: 20px;
+          margin: 0 0 24px 0;
+          border-bottom: 1px solid rgba(27, 35, 74, 0.15);
+          padding-bottom: 12px;
+          letter-spacing: 0.05em;
+        }
+        .promo-flex-box {
+          display: flex;
+          gap: 8px;
+          margin-bottom: 24px;
+        }
+        .promo-code-input {
+          flex: 1;
+          height: 40px;
+          padding: 0 12px;
+          background-color: #f4efe6;
+          border: 1px solid rgba(27, 35, 74, 0.15);
+          border-radius: 6px;
+          font-size: 13px;
+          color: #1b234a;
+          font-family: sans-serif;
+        }
+        .promo-apply-btn {
+          height: 40px;
+          padding: 0 16px;
+          background-color: transparent;
+          border: 1px solid rgba(27, 35, 74, 0.15);
+          border-radius: 6px;
+          cursor: pointer;
+          font-family: sans-serif;
+          font-size: 12px;
+          text-transform: uppercase;
+          letter-spacing: 0.1em;
+        }
+        .summary-calculation-rows {
+          font-family: sans-serif;
+          font-size: 14px;
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+          padding-bottom: 20px;
+          border-bottom: 1px solid rgba(27, 35, 74, 0.15);
+          color: #6b6661;
+        }
+        .row-space-flex {
+          display: flex;
+          justify-content: space-between;
+        }
+        .summary-dark-value {
+          font-weight: 600;
+          color: #1b234a;
+        }
+        .summary-complimentary-value {
+          font-weight: 600;
+          color: #065f46;
+        }
+        .grand-total-sum-block {
+          display: flex;
+          justify-content: space-between;
+          align-items: baseline;
+          padding: 24px 0;
+        }
+        .total-title-lbl {
+          font-size: 18px;
+          font-weight: 600;
+        }
+        .total-numeric-val {
+          font-family: sans-serif;
+          font-size: 22px;
+          font-weight: 700;
+        }
+        .proceed-checkout-btn {
+          width: 100%;
+          height: 50px;
+          background-color: #1b234a;
+          color: #ffffff;
+          border: none;
+          border-radius: 6px;
+          font-family: sans-serif;
+          font-size: 12px;
+          text-transform: uppercase;
+          letter-spacing: 0.2em;
+          font-weight: 600;
+          cursor: pointer;
+          box-shadow: 0 4px 12px rgba(27, 35, 74, 0.15);
+        }
+        .secure-checkout-footer {
+          margin-top: 24px;
+          text-transform: uppercase;
+          font-size: 10px;
+          letter-spacing: 0.1em;
+          text-align: center;
+          color: #6b6661;
+          font-family: sans-serif;
+        }
 
-          <div style={styles.layoutGrid}>
+        /* Clean Responsive Screen Adjustments via Media Queries */
+        @media (max-width: 1024px) {
+          .cart-layout-grid {
+            grid-template-columns: 1fr;
+            gap: 32px;
+          }
+          .summary-sidebar-card {
+            position: relative;
+            top: 0;
+          }
+          .cart-item-card {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 16px;
+          }
+          .action-control-group {
+            width: 100%;
+            justify-content: space-between;
+          }
+          .total-line-price-display {
+            text-align: left;
+            min-width: auto;
+          }
+        }
+      `}</style>
+
+      <div className="cart-page">
+        <div className="cart-wrapper">
+          <h1 className="cart-heading">Shopping Cart</h1>
+
+          <div className="cart-layout-grid">
             {/* List of Cart Items */}
-            <div style={styles.itemList}>
+            <div className="item-list-container">
               {cartItems.map((item: CartItem) => (
-                <div key={`${item._id}-${item.size}`} style={styles.cartItemCard}>
+                <div key={`${item._id}-${item.size}`} className="cart-item-card">
                   
                   {/* Left Side: Product Details */}
-                  <div style={styles.productMeta}>
-                    <div style={styles.imageContainer}>
-                      <img src={item.image} alt={item.name} style={styles.productImg} />
+                  <div className="product-meta-block">
+                    <div className="image-container-frame">
+                      <img src={item.image} alt={item.name} className="product-card-img" />
                     </div>
-                    <div style={styles.detailsBlock}>
-                      <span style={styles.categoryTag}>{item.category || 'Premium Fragrance'}</span>
-                      <h3 style={styles.itemName}>{item.name}</h3>
-                      <p style={styles.itemSize}>Size: <span style={{ fontWeight: 600, color: theme.primary }}>{item.size}</span></p>
+                    <div className="details-text-block">
+                      <span className="category-tag-label">{item.category || 'Premium Fragrance'}</span>
+                      <h3 className="item-name-heading">{item.name}</h3>
+                      <p className="item-size-spec">Size: <span className="highlighted-size">{item.size}</span></p>
                       
-                      {/* Integrated Fix 1: Safe Base Item Price Parsing */}
-                      <p style={styles.itemPrice}>
+                      <p className="item-base-price">
                         Rs. {(() => {
                           const numericPrice = typeof item.price === 'string' 
                             ? parseFloat(String(item.price).replace(/[^0-9.]/g, '')) 
@@ -320,20 +407,20 @@ export const Cart: React.FC = () => {
                   </div>
 
                   {/* Right Side: Handlers & Aggregates */}
-                  <div style={styles.actionControlGroup}>
+                  <div className="action-control-group">
                     {/* Plus/Minus Custom Selector */}
-                    <div style={styles.quantitySelector}>
+                    <div className="quantity-selector-matrix">
                       <button 
                         type="button"
-                        style={styles.quantityBtn} 
+                        className="quantity-control-btn" 
                         onClick={() => updateQuantity(item._id, item.size, item.quantity - 1)}
                       >
                         −
                       </button>
-                      <span style={styles.quantityVal}>{item.quantity}</span>
+                      <span className="quantity-current-val">{item.quantity}</span>
                       <button 
                         type="button"
-                        style={styles.quantityBtn} 
+                        className="quantity-control-btn" 
                         onClick={() => updateQuantity(item._id, item.size, item.quantity + 1)}
                       >
                         +
@@ -341,9 +428,8 @@ export const Cart: React.FC = () => {
                     </div>
 
                     {/* Calculated Cost Display & Delete Cross */}
-                    <div style={styles.priceWrapper}>
-                      {/* Integrated Fix 2: Safe Cumulative Product Row Subtotal Calculations */}
-                      <span style={styles.totalLinePrice}>
+                    <div className="price-wrapper-block">
+                      <span className="total-line-price-display">
                         Rs. {(() => {
                           const numericPrice = typeof item.price === 'string' 
                             ? parseFloat(String(item.price).replace(/[^0-9.]/g, '')) 
@@ -355,7 +441,7 @@ export const Cart: React.FC = () => {
                       </span>
                       <button 
                         type="button"
-                        style={styles.removeBtn} 
+                        className="remove-cross-btn" 
                         onClick={() => removeFromCart(item._id, item.size)}
                         title="Remove Item"
                       >
@@ -367,9 +453,9 @@ export const Cart: React.FC = () => {
                 </div>
               ))}
 
-              <div style={{ marginTop: '12px' }}>
+              <div className="continue-shopping-link-wrap">
                 <Link to="/shop" style={{ textDecoration: 'none' }}>
-                  <span style={{ fontFamily: 'sans-serif', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.1em', color: theme.primary, fontWeight: 600 }}>
+                  <span className="continue-shopping-text-btn">
                     ← Continue Shopping
                   </span>
                 </Link>
@@ -377,36 +463,36 @@ export const Cart: React.FC = () => {
             </div>
 
             {/* Checkout Breakdown Sidebar */}
-            <div style={styles.sidebarCard}>
-              <h2 style={styles.sidebarTitle}>Order Summary</h2>
+            <div className="summary-sidebar-card">
+              <h2 className="sidebar-title-heading">Order Summary</h2>
               
-              <div style={styles.promoBox}>
+              <div className="promo-flex-box">
                 <input 
                   type="text" 
                   placeholder="Promo code" 
                   value={promoCode}
                   onChange={(e) => setPromoCode(e.target.value)}
-                  style={styles.promoInput} 
+                  className="promo-code-input" 
                 />
-                <button type="button" style={styles.promoBtn}>Apply</button>
+                <button type="button" className="promo-apply-btn">Apply</button>
               </div>
 
-              <div style={styles.summaryRows}>
-                <div style={styles.rowSpace}>
+              <div className="summary-calculation-rows">
+                <div className="row-space-flex">
                   <span>Subtotal</span>
-                  <span style={{ fontWeight: 600, color: theme.primary }}>Rs. {subtotal.toLocaleString()}</span>
+                  <span className="summary-dark-value">Rs. {subtotal.toLocaleString()}</span>
                 </div>
-                <div style={styles.rowSpace}>
+                <div className="row-space-flex">
                   <span>Shipping</span>
-                  <span style={{ fontWeight: 600, color: '#065f46' }}>
+                  <span className="summary-complimentary-value">
                     {shippingCost === 0 ? "Complimentary" : `Rs. ${shippingCost.toLocaleString()}`}
                   </span>
                 </div>
               </div>
 
-              <div style={styles.grandTotalBlock}>
-                <span style={{ fontSize: '18px', fontWeight: '600' }}>Total</span>
-                <span style={{ fontFamily: 'sans-serif', fontSize: '22px', fontWeight: '700' }}>
+              <div className="grand-total-sum-block">
+                <span className="total-title-lbl">Total</span>
+                <span className="total-numeric-val">
                   Rs. {totalCost.toLocaleString()}
                 </span>
               </div>
@@ -414,12 +500,12 @@ export const Cart: React.FC = () => {
               <button 
                 type="button"
                 onClick={() => navigate('/checkout')} 
-                style={styles.checkoutBtn}
+                className="proceed-checkout-btn"
               >
                 Proceed to Checkout →
               </button>
 
-              <div style={{ marginTop: '24px', textTransform: 'uppercase', fontSize: '10px', letterSpacing: '0.1em', textAlign: 'center', color: theme.textMuted, fontFamily: 'sans-serif' }}>
+              <div className="secure-checkout-footer">
                 🔒 Secure Checkout • SSL Encrypted
               </div>
             </div>
