@@ -2,6 +2,7 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import { CartProvider } from "./context/CartContext"
+import { WishlistProvider } from "./context/WishlistContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Header from "./components/header";
 import Home from "./pages/Home";
@@ -20,56 +21,61 @@ import ScrollToTop from "./components/ScrollToTop";
 import Contact from "./pages/Contact"
 import { Cart } from './pages/Cart';
 import { Checkout } from './pages/Checkout';
+import { Wishlist } from './pages/Wishlist';
 
 function App() {
   return (
     <CartProvider>
     <AuthProvider>
-      <BrowserRouter>
-        <ScrollToTop />
-        <Header />
-        <Routes>
-          {/* ── Public Routes ─────────────────────────────────── */}
-          <Route path="/" element={<Home />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/reset-password/:token" element={<ResetPassword />} />
-          <Route path="/verify-email/:token" element={<VerifyEmail />} />
-          <Route path="/resend-verification" element={<ResendVerification />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/shop" element={<Shop />} />
-          <Route path="/shop/:category" element={<CategoryPage />} />
-          <Route path="/shop/:category/:productId" element={<ProductDetail />} />
-          <Route path="/contact" element={<Contact />} />
+      <BrowserRouter> 
+        <WishlistProvider>
+          <ScrollToTop />
+          <Header />
+          <Routes>
+            {/* ── Public Routes ─────────────────────────────────── */}
+            <Route path="/" element={<Home />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password/:token" element={<ResetPassword />} />
+            <Route path="/verify-email/:token" element={<VerifyEmail />} />
+            <Route path="/resend-verification" element={<ResendVerification />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/shop" element={<Shop />} />
+            <Route path="/shop/:category" element={<CategoryPage />} />
+            <Route path="/shop/:category/:productId" element={<ProductDetail />} />
+            <Route path="/contact" element={<Contact />} />
 
-          <Route path="/cart" element={<Cart />} />
-          <Route path="/checkout" element={<Checkout />} />
+            <Route path="/cart" element={<Cart />} />
+            <Route path="/checkout" element={<Checkout />} />
+            <Route path="/wishlist" element={<Wishlist />} />
 
 
 
-          {/* ── Protected: any logged-in user ─────────────────── */}
-          {/*
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            }
-          />
-          */}
 
-          {/* ── Protected: admin only ──────────────────────────── */}
-          <Route
-            path="/admin"
-            element={
-              <ProtectedRoute adminOnly>
-                <AdminDashboard />
-              </ProtectedRoute>
-            }
-          />
-        </Routes>
+            {/* ── Protected: any logged-in user ─────────────────── */}
+            {/*
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              }
+            />
+            */}
+
+            {/* ── Protected: admin only ──────────────────────────── */}
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute adminOnly>
+                  <AdminDashboard />
+                </ProtectedRoute>
+              }
+            />
+          </Routes>
+        </WishlistProvider> 
       </BrowserRouter>
     </AuthProvider>
     </CartProvider>

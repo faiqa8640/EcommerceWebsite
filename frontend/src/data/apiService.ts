@@ -68,3 +68,85 @@ export const createOrder = async (orderPayload: any): Promise<any> => {
     throw error;
   }
 };
+
+
+// Fetch logged-in user's populated wishlist
+export const fetchWishlist = async (): Promise<Product[]> => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token || token.trim() === "") {
+      console.warn("⚠️ No token available in localStorage.");
+      return [];
+    }
+
+    const response = await fetch(`${API_BASE_URL}/wishlist`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+      },
+    });
+
+    if (response.status === 401) {
+      console.error("❌ Wishlist fetch unauthorized. Stale or invalid token.");
+      return [];
+    }
+
+    if (!response.ok) {
+      throw new Error(`Server returned status code: ${response.status}`);
+    }
+
+    const data = await response.json();
+    // Return data directly if it's already an array, otherwise check for a wrapped property
+    return Array.isArray(data) ? data : (data.wishlist || []);
+  } catch (error: any) {
+    console.error("❌ Error loading wishlist inside apiService.ts:", error.message);
+    return []; // Return empty array fallback so UI rendering context never breaks
+  }
+};
+
+// Add a product ID to the user's document array
+export const addToWishlistAPI = async (productId: string): Promise<any> => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) throw new Error("Authentication token required to save items");
+
+    const response = await fetch(`${API_BASE_URL}/wishlist`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ productId }),
+    });
+
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message || "Failed to add to wishlist");
+    return data;
+  } catch (error: any) {
+    console.error("Error adding to wishlist API:", error.message);
+    throw error;
+  }
+};
+
+// Remove an explicit product ID from the user's array
+export const removeFromWishlistAPI = async (productId: string): Promise<any> => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) throw new Error("Authentication token required");
+
+    const response = await fetch(`${API_BASE_URL}/wishlist/${productId}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message || "Failed to remove from wishlist");
+    return data;
+  } catch (error: any) {
+    console.error("Error removing from wishlist API:", error.message);
+    throw error;
+  }
+};

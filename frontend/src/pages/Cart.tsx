@@ -306,7 +306,16 @@ export const Cart: React.FC = () => {
                       <span style={styles.categoryTag}>{item.category || 'Premium Fragrance'}</span>
                       <h3 style={styles.itemName}>{item.name}</h3>
                       <p style={styles.itemSize}>Size: <span style={{ fontWeight: 600, color: theme.primary }}>{item.size}</span></p>
-                      <p style={styles.itemPrice}>Rs. {item.price.toLocaleString()}</p>
+                      
+                      {/* Integrated Fix 1: Safe Base Item Price Parsing */}
+                      <p style={styles.itemPrice}>
+                        Rs. {(() => {
+                          const numericPrice = typeof item.price === 'string' 
+                            ? parseFloat(String(item.price).replace(/[^0-9.]/g, '')) 
+                            : Number(item.price);
+                          return isNaN(numericPrice) ? "0.00" : numericPrice.toLocaleString();
+                        })()}
+                      </p>
                     </div>
                   </div>
 
@@ -333,8 +342,16 @@ export const Cart: React.FC = () => {
 
                     {/* Calculated Cost Display & Delete Cross */}
                     <div style={styles.priceWrapper}>
+                      {/* Integrated Fix 2: Safe Cumulative Product Row Subtotal Calculations */}
                       <span style={styles.totalLinePrice}>
-                        Rs. {(item.price * item.quantity).toLocaleString()}
+                        Rs. {(() => {
+                          const numericPrice = typeof item.price === 'string' 
+                            ? parseFloat(String(item.price).replace(/[^0-9.]/g, '')) 
+                            : Number(item.price);
+                          const numericQty = Number(item.quantity) || 1;
+                          const subtotalValue = numericPrice * numericQty;
+                          return isNaN(subtotalValue) ? "0.00" : subtotalValue.toLocaleString();
+                        })()}
                       </span>
                       <button 
                         type="button"

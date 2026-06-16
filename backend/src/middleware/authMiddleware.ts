@@ -41,7 +41,7 @@ export const protect = async (
 
     const secret = process.env.JWT_SECRET;
     if (!secret) {
-      console.error("❌ [AUTH MIDDLEWARE CRITICAL]: Environment configuration error. JWT_SECRET variable is missing from your .env file.");
+      console.error(" [AUTH MIDDLEWARE CRITICAL]: Environment configuration error. JWT_SECRET variable is missing from your .env file.");
       return res.status(500).json({ message: "JWT secret configuration mismatch on server" });
     }
 
@@ -51,7 +51,7 @@ export const protect = async (
     // Fetch account from database to verify profile status
     const user = await User.findById(decoded.id).select("-password");
     if (!user) {
-      console.error(`❌ [AUTH MIDDLEWARE]: Token is valid, but no account exists in MongoDB for User ID: ${decoded.id}`);
+      console.error(`[AUTH MIDDLEWARE]: Token is valid, but no account exists in MongoDB for User ID: ${decoded.id}`);
       return res
         .status(401)
         .json({ message: "Not authorized — user account no longer exists" });
@@ -86,16 +86,8 @@ export const adminOnly = (
   next: NextFunction
 ) => {
   if (req.user?.role !== "admin") {
-    console.warn(`⚠️ [AUTH MIDDLEWARE]: Access denied. User ${req.user?.email} attempted admin action without required permissions.`);
+    console.warn(` [AUTH MIDDLEWARE]: Access denied. User ${req.user?.email} attempted admin action without required permissions.`);
     return res.status(403).json({ message: "Admin access privileges required" });
   }
   next();
 };
-
-
-
-
-
-
-
-

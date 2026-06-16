@@ -3,10 +3,11 @@
 // import Header from "../components/header";
 // import Footer from "../components/Footer";
 // import ReviewFormModal from "../components/ReviewFormModal"; 
-// import { Product, Category , Review} from "../types"; 
+// import { Product, Category, Review } from "../types"; 
+// import { useCart } from "../context/CartContext";
 
-// // ── Star rating  ──────────────────
-// function DynamicStars({ rating }: { rating: number }) { // in this we create the 2 start one is not fill then is in button and the overone  is filled and it is on the top
+// // ── Star rating ──────────────────
+// function DynamicStars({ rating }: { rating: number }) { 
 //   return (
 //     <>
 //       <style>{`
@@ -34,7 +35,6 @@
 //       `}</style>
 //       <div className="star-rating-container">
 //         {[1, 2, 3, 4, 5].map((index) => {
-//           // Computes the exact percentage to slice the color for partial ratings (like 4.5)
 //           const fillWidth = Math.max(0, Math.min(100, (rating - (index - 1)) * 100));
 //           return (
 //             <span 
@@ -52,23 +52,27 @@
 // }
 
 // export default function ProductDetail() {
-//   const { category, productId } = useParams<{// getting the product and category from the url
+//   const { category, productId } = useParams<{
 //     category: string; 
 //     productId: string;
 //   }>();
 
+//   // Cart Context Core Hook
+//   const { addToCart } = useCart();
+
 //   // State managers to store data coming live from MongoDB
-//   const [product, setProduct] = useState<Product | null>(null); //store product
-//   const [cat, setCat] = useState<Category | null>(null); //store current category 
+//   const [product, setProduct] = useState<Product | null>(null); 
+//   const [cat, setCat] = useState<Category | null>(null); 
 //   const [related, setRelated] = useState<Product[]>([]);
   
 //   // Loading and Error states
-//   const [loading, setLoading] = useState<boolean>(true); // it control the loadin screen
+//   const [loading, setLoading] = useState<boolean>(true); 
 //   const [redirect, setRedirect] = useState<boolean>(false);
 
 //   // UI States
 //   const [currentImage, setCurrentImage] = useState(0);
-//   const [isModalOpen, setIsModalOpen] = useState(false); // for the review -> when you click wrte review then the model is open
+//   const [isModalOpen, setIsModalOpen] = useState(false); 
+//   const [selectedSize, setSelectedSize] = useState<string>("100ml");
 //   const reviewScrollRef = useRef<HTMLDivElement | null>(null);
 
 //   // FETCH DATA FROM BACKEND API
@@ -80,13 +84,13 @@
 //         // 1. Fetch Main Product Details
 //         const productRes = await fetch(`http://localhost:5000/api/products/${productId}`);
 //         if (!productRes.ok) throw new Error("Product not found");
-//         const productData: Product = await productRes.json();// convert into the js element
+//         const productData: Product = await productRes.json();
 
 //         // 2. Fetch All Categories to find the current active category
 //         const categoryRes = await fetch(`http://localhost:5000/api/categories`);
 //         if (!categoryRes.ok) throw new Error("Categories not found");
 //         const categoriesData: Category[] = await categoryRes.json();
-//         const currentCat = categoriesData.find((c) => c.slug === category);// get the current category
+//         const currentCat = categoriesData.find((c) => c.slug === category);
 
 //         // 3. Fetch Related Products (Filtering by the same category)
 //         const relatedRes = await fetch(`http://localhost:5000/api/products?category=${category}`);
@@ -98,6 +102,12 @@
 //         setCat(currentCat || null);
 //         setRelated(relatedData.filter((p) => p.id !== productId).slice(0, 3));
 //         setCurrentImage(0); 
+        
+//         // Dynamically assign default size selection state post-fetch
+//         if (productData.size) {
+//           setSelectedSize(productData.size);
+//         }
+
 //         setLoading(false);
 //       } catch (error) {
 //         console.error("Error connecting to database:", error);
@@ -111,15 +121,31 @@
 //     }
 //   }, [category, productId]);
 
-//   // HANDLS THE NEW REVIEW
+//   // HANDLES THE CART ADDITION ACTION
+//   const handleAddToCartClick = () => {
+//     if (!product) return;
+
+//     addToCart({
+//       _id: product._id || product.id, // Fallback safety match strategy depending on backend mapping types
+//       name: product.name,
+//       price: typeof product.price === 'string' ? parseFloat(product.price.replace(/[^0-9.]/g, '')) : product.price,
+//       image: product.images[0], 
+//       size: selectedSize
+//     }, 1);
+    
+//     alert(`${product.name} (${selectedSize}) added to your luxury selection!`);
+//   };
+
+//   // HANDLES THE NEW REVIEW
 //   const handleNewReview = (newReview: Review) => {
-//   if (product) {
-//     setProduct({
-//       ...product,
-//       reviews: [newReview, ...(product.reviews || [])],
-//     });
-//   }
-// };
+//     if (product) {
+//       setProduct({
+//         ...product,
+//         reviews: [newReview, ...(product.reviews || [])],
+//       });
+//     }
+//   };
+
 //   // Handle redirects safely
 //   if (redirect) return <Navigate to="/shop" replace />;
 //   if (loading) return <div className="text-center py-20 bg-[#EAE0CF] min-height-100vh text-[#111844]">Loading luxury fragrance...</div>;
@@ -127,7 +153,6 @@
 
 //   const reviews = product.reviews ?? [];
 
-//   // AVG RATING
 //   // Calculate Average Rating Summary
 //   const averageRating = reviews.length > 0 
 //     ? (reviews.reduce((acc, curr) => acc + curr.rating, 0) / reviews.length).toFixed(1) 
@@ -701,7 +726,9 @@
 //             <div className="detail-divider" />
 
 //             <div className="detail-actions">
-//               <button className="detail-btn-primary">Add to Cart</button>
+//               <button onClick={handleAddToCartClick} className="detail-btn-primary">
+//                 Add to Cart
+//               </button>
 //               <button className="detail-btn-secondary" aria-label="Save item">♡</button>
 //             </div>
 //           </div>
@@ -742,7 +769,6 @@
 //                   <div className="review-top">
 //                     <div className="review-user" style={{ textTransform: "capitalize" }}>{r.user}</div>
 //                     <div className="review-rating">
-//                       {/* Integrated dynamic star layout row */}
 //                       <DynamicStars rating={r.rating} />
 //                     </div>
 //                   </div>
@@ -791,7 +817,6 @@
 
 //       <Footer />
 
-//       {/* Embedded Submission Dialog Modal Hook */}
 //       <ReviewFormModal
 //         isOpen={isModalOpen}
 //         onClose={() => setIsModalOpen(false)}
@@ -811,6 +836,8 @@ import Footer from "../components/Footer";
 import ReviewFormModal from "../components/ReviewFormModal"; 
 import { Product, Category, Review } from "../types"; 
 import { useCart } from "../context/CartContext";
+// Import the Wishlist Context Hook
+import { useWishlist } from "../context/WishlistContext";
 
 // ── Star rating ──────────────────
 function DynamicStars({ rating }: { rating: number }) { 
@@ -865,6 +892,9 @@ export default function ProductDetail() {
 
   // Cart Context Core Hook
   const { addToCart } = useCart();
+
+  // Wishlist Context Operations Hook
+  const { toggleWishlist, isInWishlist } = useWishlist();
 
   // State managers to store data coming live from MongoDB
   const [product, setProduct] = useState<Product | null>(null); 
@@ -981,6 +1011,9 @@ export default function ProductDetail() {
     setCurrentImage((prev) => Math.max(prev - 1, 0));
   };
 
+  // Helper definition to extract active ID safely for key evaluation
+  const activeProductId = product._id || product.id || "";
+
   return (
     <>
       <style>{`
@@ -1083,7 +1116,7 @@ export default function ProductDetail() {
          opacity: 0.3; 
          cursor: not-allowed; 
          pointer-events: none; 
-        }
+         }
         .carousel-indicator { 
          position: absolute; 
          bottom: 16px; 
@@ -1291,7 +1324,7 @@ export default function ProductDetail() {
         .review-user { 
          font-weight: 600; 
          color: #111844; 
-        }
+         }
         .review-rating { font-size: 0.9rem; }
         .review-comment { 
          font-size: 0.85rem; 
@@ -1443,15 +1476,15 @@ export default function ProductDetail() {
          color: #EAE0CF; 
         }
         @media (max-width: 900px) { 
-         .detail-main { grid-template-columns: 1fr; gap: 2.5rem; } 
-         .detail-img-wrap { position: relative; top: 0; height: 360px; } 
-         .related-grid { grid-template-columns: 1fr 1fr; } 
+          .detail-main { grid-template-columns: 1fr; gap: 2.5rem; } 
+          .detail-img-wrap { position: relative; top: 0; height: 360px; } 
+          .related-grid { grid-template-columns: 1fr 1fr; } 
         }
         @media (max-width: 600px) { 
-         .notes-row { grid-template-columns: 1fr; } 
-         .detail-specs { grid-template-columns: 1fr 1fr; } 
-         .related-grid { grid-template-columns: 1fr; } 
-         .reviews-header { flex-direction: column; align-items: flex-start; gap: 15px; }
+          .notes-row { grid-template-columns: 1fr; } 
+          .detail-specs { grid-template-columns: 1fr 1fr; } 
+          .related-grid { grid-template-columns: 1fr; } 
+          .reviews-header { flex-direction: column; align-items: flex-start; gap: 15px; }
         }
       `}</style>
 
@@ -1535,7 +1568,19 @@ export default function ProductDetail() {
               <button onClick={handleAddToCartClick} className="detail-btn-primary">
                 Add to Cart
               </button>
-              <button className="detail-btn-secondary" aria-label="Save item">♡</button>
+              
+              {/* Reactive Wishlist Action Trigger Heart Button */}
+              <button 
+                onClick={() => toggleWishlist(product)} 
+                className="detail-btn-secondary" 
+                aria-label="Save item"
+                style={{ 
+                  color: isInWishlist(activeProductId) ? "#4B5694" : "inherit",
+                  transition: "color 0.2s ease, transform 0.1s ease"
+                }}
+              >
+                {isInWishlist(activeProductId) ? "♥" : "♡"}
+              </button>
             </div>
           </div>
         </div>
