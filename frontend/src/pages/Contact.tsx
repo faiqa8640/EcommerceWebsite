@@ -87,7 +87,7 @@ export default function Contact() {
 
         /* ── PAGE LAYOUT BASE ─────────────────────────────────── */
         .contact-page {
-          background: #EAE0CF;
+          background: #eae0cfd6; 
           font-family: 'Jost', sans-serif;
           margin-top: 0;
           padding-top: 0;

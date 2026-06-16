@@ -33,7 +33,7 @@ export default function Shop() {
     <>
       <style>{`
         .shop-page {
-          background: #EAE0CF;
+          background: #eae0cfd6; 
           min-height: 100vh;
           font-family: 'Jost', sans-serif;
         }

@@ -47,7 +47,7 @@ export default function BestSellers() {
     <>
       <style>{`
         .best-section {
-          background: #EAE0CF;
+          background: #eae0cfd6; 
           padding: 5rem 2rem;
           position: relative;
         }

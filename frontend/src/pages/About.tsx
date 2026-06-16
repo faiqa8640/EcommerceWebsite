@@ -62,7 +62,7 @@ export default function About() {
 
         /* ── SHARED SECTION BASE ──────────────────────────────── */
         .about-page {
-          background: #EAE0CF;
+          background: #eae0cfd6; 
           font-family: 'Jost', sans-serif;
           margin-top: 0;
           padding-top: 0;

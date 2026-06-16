@@ -37,7 +37,7 @@ export default function Categories() {
     <>
       <style>{`
         .category-section {
-          background: #EAE0CF;
+          background: #eae0cfd6; 
           padding: 2rem;
         }
 

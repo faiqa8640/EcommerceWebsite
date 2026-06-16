@@ -56,7 +56,7 @@ export default function ServicesAndReviews(){
     <>
       <style>{`
         .section {
-          background: #EAE0CF;
+          background: #eae0cfd6; 
           padding: 1.5rem 2rem 5rem;
         }
 

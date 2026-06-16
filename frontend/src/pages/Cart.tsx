@@ -88,7 +88,7 @@ export const Cart: React.FC = () => {
       {/* Premium Luxury Stylesheet Tag Injection */}
       <style>{`
         .cart-page {
-          background-color: #f4efe6;
+          background: #eae0cfd6; 
           color: #1b234a;
           min-height: 100vh;
           padding: 12px 24px 64px 24px;
