@@ -741,9 +741,7 @@ function UserIconArea({ user, onLogout, onWishlistClick }: UserIconAreaProps) {
           <Link to="/profile" className="user-tooltip-link" onClick={() => setOpen(false)}>
             My Profile
           </Link>
-          <Link to="/orders" className="user-tooltip-link" onClick={() => setOpen(false)}>
-            My Orders
-          </Link>
+          
           {/* PROTECTED DROPDOWN WISHLIST LINK */}
           <button 
             className="user-tooltip-link" 

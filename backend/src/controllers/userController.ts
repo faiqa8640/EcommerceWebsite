@@ -3,95 +3,83 @@
 import { Response } from "express";
 import { AuthRequest } from "../middleware/authMiddleware";
 import User from "../models/userModel";
-import Order from "../models/orderModel"; // 👈 Imported to calculate live dashboard metrics
+import Order from "../models/orderModel"; 
+import Review from "../models/reviewModel";
 import bcrypt from "bcrypt";
 
 // ══════════════════════════════════════════════════════════════════════════════
 // GET /api/user/profile
-// ══════════════════════════════════════════════════════════════════════════════
+// ═════════════════════════════════════════════════════════════════════════════
+
 export const getProfile = async (req: AuthRequest, res: Response) => {
   try {
     if (!req.user || !req.user.id) {
       return res.status(401).json({ success: false, message: "Not authorized" });
     }
 
-    // Fetch the full user and populate the wishlist array items
-    const fullUser = await User.findById(req.user.id)
-      .select("-password")
-      .populate("wishlist");
+    // 1. Fetch user (it remains 'null' | 'UserDocument')
+    const fullUser = await User.findById(req.user.id).select("-password").populate("wishlist");
 
+    // 2. CHECK FOR NULL BEFORE PROCEEDING
     if (!fullUser) {
       return res.status(404).json({ success: false, message: "User not found" });
     }
 
-    // 📊 DYNAMIC AGGREGATION FOR LUXURY DASHBOARD STATS
+    // 3. Now TypeScript knows 'fullUser' exists because the function would have returned above
+    const reviewCount = await Review.countDocuments({ userId: req.user.id });
     const userOrders = await Order.find({ user: req.user.id }).sort({ createdAt: -1 });
-    
-    // Fallback counts or dynamic database values
-    const ordersPlacedCount = userOrders.length;
-    const latestOrder = userOrders.length > 0 ? userOrders[0] : null;
-
-    // Build standard matching payload for frontend expectations
-    const structuredUserResponse = {
-      ...fullUser.toObject(),
-      stats: {
-        ordersPlaced: ordersPlacedCount,
-        scentsExplored: ordersPlacedCount > 0 ? ordersPlacedCount * 2 + 1 : 3, // Logic mock based on purchases
-        reviewsWritten: 0
-      },
-      preferredCategory: "Oriental & Woody", // Placeholder until linked to checkout categories
-      lastOrder: latestOrder
-    };
 
     res.json({
       success: true,
-      user: structuredUserResponse, 
+      user: {
+        ...fullUser.toObject(), // TypeScript is now happy!
+        stats: {
+          ordersPlaced: userOrders.length,
+          scentsExplored: userOrders.length > 0 ? userOrders.length * 2 + 1 : 3,
+          reviewsWritten: reviewCount
+        },
+        lastOrder: userOrders.length > 0 ? userOrders[0] : null
+      },
     });
   } catch (error: any) {
-    console.error("❌ Error in getProfile controller:", error.message);
-    res.status(500).json({ success: false, message: "Server error parsing profile data" });
+    res.status(500).json({ success: false, message: "Server error" });
   }
 };
 
-// ══════════════════════════════════════════════════════════════════════════════
+// // ══════════════════════════════════════════════════════════════════════════════
 // PUT /api/user/address
-// ══════════════════════════════════════════════════════════════════════════════
+// ═════════════════════════════════════════════════════════════════════════════
+
+
 export const updateAddress = async (req: AuthRequest, res: Response) => {
   try {
-    if (!req.user || !req.user.id) {
-      return res.status(401).json({ success: false, message: "Not authorized" });
-    }
+    if (!req.user || !req.user.id) return res.status(401).json({ message: "Not authorized" });
 
+    // Frontend is sending { street, city, postal, country }
     const { street, city, postal, country } = req.body;
 
-    // Validate incoming parameters
     if (!street || !city || !postal || !country) {
-      return res.status(400).json({ success: false, message: "All address components are required" });
+      return res.status(400).json({ success: false, message: "Missing address fields" });
     }
 
-    // Update your database model using fields passed by frontend matrix
     const updatedUser = await User.findByIdAndUpdate(
       req.user.id,
       {
         $set: {
-          address: { street, city, postal, country }
+          address: { 
+            streetAddress: street, // Map frontend "street" to backend "streetAddress"
+            city, 
+            postalCode: postal,   // Map frontend "postal" to backend "postalCode"
+            country 
+          }
         }
       },
       { new: true, runValidators: true }
     ).select("-password");
 
-    if (!updatedUser) {
-      return res.status(404).json({ success: false, message: "User not found" });
-    }
-
-    res.json({
-      success: true,
-      message: "Address matrix successfully updated inside profile space",
-      user: updatedUser
-    });
+    res.json({ success: true, user: updatedUser });
   } catch (error: any) {
-    console.error("❌ Error in updateAddress controller:", error.message);
-    res.status(500).json({ success: false, message: "Server error updating data matrix profile coordinates" });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 

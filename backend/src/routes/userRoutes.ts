@@ -11,10 +11,11 @@ router.get("/profile", protect, getProfile);
 // Address update connector match -> handles PUT requests seamlessly
 router.put("/address", protect, updateAddress);
 
+// to update the setting of the user .. 
+router.put("/update-settings", protect, updateProfileSettings);
+
 // Admin spaces
 router.get("/admin-only", protect, adminOnly, getAdminData);
 
-// to update the setting of the user .. 
-router.put("/update-settings", protect, updateProfileSettings);
 
 export default router;
