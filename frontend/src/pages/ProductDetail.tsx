@@ -104,7 +104,7 @@ export default function ProductDetail() {
         // Save data to our states
         setProduct(productData);
         setCat(currentCat || null);
-        setRelated(relatedData.filter((p) => (p._id || p.id) !== productId).slice(0, 3));
+        setRelated(relatedData.filter((p) => (p._id ) !== productId).slice(0, 3));
         setCurrentImage(0); 
         
         if (productData.size) {
@@ -125,25 +125,34 @@ export default function ProductDetail() {
   }, [category, productId]);
 
   // HANDLES THE CART ADDITION ACTION
+
   const handleAddToCartClick = () => {
     if (!product) return;
-
     addToCart({
-      _id: product._id || product.id, 
+      _id: product._id,
       name: product.name,
-      price: typeof product.price === 'string' ? parseFloat(product.price.replace(/[^0-9.]/g, '')) : product.price,
-      image: product.images[0], 
+      price: product.price, 
+      image: product.images[0],
       size: selectedSize
     }, 1);
     
     alert(`${product.name} (${selectedSize}) added to your luxury selection!`);
   };
-
+  // HANDLES THE NEW REVIEW
+  // const handleNewReview = (newReview: Review) => {
+  //   if (product) {
+  //     setProduct({
+  //       ...product,
+  //       reviews: [newReview, ...(product.reviews || [])],
+  //     });
+  //   }
+  // };
   // HANDLES THE NEW REVIEW
   const handleNewReview = (newReview: Review) => {
     if (product) {
       setProduct({
         ...product,
+        // Ensure newReview structure matches your backend response
         reviews: [newReview, ...(product.reviews || [])],
       });
     }
@@ -167,7 +176,11 @@ export default function ProductDetail() {
   if (loading) return <div className="text-center py-20 bg-[#EAE0CF] min-height-100vh text-[#111844]">Loading luxury fragrance...</div>;
   if (!product || !cat) return <Navigate to="/shop" replace />;
 
-  const reviews = product.reviews ?? [];
+  // Filter out any falsy/malformed entries defensively — guards against
+  // a bad API response or stale state ever crashing this calculation again.
+  const reviews = (product.reviews ?? []).filter(
+    (r): r is NonNullable<typeof r> => Boolean(r) && typeof r.rating === "number"
+  );
 
   // Calculate Average Rating Summary
   const averageRating = reviews.length > 0 
@@ -192,7 +205,7 @@ export default function ProductDetail() {
   };
 
   // Safe ID resolution string for hook keys
-  const activeProductId = product._id || product.id || "";
+  const activeProductId = product._id  || "";
 
   return (
     <>
@@ -706,7 +719,7 @@ export default function ProductDetail() {
           <div className="detail-info">
             <span className="detail-category-tag">{cat.label}</span>
             <h1 className="detail-name">{product.name}</h1>
-            <div className="detail-price">{product.price}</div>
+            <div className="detail-price">PKR {product.price}</div>
 
             <div className="detail-divider" />
             <p className="detail-desc">{product.description}</p>
@@ -798,15 +811,18 @@ export default function ProductDetail() {
           {reviews.length > 0 ? (
             <div className="reviews-row" ref={reviewScrollRef}>
               {reviews.map((r, i) => (
-                <div className="review-card" key={i}>
+                <div className="review-card" key={r._id || i}>
                   <div className="review-top">
-                    <div className="review-user" style={{ textTransform: "capitalize" }}>{r.user}</div>
+                    <div className="review-user" style={{ textTransform: "capitalize" }}>{r.userName}</div>
                     <div className="review-rating">
                       <DynamicStars rating={r.rating} />
                     </div>
                   </div>
                   <p className="review-comment">"{r.comment}"</p>
-                  <div className="review-date">{r.date}</div>
+                  {/* <div className="review-date">{r.date}</div> */}
+                  <div className="review-date">
+                    {r.createdAt ? new Date(r.createdAt).toLocaleDateString() : "Just now"}
+                  </div>
                 </div>
               ))}
             </div>
@@ -826,7 +842,7 @@ export default function ProductDetail() {
             </div>
             <div className="related-grid">
               {related.map((p) => {
-                const relId = p._id || p.id;
+                const relId = p._id ;
                 return (
                   <Link key={relId} to={`/shop/${category}/${relId}`} className="product-card-link">
                     <div className="product-card">
@@ -838,7 +854,7 @@ export default function ProductDetail() {
                         <div className="product-card-name">{p.name}</div>
                         <div className="product-card-desc">{p.shortDesc}</div>
                         <div className="product-card-footer">
-                          <span className="product-card-price">{p.price}</span>
+                          <span className="product-card-price">PKR {p.price}</span>
                           <span className="product-card-btn">View →</span>
                         </div>
                       </div>
@@ -856,7 +872,7 @@ export default function ProductDetail() {
       <ReviewFormModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        productId={productId || ""}
+        productId={product?._id || ""}
         onReviewSubmitted={handleNewReview}
       />
     </>

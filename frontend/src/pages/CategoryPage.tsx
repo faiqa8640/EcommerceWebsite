@@ -6,31 +6,31 @@ import { Product, Category } from "../types";
 import { fetchProducts, fetchCategories } from "../data/apiService"; 
 
 export default function CategoryPage() {
-  const { category } = useParams<{ category: string }>();  // get the category from url 
-  const location = useLocation();  // give the correct location
+  const { category } = useParams<{ category: string }>();  // get the category from url[cite: 2]
+  const location = useLocation();  // give the correct location[cite: 2]
 
-  const [currentCategoryInfo, setCurrentCategoryInfo] = useState<Category | null>(null); //get the current category information
-  const [baseItems, setBaseItems] = useState<Product[]>([]); //  get the products in that category 
+  const [currentCategoryInfo, setCurrentCategoryInfo] = useState<Category | null>(null); //get the current category information[cite: 2]
+  const [baseItems, setBaseItems] = useState<Product[]>([]); //  get the products in that category[cite: 2]
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [hasCheckedData, setHasCheckedData] = useState<boolean>(false);
 
   // ------------------
   // FILTERS info
   // ------------------
-  const [currentPage, setCurrentPage] = useState(1);  // it just store the current page
-  const itemsPerPage = 8; // on one page the total 8 products will be visible
-  const [isFilterOpen, setIsFilterOpen] = useState(false);  //for the mobile 
-  const [selectedRating, setSelectedRating] = useState(0);// for rating 
-  const [selectedBrands, setSelectedBrands] = useState<string[]>([]);// for selected brand
-  const [maxPrice, setMaxPrice] = useState(100000);// storing the max price
+  const [currentPage, setCurrentPage] = useState(1);  // it just store the current page[cite: 2]
+  const itemsPerPage = 8; // on one page the total 8 products will be visible[cite: 2]
+  const [isFilterOpen, setIsFilterOpen] = useState(false);  //for the mobile[cite: 2]
+  const [selectedRating, setSelectedRating] = useState(0);// for rating[cite: 2]
+  const [selectedBrands, setSelectedBrands] = useState<string[]>([]);// for selected brand[cite: 2]
+  const [maxPrice, setMaxPrice] = useState(100000);// storing the max price[cite: 2]
 
   // ── NEW DEBOUNCE Search ───────────────────
-  const searchParams = new URLSearchParams(location.search);  // create an object that read the query parameter
-  const urlSearchQuery = searchParams.get("search") || "";//if search?allure -> the it contain allure
+  const searchParams = new URLSearchParams(location.search);  // create an object that read the query parameter[cite: 2]
+  const urlSearchQuery = searchParams.get("search") || "";//if search?allure -> the it contain allure[cite: 2]
 
   // 1. Tracks what's in the URL immediately
-  const [localSearch, setLocalSearch] = useState<string>(urlSearchQuery); // lword by word storing 
-  const [debouncedSearch, setDebouncedSearch] = useState<string>(urlSearchQuery); // the final search value is saved
+  const [localSearch, setLocalSearch] = useState<string>(urlSearchQuery); // lword by word storing[cite: 2]
+  const [debouncedSearch, setDebouncedSearch] = useState<string>(urlSearchQuery); // the final search value is saved[cite: 2]
 
   // Sync local search when URL changes directly (e.g. clearing search or navigating)
   useEffect(() => {
@@ -41,10 +41,10 @@ export default function CategoryPage() {
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedSearch(localSearch);
-    }, 300); // 300ms delay window
+    }, 300); // 300ms delay window[cite: 2]
 
     return () => {
-      clearTimeout(handler); // Clears timer if user types another key within 300ms
+      clearTimeout(handler); // Clears timer if user types another key within 300ms[cite: 2]
     };
   }, [localSearch]);
   // ──────────────────────────────────────────────────
@@ -56,14 +56,16 @@ export default function CategoryPage() {
         setIsLoading(true);
         
         const allCategories = await fetchCategories();
-        const matchedCat = allCategories.find(c => c.slug === category);
+        // const matchedCat = allCategories.find(c => c.slug === category);
+        const matchedCat = allCategories.find((c: Category) => c.slug === category);
         setCurrentCategoryInfo(matchedCat || null); 
 
         const categoryProducts = await fetchProducts(category); 
         setBaseItems(categoryProducts);
 
+        // ✅ FIXED: Changed p.priceNum to p.price to match backend requirements
         if (categoryProducts.length > 0) { 
-          const highest = Math.max(...categoryProducts.map(p => p.priceNum));
+          const highest = Math.max(...categoryProducts.map(p => p.price));
           setMaxPrice(highest);
         } else {
           setMaxPrice(100000);
@@ -95,7 +97,9 @@ export default function CategoryPage() {
   }
 
   const allBrands = [...new Set(baseItems.map(p => p.brand))];
-  const highestPrice = baseItems.length > 0 ? Math.max(...baseItems.map(p => p.priceNum)) : 100000;
+  
+  // ✅ FIXED: Changed p.priceNum to p.price
+  const highestPrice = baseItems.length > 0 ? Math.max(...baseItems.map(p => p.price)) : 100000;
 
   // -------------------------
   // ── FILTERS ──
@@ -107,7 +111,8 @@ export default function CategoryPage() {
           p.shortDesc.toLowerCase().includes(debouncedSearch.toLowerCase())
         : true
     )
-    .filter(p => p.priceNum <= maxPrice) 
+    // ✅ FIXED: Changed p.priceNum to p.price
+    .filter(p => p.price <= maxPrice) 
     .filter(p => 
       selectedBrands.length === 0 
         ? true
@@ -369,7 +374,7 @@ export default function CategoryPage() {
 
         .mobile-filter-trigger {
           display: none;
-        }
+          }
 
         /* ── PRODUCT GRID ────────────────────────────────── */
         .cat-body {
@@ -808,8 +813,8 @@ export default function CategoryPage() {
                       <div className="product-grid">
                         {paginatedItems.map((product) => (
                           <Link
-                            key={product.id} // Bind to MongoDB unique _id string field identifier representation
-                            to={`/shop/${category}/${product.id}`}
+                            key={product._id} // Bind to MongoDB unique _id string field identifier representation
+                            to={`/shop/${category}/${product._id}`}
                             className="product-card-link"
                           >
                             <div className="product-card">
@@ -823,7 +828,7 @@ export default function CategoryPage() {
                                 <div className="product-card-name">{product.name}</div>
                                 <div className="product-card-desc">{product.shortDesc}</div>
                                 <div className="product-card-footer">
-                                  <span className="product-card-price">{product.price}</span>
+                                  <span className="product-card-price">PKR {product.price}</span>
                                   <span className="product-card-btn">View →</span>
                                 </div>
                               </div>
@@ -859,4 +864,3 @@ export default function CategoryPage() {
     </>
   );
 }
-

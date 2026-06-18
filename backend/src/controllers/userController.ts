@@ -1,34 +1,97 @@
-// User-related logic: profile, admin-only data
+
+// User-related logic: profile, address management, admin-only data
 import { Response } from "express";
 import { AuthRequest } from "../middleware/authMiddleware";
-import User from "../models/userModel"; // 👈 1. Make sure to import your User model
+import User from "../models/userModel";
+import Order from "../models/orderModel"; // 👈 Imported to calculate live dashboard metrics
+import bcrypt from "bcrypt";
 
 // ══════════════════════════════════════════════════════════════════════════════
 // GET /api/user/profile
 // ══════════════════════════════════════════════════════════════════════════════
 export const getProfile = async (req: AuthRequest, res: Response) => {
   try {
-    // 2. Ensure we have a valid user ID from the protect middleware
     if (!req.user || !req.user.id) {
       return res.status(401).json({ success: false, message: "Not authorized" });
     }
 
-    // 3. Fetch the full user from the database and populate the wishlist array items
+    // Fetch the full user and populate the wishlist array items
     const fullUser = await User.findById(req.user.id)
       .select("-password")
-      .populate("wishlist"); // 👈 This turns the [ObjectId] strings into an array of full Product objects!
+      .populate("wishlist");
 
     if (!fullUser) {
       return res.status(404).json({ success: false, message: "User not found" });
     }
 
+    // 📊 DYNAMIC AGGREGATION FOR LUXURY DASHBOARD STATS
+    const userOrders = await Order.find({ user: req.user.id }).sort({ createdAt: -1 });
+    
+    // Fallback counts or dynamic database values
+    const ordersPlacedCount = userOrders.length;
+    const latestOrder = userOrders.length > 0 ? userOrders[0] : null;
+
+    // Build standard matching payload for frontend expectations
+    const structuredUserResponse = {
+      ...fullUser.toObject(),
+      stats: {
+        ordersPlaced: ordersPlacedCount,
+        scentsExplored: ordersPlacedCount > 0 ? ordersPlacedCount * 2 + 1 : 3, // Logic mock based on purchases
+        reviewsWritten: 0
+      },
+      preferredCategory: "Oriental & Woody", // Placeholder until linked to checkout categories
+      lastOrder: latestOrder
+    };
+
     res.json({
       success: true,
-      user: fullUser, // 👈 Sends back the user including the populated wishlist!
+      user: structuredUserResponse, 
     });
   } catch (error: any) {
     console.error("❌ Error in getProfile controller:", error.message);
     res.status(500).json({ success: false, message: "Server error parsing profile data" });
+  }
+};
+
+// ══════════════════════════════════════════════════════════════════════════════
+// PUT /api/user/address
+// ══════════════════════════════════════════════════════════════════════════════
+export const updateAddress = async (req: AuthRequest, res: Response) => {
+  try {
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ success: false, message: "Not authorized" });
+    }
+
+    const { street, city, postal, country } = req.body;
+
+    // Validate incoming parameters
+    if (!street || !city || !postal || !country) {
+      return res.status(400).json({ success: false, message: "All address components are required" });
+    }
+
+    // Update your database model using fields passed by frontend matrix
+    const updatedUser = await User.findByIdAndUpdate(
+      req.user.id,
+      {
+        $set: {
+          address: { street, city, postal, country }
+        }
+      },
+      { new: true, runValidators: true }
+    ).select("-password");
+
+    if (!updatedUser) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    res.json({
+      success: true,
+      message: "Address matrix successfully updated inside profile space",
+      user: updatedUser
+    });
+  } catch (error: any) {
+    console.error("❌ Error in updateAddress controller:", error.message);
+    res.status(500).json({ success: false, message: "Server error updating data matrix profile coordinates" });
   }
 };
 
@@ -40,4 +103,69 @@ export const getAdminData = (_req: AuthRequest, res: Response) => {
     success: true,
     message: "Welcome, Admin! This is a protected admin route.",
   });
+};
+
+// ══════════════════════════════════════════════════════════════════════════════
+// PUT /api/user/update-settings
+// ══════════════════════════════════════════════════════════════════════════════
+export const updateProfileSettings = async (req: AuthRequest, res: Response) => {
+  try {
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ success: false, message: "Not authorized" });
+    }
+
+    const { name, email, currentPassword, newPassword } = req.body;
+    
+    // Crucial: Do NOT select("-password") here because we NEED to read the old hash to compare it!
+    const userToUpdate = await User.findById(req.user.id);
+
+    if (!userToUpdate) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    // SCENARIO A: User is updating Password
+    if (newPassword) {
+      if (!currentPassword) {
+        return res.status(400).json({ success: false, message: "Current password is required to set a new one" });
+      }
+      
+      // Verify current password matches
+      const isMatch = await bcrypt.compare(currentPassword, userToUpdate.password);
+      if (!isMatch) {
+        return res.status(400).json({ success: false, message: "Incorrect current password" });
+      }
+
+      // ✅ FIX: Assign the PLAIN TEXT new password directly.
+      // Let your userModel's .pre("save") hook do the hashing so it doesn't double-hash!
+      userToUpdate.password = newPassword;
+    }
+
+    // SCENARIO B: User is updating Name or Email
+    if (name) userToUpdate.name = name;
+    if (email) {
+      // Check if email is already taken by someone else
+      const emailExists = await User.findOne({ email });
+      if (emailExists && emailExists._id.toString() !== req.user.id) {
+        return res.status(400).json({ success: false, message: "This email address is already taken" });
+      }
+      userToUpdate.email = email;
+    }
+
+    // This triggers the pre("save") hook perfectly and hashes the password exactly once!
+    await userToUpdate.save();
+
+    res.json({
+      success: true,
+      message: "Security settings updated successfully",
+      user: {
+        _id: userToUpdate._id,
+        name: userToUpdate.name,
+        email: userToUpdate.email,
+        role: userToUpdate.role
+      }
+    });
+  } catch (error: any) {
+    console.error("❌ Error in updateProfileSettings controller:", error.message);
+    res.status(500).json({ success: false, message: "Server error updating profile settings" });
+  }
 };

@@ -1,5 +1,3 @@
-// Registration form — creates account and shows "check your email" message
-
 import { useState } from "react";
 import { Link } from "react-router-dom";
 
@@ -24,9 +22,6 @@ export default function Signup() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     setUserData({ ...userData, [e.target.name]: e.target.value });
-     // this function run whenever user inputs
-    //e.target.name -> give the feild and e.target.value gives what user type
-    //keep the rest feild same and change only the feild in  which user is typing
   };
 
   const handleSubmit = async (
@@ -34,13 +29,32 @@ export default function Signup() {
   ): Promise<void> => {
     e.preventDefault();
     setError("");
+
+    // 1. Frontend validation matching backend requirements
+    if (userData.password.length < 6) {
+      setError("Password must be at least 6 characters long.");
+      return;
+    }
+
+    if (userData.password !== userData.confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
+
     setLoading(true);
 
     try {
+      // 2. Extract only fields expected by your backend signUp controller
+      const payload = {
+        name: userData.name,
+        email: userData.email,
+        password: userData.password
+      };
+
       const response = await fetch("http://localhost:5000/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(userData),
+        body: JSON.stringify(payload), // Send sanitized payload
       });
 
       const data = await response.json();
@@ -213,7 +227,6 @@ export default function Signup() {
           <div className="auth-title">Eloura</div>
 
           {success ? (
-            // ── Success: show "check your email" message ──
             <div className="success-box">
               <div className="success-icon">✉️</div>
               <div className="success-title">Check Your Email</div>
@@ -233,7 +246,6 @@ export default function Signup() {
               </div>
             </div>
           ) : (
-            // ── Registration Form ──
             <>
               <div className="auth-subtitle">Create your account</div>
 

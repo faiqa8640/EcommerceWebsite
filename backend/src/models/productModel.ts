@@ -1,10 +1,9 @@
 import mongoose, { Schema, Document } from "mongoose";
 
 export interface IProduct extends Document {
-  id: string;
+  _id: mongoose.Types.ObjectId; 
   name: string;
-  price: string;
-  priceNum: number;
+  price: number; 
   category: string;
   brand: string;
   images: string[];
@@ -20,14 +19,12 @@ export interface IProduct extends Document {
   longevity: string;
   sillage: string;
   season: string[];
-  averageRating: number; // ← NEW: stored and updated whenever a review is submitted
+  averageRating: number; 
 }
 
 const productSchema = new Schema<IProduct>({
-  id: { type: String, required: true, unique: true },
   name: { type: String, required: true },
-  price: { type: String, required: true },
-  priceNum: { type: Number, required: true },
+  price: { type: Number, required: true }, 
   category: { type: String, required: true },
   brand: { type: String, required: true },
   images: { type: [String], required: true },
@@ -43,7 +40,7 @@ const productSchema = new Schema<IProduct>({
   longevity: { type: String, required: true },
   sillage: { type: String, required: true },
   season: { type: [String], required: true },
-  averageRating: { type: Number, default: 0 }, // ← NEW
+  averageRating: { type: Number, default: 0 }, 
 }, { timestamps: true });
 
 export default mongoose.model<IProduct>("Product", productSchema);

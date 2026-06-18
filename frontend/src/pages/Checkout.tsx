@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import Footer from "../components/Footer";
 import { createOrder } from '../data/apiService';
+import { OrderItem, ShippingAddress } from '../types';
 
 interface CheckoutCartItem {
   _id: string;
@@ -17,20 +18,25 @@ export const Checkout: React.FC = () => {
   const { cartItems, getCartSubtotal, clearCart } = useCart();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      alert("Please login to place an order");
-      navigate('/login');
-    }
-  }, [navigate]);
+  const [isLoading, setIsLoading] = useState(false);
 
+  // Form State
   const [formData, setFormData] = useState({
-    firstName: '', lastName: '', email: '', phone: '',
-    streetAddress: '', apartment: '', city: '', postalCode: '', country: 'Pakistan'
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    streetAddress: '',
+    apartment: '',
+    city: '',
+    postalCode: '',
+    country: 'Pakistan'
   });
-  const [shippingMethod, setShippingMethod] = useState('Standard Shipping');
-  const [paymentMethod, setPaymentMethod] = useState('Cash on Delivery');
+
+  const [shippingMethod, setShippingMethod] = useState<'Standard Shipping' | 'Express Shipping'>('Standard Shipping');
+  const [paymentMethod, setPaymentMethod] = useState<
+    "Cash on Delivery" | "JazzCash" | "Easypaisa" | "Card"
+  >("Cash on Delivery");
 
   const subtotal = getCartSubtotal();
   const shippingCost = shippingMethod === 'Express Shipping' ? 2000 : 500;
@@ -45,26 +51,40 @@ export const Checkout: React.FC = () => {
 
     const token = localStorage.getItem('token');
     if (!token) {
-        alert("Please log in to place an order");
-        navigate('/login');
-        return;
+      alert("Please log in to place an order");
+      navigate('/login');
+      return;
     }
-    
+
+    // Basic Validation
+    if (!formData.firstName || !formData.lastName || !formData.streetAddress || 
+        !formData.city || !formData.postalCode || !formData.phone) {
+      alert("Please fill in all required fields");
+      return;
+    }
+
+    if (cartItems.length === 0) {
+      alert("Your cart is empty");
+      return;
+    }
+
+    setIsLoading(true);
+
     const orderPayload = {
-      items: cartItems.map((item: CheckoutCartItem) => ({
+      items: cartItems.map((item: CheckoutCartItem): OrderItem => ({
         product: item._id,
         name: item.name,
-        quantity: item.quantity,
         price: item.price,
+        quantity: item.quantity,
         size: item.size
       })),
       shippingAddress: {
         streetAddress: formData.streetAddress,
-        apartment: formData.apartment,
+        apartment: formData.apartment || undefined,
         city: formData.city,
         postalCode: formData.postalCode,
         country: formData.country
-      },
+      } as ShippingAddress,
       paymentMethod,
       shippingMethod,
       subtotal,
@@ -74,16 +94,19 @@ export const Checkout: React.FC = () => {
 
     try {
       const data = await createOrder(orderPayload);
+
       if (data.success) {
-        alert('✨ Luxury selection order successfully placed! Viewable now in your database collections.');
+        alert('✨ Order placed successfully! Thank you for your purchase.');
         clearCart();
-        navigate('/'); 
+        navigate('/shop'); // ← Redirect to Shop Page as requested
       } else {
-        alert(`Failed to save order: ${data.message || 'Check authentication status.'}`);
+        alert(`Failed to place order: ${data.message || 'Please try again.'}`);
       }
     } catch (err: any) {
       console.error('Checkout error:', err);
-      alert(err.message || 'Network communication error encountered processing request.');
+      alert(err.message || 'Something went wrong. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -205,11 +228,6 @@ export const Checkout: React.FC = () => {
           font-size: 14px;
           font-weight: 600;
         }
-        .disabled-option {
-          margin-bottom: 0;
-          opacity: 0.45;
-          cursor: not-allowed;
-        }
         .right-sidebar-card {
           background-color: #fcfaf7;
           padding: 32px;
@@ -321,8 +339,11 @@ export const Checkout: React.FC = () => {
           box-shadow: 0 4px 14px rgba(27, 35, 74, 0.18);
           transition: background-color 0.2s ease;
         }
+        .submit-order-btn:disabled {
+          opacity: 0.7;
+          cursor: not-allowed;
+        }
         
-        /* Clean Responsive Screen Adjustments via Media Queries */
         @media (max-width: 1024px) {
           .checkout-form {
             grid-template-columns: 1fr;
@@ -340,10 +361,9 @@ export const Checkout: React.FC = () => {
           
           <form onSubmit={handlePlaceOrderSubmit} className="checkout-form">
             
-            {/* Left Elements: Client Shipment Info Fields */}
             <div className="left-stack">
               
-              {/* Box 1: Contact Info */}
+              {/* Contact Information */}
               <div className="form-section-card">
                 <h2 className="section-title">Contact Information</h2>
                 <div className="field-row">
@@ -366,7 +386,7 @@ export const Checkout: React.FC = () => {
                 </div>
               </div>
 
-              {/* Box 2: Address Specification */}
+              {/* Shipping Address */}
               <div className="form-section-card">
                 <h2 className="section-title">Shipping Address</h2>
                 <div className="full-width-field">
@@ -393,77 +413,66 @@ export const Checkout: React.FC = () => {
                 </div>
               </div>
 
-              {/* Box 3: Shipment Mode Radios */}
+              {/* Shipping Method */}
               <div className="form-section-card">
                 <h2 className="section-title">Shipping Method</h2>
                 
                 <div className="selectable-option-row" onClick={() => setShippingMethod('Standard Shipping')}>
                   <div className="radio-label-block">
-                    <input 
-                      type="radio" 
-                      name="shippingMethod"
-                      checked={shippingMethod === 'Standard Shipping'} 
-                      onChange={() => setShippingMethod('Standard Shipping')} 
-                      className="radio-input" 
-                    />
+                    <input type="radio" checked={shippingMethod === 'Standard Shipping'} readOnly className="radio-input" />
                     <span className="option-label-text">Standard Shipping (3-5 Business Days)</span>
                   </div>
                   <span className="option-price-text">Rs. 500</span>
                 </div>
 
-                <div className="selectable-option-row" style={{ marginBottom: 0 }} onClick={() => setShippingMethod('Express Shipping')}>
+                <div className="selectable-option-row" onClick={() => setShippingMethod('Express Shipping')}>
                   <div className="radio-label-block">
-                    <input 
-                      type="radio" 
-                      name="shippingMethod"
-                      checked={shippingMethod === 'Express Shipping'} 
-                      onChange={() => setShippingMethod('Express Shipping')} 
-                      className="radio-input" 
-                    />
-                    <span className="option-label-text">Express Courier Delivery (Next Day)</span>
+                    <input type="radio" checked={shippingMethod === 'Express Shipping'} readOnly className="radio-input" />
+                    <span className="option-label-text">Express Shipping (Next Day)</span>
                   </div>
                   <span className="option-price-text">Rs. 2,000</span>
                 </div>
               </div>
 
-              {/* Box 4: Financial Verification Radios */}
+              {/* Payment Method - All Options Visible */}
               <div className="form-section-card">
                 <h2 className="section-title">Payment Method</h2>
                 
                 <div className="selectable-option-row" onClick={() => setPaymentMethod('Cash on Delivery')}>
                   <div className="radio-label-block">
-                    <input 
-                      type="radio" 
-                      name="paymentMethod"
-                      checked={paymentMethod === 'Cash on Delivery'} 
-                      onChange={() => setPaymentMethod('Cash on Delivery')} 
-                      className="radio-input" 
-                    />
+                    <input type="radio" checked={paymentMethod === 'Cash on Delivery'} readOnly className="radio-input" />
                     <span className="option-label-text">Cash on Delivery (COD)</span>
                   </div>
                 </div>
 
-                <div className="selectable-option-row disabled-option">
+                <div className="selectable-option-row" onClick={() => setPaymentMethod('JazzCash')}>
                   <div className="radio-label-block">
-                    <input 
-                      type="radio" 
-                      name="paymentMethod"
-                      disabled 
-                      checked={paymentMethod === 'Card'} 
-                      className="radio-input" 
-                    />
-                    <span className="option-label-text">Credit / Debit Card (Online Gateway Coming Soon)</span>
+                    <input type="radio" checked={paymentMethod === 'JazzCash'} readOnly className="radio-input" />
+                    <span className="option-label-text">JazzCash</span>
+                  </div>
+                </div>
+
+                <div className="selectable-option-row" onClick={() => setPaymentMethod('Easypaisa')}>
+                  <div className="radio-label-block">
+                    <input type="radio" checked={paymentMethod === 'Easypaisa'} readOnly className="radio-input" />
+                    <span className="option-label-text">Easypaisa</span>
+                  </div>
+                </div>
+
+                <div className="selectable-option-row" onClick={() => setPaymentMethod('Card')}>
+                  <div className="radio-label-block">
+                    <input type="radio" checked={paymentMethod === 'Card'} readOnly className="radio-input" />
+                    <span className="option-label-text">Credit / Debit Card</span>
                   </div>
                 </div>
               </div>
 
             </div>
 
-            {/* Right Elements: Order Breakdowns Sticky Sidebar */}
+            {/* Order Summary Sidebar */}
             <div className="right-sidebar-card">
               <h2 className="sidebar-title">Your Order</h2>
               
-              {/* Scrollable Item Stack View */}
               <div className="items-container">
                 {cartItems.map((item: CheckoutCartItem) => (
                   <div key={`${item._id}-${item.size}`} className="sidebar-item-row">
@@ -481,19 +490,17 @@ export const Checkout: React.FC = () => {
                 ))}
               </div>
 
-              {/* Calculations Breakdown Container */}
               <div className="breakdown-rows">
                 <div className="breakdown-row-flex">
                   <span>Subtotal</span>
                   <span className="breakdown-value">Rs. {subtotal.toLocaleString()}</span>
                 </div>
                 <div className="breakdown-row-flex">
-                  <span>Shipping cost</span>
+                  <span>Shipping</span>
                   <span className="breakdown-value">Rs. {shippingCost.toLocaleString()}</span>
                 </div>
               </div>
 
-              {/* Consolidated Sum Blocks */}
               <div className="grand-total-block">
                 <span className="grand-total-title">Total Amount</span>
                 <span className="grand-total-value">
@@ -501,8 +508,12 @@ export const Checkout: React.FC = () => {
                 </span>
               </div>
 
-              <button type="submit" className="submit-order-btn">
-                Place Order
+              <button 
+                type="submit" 
+                className="submit-order-btn"
+                disabled={isLoading}
+              >
+                {isLoading ? 'Processing Order...' : 'Place Order'}
               </button>
             </div>
 
@@ -513,3 +524,4 @@ export const Checkout: React.FC = () => {
     </>
   );
 };
+

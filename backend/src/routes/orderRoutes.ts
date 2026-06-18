@@ -1,12 +1,33 @@
-// BACKEND/src/routes/orderRoutes.ts
+
 import { Router } from 'express';
-import { createOrder, getUserOrders } from '../controllers/orderController';
-import { protect } from '../middleware/authMiddleware'; // Adjust name based on your file
+import { 
+  createOrder, 
+  getMyOrders, 
+  getOrderById, 
+  updateOrderAddress 
+} from '../controllers/orderController';
+import { protect } from '../middleware/authMiddleware';
 
 const router = Router();
 
-// Protect routes so only logged-in users can check out or see their history
+// ─── Core Order Placement ────────────────────────────────────
+// @route   POST /api/orders
+// @desc    Place a new checkout order mapping relational products and static snapshot data
 router.post('/', protect, createOrder);
-router.get('/my-orders', protect, getUserOrders);
+
+// ─── User Profile Order History ──────────────────────────────
+// @route   GET /api/orders/my-orders
+// @desc    Retrieve all past order transaction files belonging to the logged-in account
+router.get('/my-orders', protect, getMyOrders);
+
+// ─── Single Order Verification Lookup ────────────────────────
+// @route   GET /api/orders/:id
+// @desc    Fetch a singular detailed transaction statement by its MongoDB ObjectId sequence
+router.get('/:id', protect, getOrderById);
+
+// ─── Shipping Modification Safeguard ─────────────────────────
+// @route   PUT /api/orders/:id/address
+// @desc    Modify shipping markers prior to strict administrative fulfillment locks
+router.put('/:id/address', protect, updateOrderAddress);
 
 export default router;

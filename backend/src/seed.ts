@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 import dotenv from "dotenv";
 import Product from "./models/productModel";
 import Category from "./models/categoryModel";
-import Review from "./models/reviewModel"; // 1. Import your brand new review model
+import Review from "./models/reviewModel"; 
 
 // Load environmental variables for MONGO_URI
 dotenv.config();
@@ -45,13 +45,10 @@ const seedCategories = [
   },
 ];
 
-// Copy-pasted your exact frontend Products data array
 const seedProducts = [
   {
-    id: "allure",
     name: "Allure Homme",
-    price: "PKR 8,500",
-    priceNum: 8500,
+    price: 8500,
     category: "men",
     brand: "Chanel",
     images: ["/perfumes/p1-1.jpg", "/perfumes/p1-2.jfif", "/perfumes/p1-3.jfif"],
@@ -77,10 +74,8 @@ const seedProducts = [
     ],
   },
   {
-    id: "Irresistible",
     name: "Irresistible",
-    price: "PKR 9,200",
-    priceNum: 9200,
+    price: 9200,
     category: "women",
     brand: "Givenchy",
     images: ["/perfumes/p2-1.jpg", "/perfumes/p2-2.jfif", "/perfumes/p2-3.jfif"],
@@ -103,10 +98,8 @@ const seedProducts = [
     ],
   },
   {
-    id: "noir-sport",
     name: "Noir Sport",
-    price: "PKR 7,800",
-    priceNum: 7800,
+    price: 7800,
     category: "men",
     brand: "Dior",
     images: ["/perfumes/p3.jpg"],
@@ -128,10 +121,8 @@ const seedProducts = [
     ],
   },
   {
-    id: "amber-bloom-men",
     name: "Amber Spice",
-    price: "PKR 8,800",
-    priceNum: 8800,
+    price: 8800,
     category: "men",
     brand: "Dior",
     images: ["/perfumes/p4.jpg"],
@@ -153,10 +144,8 @@ const seedProducts = [
     ],
   },
   {
-    id: "rose-mystique",
     name: "Rose Mystique",
-    price: "PKR 8,000",
-    priceNum: 8000,
+    price: 8000,
     category: "women",
     brand: "Givenchy",
     images: ["/perfumes/p5.jpg"],
@@ -178,10 +167,8 @@ const seedProducts = [
     ],
   },
   {
-    id: "fleur-blanc",
     name: "Fleur Blanc",
-    price: "PKR 7,500",
-    priceNum: 7500,
+    price: 7500,
     category: "women",
     brand: "Givenchy",
     images: ["/perfumes/p6.jpg"],
@@ -202,10 +189,8 @@ const seedProducts = [
     ],
   },
   {
-    id: "velvet-rose",
     name: "Velvet Rose Noir",
-    price: "PKR 9,000",
-    priceNum: 9000,
+    price: 9000,
     category: "women",
     brand: "Dior",
     images: ["/perfumes/p7.jpg"],
@@ -226,10 +211,8 @@ const seedProducts = [
     ],
   },
   {
-    id: "golden-orchid",
     name: "Golden Orchid",
-    price: "PKR 8,200",
-    priceNum: 8200,
+    price: 8200,
     category: "women",
     brand: "Chanel",
     images: ["/perfumes/p8.jpg"],
@@ -250,10 +233,8 @@ const seedProducts = [
     ],
   },
   {
-    id: "golden-musk",
     name: "Golden Musk",
-    price: "PKR 9,500",
-    priceNum: 9500,
+    price: 9500,
     category: "unisex",
     brand: "Chanel",
     images: ["/perfumes/p9.jpg"],
@@ -275,10 +256,8 @@ const seedProducts = [
     ],
   },
   {
-    id: "cedar-sage",
     name: "Cedar & Sage",
-    price: "PKR 8,400",
-    priceNum: 8400,
+    price: 8400,
     category: "unisex",
     brand: "Tom Ford",
     images: ["/perfumes/p10.jpg"],
@@ -299,10 +278,8 @@ const seedProducts = [
     ],
   },
   {
-    id: "smoke-and-silk",
     name: "Smoke & Silk",
-    price: "PKR 9,800",
-    priceNum: 9800,
+    price: 9800,
     category: "unisex",
     brand: "Tom Ford",
     images: ["/perfumes/p11.jpg"],
@@ -324,10 +301,8 @@ const seedProducts = [
     ],
   },
   {
-    id: "aqua-verde",
     name: "Aqua Verde",
-    price: "PKR 7,600",
-    priceNum: 7600,
+    price: 7600,
     category: "unisex",
     brand: "Tom Ford",
     images: ["/perfumes/p12.jpg"],
@@ -348,10 +323,8 @@ const seedProducts = [
     ],
   },
   {
-    id: "oud-royal",
     name: "Oud Royal",
-    price: "PKR 18,500",
-    priceNum: 18500,
+    price: 18500,
     category: "luxury",
     brand: "Creed",
     images: ["/perfumes/p13.jpg"],
@@ -373,10 +346,8 @@ const seedProducts = [
     ],
   },
   {
-    id: "la-nuit-absolute",
     name: "La Nuit Absolue",
-    price: "PKR 16,000",
-    priceNum: 16000,
+    price: 16000,
     category: "luxury",
     brand: "Creed",
     images: ["/perfumes/p14.jpg"],
@@ -398,10 +369,8 @@ const seedProducts = [
     ],
   },
   {
-    id: "imperial-amber",
     name: "Imperial Amber",
-    price: "PKR 14,500",
-    priceNum: 14500,
+    price: 14500,
     category: "luxury",
     brand: "Creed",
     images: ["/perfumes/p15.jpg"],
@@ -423,10 +392,8 @@ const seedProducts = [
     ],
   },
   {
-    id: "white-diamond",
     name: "White Diamond",
-    price: "PKR 15,000",
-    priceNum: 15000,
+    price: 15000,
     category: "luxury",
     brand: "Versace",
     images: ["/perfumes/p16.jpg"],
@@ -458,63 +425,73 @@ const runSeeder = async () => {
     await mongoose.connect(process.env.MONGO_URI);
     console.log("Database connection successful.");
 
-    // 2. Clear out ALL datasets to prevent lingering or fragmented arrays
     console.log("Clearing old products, categories, and reviews details...");
     await Product.deleteMany({});
     await Category.deleteMany({});
-    await Review.deleteMany({}); // Clears out your dedicated reviews collection cleanly
+    await Review.deleteMany({}); 
 
-    // 3. Process data arrays dynamically to split products and reviews cleanly
-    const extractedReviews: any[] = [];
-    const cleanedProducts = seedProducts.map((product) => {
-      // Pull out reviews if they exist on the hardcoded array item
-      if (product.reviews && product.reviews.length > 0) {
-        product.reviews.forEach((rev) => {
-          extractedReviews.push({
-            productId: product.id, // Direct linkage mapping reference
-            user: rev.user,
-            rating: rev.rating,
-            comment: rev.comment,
-            date: rev.date,
-          });
-        });
-      }
+    // 🔥 FIX: Explicitly drop the old 'id_1' unique index if it still exists in the database collection
+    try {
+      await Product.collection.dropIndex("id_1");
+      console.log("Successfully dropped legacy unique 'id' index.");
+    } catch (indexError) {
+      // If the index doesn't exist, ignore the error and proceed cleanly
+      console.log("Legacy index not found or already dropped. Proceeding...");
+    }
 
-      // Destructure to return everything EXCEPT the reviews block to match your new Product Schema definition
-      const { reviews, ...productWithoutReviews } = product;
-      return productWithoutReviews;
-    });
-
-    // 4. Perform pristine DB Insertion Operations
     console.log("Inserting new Categories collection data...");
     await Category.insertMany(seedCategories);
 
-    console.log("Inserting new Cleaned Products collection data...");
-    await Product.insertMany(cleanedProducts);
+    // Separate the nested reviews out so we can insert raw clean products first
+    const productsWithoutReviews = seedProducts.map((p) => {
+      const { reviews, ...cleanProduct } = p;
+      return cleanProduct;
+    });
 
-    console.log("Inserting separated Reviews collection data...");
+    console.log("Inserting new Cleaned Products collection data...");
+    const insertedProducts = await Product.insertMany(productsWithoutReviews);
+
+    // Build the decoupled reviews using the actual dynamic _id properties generated by MongoDB
+    console.log("Processing and inserting decoupled reviews with valid database ObjectIds...");
+    const extractedReviews: any[] = [];
+
+    insertedProducts.forEach((insertedProduct) => {
+      const originalProductData = seedProducts.find(
+        (p) => p.name === insertedProduct.name
+      );
+
+      if (originalProductData && originalProductData.reviews && originalProductData.reviews.length > 0) {
+        originalProductData.reviews.forEach((rev) => {
+          extractedReviews.push({
+            productId: insertedProduct._id, // Links accurately using dynamic mongoose generated Product ObjectId
+            user: rev.user,
+            rating: rev.rating,
+            comment: rev.comment
+          });
+        });
+      }
+    });
+
     if (extractedReviews.length > 0) {
       await Review.insertMany(extractedReviews);
+      console.log("Reviews saved successfully.");
     }
 
-    // 5. Calculate averageRating for each product from its seeded reviews
-    // and save it directly into the Product document in MongoDB
+    // Compute the initial average ratings directly based on those fresh reviews
     console.log("Calculating and saving average ratings into Product collection...");
-    for (const product of cleanedProducts) {
-      // Get only the reviews that belong to this product
-      const productReviews = extractedReviews.filter(r => r.productId === product.id);
+    for (const productDoc of insertedProducts) {
+      const matchingReviews = extractedReviews.filter(
+        (r) => r.productId.toString() === productDoc._id.toString()
+      );
 
-      if (productReviews.length > 0) {
-        // Add up all ratings then divide by count, rounded to 1 decimal place
-        const total = productReviews.reduce((sum: number, r: any) => sum + r.rating, 0);
-        const avg = parseFloat((total / productReviews.length).toFixed(1));
+      if (matchingReviews.length > 0) {
+        const total = matchingReviews.reduce((sum, r) => sum + r.rating, 0);
+        const avg = parseFloat((total / matchingReviews.length).toFixed(1));
 
-        // Update the product document in MongoDB with the calculated average
-        await Product.findOneAndUpdate({ id: product.id }, { averageRating: avg });
+        await Product.findByIdAndUpdate(productDoc._id, { averageRating: avg });
       }
-      // If a product has no reviews, averageRating stays at 0 (the schema default)
     }
-    console.log("Average ratings saved successfully!");
+    console.log("Average ratings mapped completely!");
 
     console.log("Database Successfully Seeded with decoupled collections!");
     process.exit(0);
@@ -525,3 +502,4 @@ const runSeeder = async () => {
 };
 
 runSeeder();
+

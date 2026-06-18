@@ -1,5 +1,3 @@
-// Global auth state — with JWT expiry detection and auto-logout
-
 import {
   createContext,
   useContext,
@@ -9,8 +7,9 @@ import {
   ReactNode,
 } from "react";
 
-type User = {
+export type User = {
   id: string;
+  _id: string; // Syncs seamlessly with the backend AuthRequest payload interface
   name: string;
   email: string;
   role: string;
@@ -145,7 +144,4 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 }
 
-// ─── Hook ─────────────────────────────────────────────────────────────────────
-// Usage: const { user, isAdmin, login, logout } = useAuth();
 export const useAuth = () => useContext(AuthContext);
-

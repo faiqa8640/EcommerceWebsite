@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { Product } from "../types";
-import { fetchWishlist, addToWishlistAPI, removeFromWishlistAPI } from "../data/apiService"; 
+import { getWishlistAPI, addToWishlistAPI, removeFromWishlistAPI } from "../data/apiService"; 
 import { useAuth } from "./AuthContext";
 import { useNavigate } from "react-router-dom";
 
@@ -18,7 +18,7 @@ const WishlistContext = createContext<WishlistContextType | undefined>(undefined
 
 export const WishlistProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [wishlist, setWishlist] = useState<Product[]>([]);
-  const { user } = useAuth() as any;
+  const { user } = useAuth();
   const navigate = useNavigate();
 
   // Helper check to verify if a logged-in session token exists
@@ -34,7 +34,7 @@ export const WishlistProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       return;
     }
     try {
-      const remoteWishlist = await fetchWishlist();
+      const remoteWishlist = await getWishlistAPI();
       setWishlist(remoteWishlist);
     } catch (error) {
       console.error("Failed to refresh wishlist from server:", error);
@@ -46,13 +46,10 @@ export const WishlistProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     refreshWishlist();
   }, [user]);
 
-  // Check if a product is already in the wishlist
+  // Check if a product is already in the wishlist (Strictly matches native _id string)
   const isInWishlist = (productId: string): boolean => {
     if (!isAuthenticated() || !productId || !wishlist) return false;
-    return wishlist.some((item) => {
-      const idToCheck = item._id || item.id;
-      return String(idToCheck) === String(productId);
-    });
+    return wishlist.some((item) => String(item._id) === String(productId));
   };
 
   // Handle adding an item safely to the database
@@ -63,12 +60,12 @@ export const WishlistProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       return;
     }
 
-    const uniqueId = product._id || product.id;
+    const uniqueId = product._id;
     if (!uniqueId) return;
 
     try {
-      // Optimistic UI state update
-      if (!wishlist.some(item => (item._id || item.id) === uniqueId)) {
+      // Optimistic UI state update using native schema property paths
+      if (!wishlist.some(item => item._id === uniqueId)) {
         setWishlist(prev => [...prev, product]);
       }
       
@@ -86,8 +83,8 @@ export const WishlistProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     if (!productId) return;
     
     try {
-      // Optimistic UI update
-      setWishlist(prev => prev.filter(item => String(item._id || item.id) !== String(productId)));
+      // Optimistic UI update filtered clean via direct reference
+      setWishlist(prev => prev.filter(item => String(item._id) !== String(productId)));
       await removeFromWishlistAPI(productId);
     } catch (error: any) {
       console.error("Context error removing item:", error.message);
@@ -97,14 +94,13 @@ export const WishlistProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   // Toggle function with explicit authentication checks
   const toggleWishlist = async (product: Product) => {
-    // 1. Core Gate Check: Block unauthenticated users immediately
     if (!isAuthenticated()) {
       alert("✨ Please sign in to save items to your personal wishlist!");
       navigate("/login");
       return;
     }
 
-    const uniqueId = product._id || product.id;
+    const uniqueId = product._id;
     if (!uniqueId) return;
 
     try {

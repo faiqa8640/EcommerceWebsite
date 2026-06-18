@@ -279,7 +279,7 @@ export function Wishlist() {
           ) : (
             <div className="wishlist-grid">
               {wishlist.map((product: Product) => {
-                const uniqueId = product._id || product.id;
+                const uniqueId = product._id ;
                 
                 const displayImage = product.images && product.images.length > 0 
                   ? product.images[0] 

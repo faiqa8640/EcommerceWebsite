@@ -1,10 +1,38 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import mongoose, { Schema, Document } from "mongoose";
+
+/* =========================
+   ENUMS
+========================= */
+
+export enum PaymentMethod {
+  COD = "Cash on Delivery",
+  JAZZCASH = "JazzCash",
+  EASYPAISA = "Easypaisa",
+  CARD = "Card",
+}
+
+export enum ShippingMethod {
+  STANDARD = "Standard Shipping",
+  EXPRESS = "Express Shipping",
+}
+
+export enum OrderStatus {
+  PENDING = "Pending",
+  CONFIRMED = "Confirmed",
+  SHIPPED = "Shipped",
+  DELIVERED = "Delivered",
+  CANCELLED = "Cancelled",
+}
+
+/* =========================
+   INTERFACES
+========================= */
 
 export interface IOrderItem {
-  product: string;
+  product: mongoose.Types.ObjectId;
   name: string;
-  quantity: number;
   price: number;
+  quantity: number;
   size: string;
 }
 
@@ -17,51 +45,131 @@ export interface IShippingAddress {
 }
 
 export interface IOrder extends Document {
-  user: mongoose.Types.ObjectId;        // ← This must be ObjectId
+  user: mongoose.Types.ObjectId;
+
   items: IOrderItem[];
+
   shippingAddress: IShippingAddress;
-  paymentMethod: string;
-  shippingMethod: string;
+
+  paymentMethod: PaymentMethod;
+  shippingMethod: ShippingMethod;
+  status: OrderStatus;
+
   subtotal: number;
   shippingCost: number;
   total: number;
-  status: string;
+
   createdAt: Date;
+  updatedAt: Date;
 }
 
-const OrderSchema: Schema = new Schema({
-  user: { 
-    type: Schema.Types.ObjectId, 
-    ref: 'User', 
-    required: true 
-  },   // ← This is the critical fix
+/* =========================
+   SCHEMA
+========================= */
 
-  items: [
-    {
-      product: { type: String, required: true },
-      name: { type: String, required: true },
-      quantity: { type: Number, required: true, min: 1 },
-      price: { type: Number, required: true },
-      size: { type: String, required: true }
-    }
-  ],
-  shippingAddress: {
-    streetAddress: { type: String, required: true },
-    apartment: { type: String },
-    city: { type: String, required: true },
-    postalCode: { type: String, required: true },
-    country: { type: String, required: true }
+const OrderSchema = new Schema<IOrder>(
+  {
+    user: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+
+    items: [
+      {
+        product: {
+          type: Schema.Types.ObjectId,
+          ref: "Product",
+          required: true,
+        },
+
+        name: {
+          type: String,
+          required: true,
+        },
+
+        price: {
+          type: Number,
+          required: true,
+        },
+
+        quantity: {
+          type: Number,
+          required: true,
+          min: 1,
+        },
+
+        size: {
+          type: String,
+          required: true,
+        },
+      },
+    ],
+
+    shippingAddress: {
+      streetAddress: {
+        type: String,
+        required: true,
+      },
+
+      apartment: {
+        type: String,
+      },
+
+      city: {
+        type: String,
+        required: true,
+      },
+
+      postalCode: {
+        type: String,
+        required: true,
+      },
+
+      country: {
+        type: String,
+        required: true,
+      },
+    },
+
+    paymentMethod: {
+      type: String,
+      enum: Object.values(PaymentMethod),
+      required: true,
+    },
+
+    shippingMethod: {
+      type: String,
+      enum: Object.values(ShippingMethod),
+      default: ShippingMethod.STANDARD,
+      required: true,
+    },
+
+    status: {
+      type: String,
+      enum: Object.values(OrderStatus),
+      default: OrderStatus.PENDING,
+      required: true,
+    },
+
+    subtotal: {
+      type: Number,
+      required: true,
+    },
+
+    shippingCost: {
+      type: Number,
+      required: true,
+    },
+
+    total: {
+      type: Number,
+      required: true,
+    },
   },
-  paymentMethod: { type: String, required: true },
-  shippingMethod: { type: String, required: true },
-  subtotal: { type: Number, required: true },
-  shippingCost: { type: Number, required: true },
-  total: { type: Number, required: true },
-  status: { 
-    type: String, 
-    default: 'Pending', 
-    enum: ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'] 
+  {
+    timestamps: true,
   }
-}, { timestamps: true });
+);
 
-export default mongoose.model<IOrder>('Order', OrderSchema);
+export default mongoose.model<IOrder>("Order", OrderSchema);

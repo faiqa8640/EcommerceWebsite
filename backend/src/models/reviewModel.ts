@@ -1,22 +1,61 @@
 import mongoose, { Schema, Document } from "mongoose";
 
 export interface IReview extends Document {
-  productId: string; // Links the review directly to a specific product slug/id (e.g., 'allure')
-  user: string;
+  productId: mongoose.Types.ObjectId;
+  userId: mongoose.Types.ObjectId;
+
+  userName: string; // Snapshot of user's name at review time
+
   rating: number;
   comment: string;
-  date: string;
+
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 const reviewSchema = new Schema<IReview>(
   {
-    productId: { type: String, required: true, index: true }, // Indexed for lightning-fast lookups
-    user: { type: String, required: true },
-    rating: { type: Number, required: true, min: 1, max: 5 },
-    comment: { type: String, required: true },
-    date: { type: String, required: true }
+    productId: {
+      type: Schema.Types.ObjectId,
+      ref: "Product",
+      required: true,
+      index: true,
+    },
+
+    userId: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+      index: true,
+    },
+
+    userName: {
+      type: String,
+      required: true,
+    },
+
+    rating: {
+      type: Number,
+      required: true,
+      min: 1,
+      max: 5,
+    },
+
+    comment: {
+      type: String,
+      required: true,
+      trim: true,
+    },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+  }
+);
+
+// Prevent a user from reviewing the same product multiple times
+reviewSchema.index(
+  { productId: 1, userId: 1 },
+  { unique: true }
 );
 
 export default mongoose.model<IReview>("Review", reviewSchema);

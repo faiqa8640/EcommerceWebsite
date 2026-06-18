@@ -1,17 +1,15 @@
 import { Request, Response } from 'express';
-import Order from '../models/orderModel';
+import Order, { IOrder } from '../models/orderModel';
+import { AuthRequest } from "../middleware/authMiddleware";
 
-export const createOrder = async (req: Request, res: Response): Promise<void> => {
+
+
+export const createOrder = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    console.log("📦 [createOrder] Request Body:", req.body);
-    console.log("👤 [createOrder] User from middleware:", (req as any).user);
-
     const { items, shippingAddress, paymentMethod, shippingMethod, subtotal, shippingCost, total } = req.body;
 
-    const userId = (req as any).user?._id;
-
-    // ←←← CRITICAL CHECK
-    if (!userId) {
+    // 1. Verify user is authenticated and access the _id from middleware
+    if (!req.user || !req.user._id) {
       res.status(401).json({ 
         success: false, 
         message: "Authentication failed. Please log in again." 
@@ -19,13 +17,16 @@ export const createOrder = async (req: Request, res: Response): Promise<void> =>
       return;
     }
 
+    // 2. Basic Validation
     if (!items || items.length === 0) {
-      res.status(400).json({ message: 'No order items found' });
+      res.status(400).json({ success: false, message: 'No order items found' });
       return;
     }
 
+    // 3. Create New Order Instance
+    // Map the user ID directly from the authenticated request object
     const newOrder = new Order({
-      user: userId,
+      user: req.user._id, 
       items,
       shippingAddress,
       paymentMethod,
@@ -36,29 +37,110 @@ export const createOrder = async (req: Request, res: Response): Promise<void> =>
     });
 
     const savedOrder = await newOrder.save();
-
+    
     res.status(201).json({ 
       success: true, 
-      message: "Order placed successfully!",
       order: savedOrder 
     });
-
   } catch (error: any) {
-    console.error("❌ [createOrder] Full Error:", error);
+    console.error("📦 [createOrder] Error:", error);
     res.status(500).json({ 
-      success: false,
-      message: 'Server error while placing order', 
+      success: false, 
+      message: "Server error creating order", 
       error: error.message 
     });
   }
 };
-
-export const getUserOrders = async (req: Request, res: Response): Promise<void> => {
+// @desc    Get logged in user's orders
+// @route   GET /api/orders/myorders
+// @access  Private
+export const getMyOrders = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const userId = (req as any).user?._id;
-    const orders = await Order.find({ user: userId }).sort({ createdAt: -1 });
-    res.status(200).json(orders);
+    const userId = req.user?._id;
+    
+    if (!userId) {
+      res.status(401).json({ success: false, message: "Unauthorized access detected." });
+      return;
+    }
+
+    // Populate user details and product reference items inside the order array
+    const orders = await Order.find({ user: userId })
+      .populate("user", "name email")
+      .populate("items.product", "name brand images price");
+
+    res.status(200).json({ success: true, orders });
   } catch (error: any) {
-    res.status(500).json({ message: 'Server error retrieving orders', error: error.message });
+    res.status(500).json({ success: false, message: "Error fetching order database profiles", error: error.message });
+  }
+};
+
+// @desc    Get single order details
+// @route   GET /api/orders/:id
+// @access  Private
+export const getOrderById = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const orderId = req.params.id;
+    const order = await Order.findById(orderId)
+      .populate("user", "name email")
+      .populate("items.product", "name brand images price");
+
+    if (!order) {
+      res.status(404).json({ success: false, message: "Order records not found." });
+      return;
+    }
+
+    // Authorization safeguard check
+    if (order.user._id.toString() !== req.user?._id.toString() && req.user?.role !== 'admin') {
+      res.status(403).json({ success: false, message: "Not authorized to view this order transaction statement." });
+      return;
+    }
+
+    res.status(200).json({ success: true, order });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: "Error looking up order details", error: error.message });
+  }
+};
+
+// @desc    Update order shipping address statement (Before fulfillment processing window completes)
+// @route   PUT /api/orders/:id/address
+// @access  Private
+export const updateOrderAddress = async (req: AuthRequest, res: Response) => {
+  try {
+    const orderId = req.params.id;
+    const { shippingAddress } = req.body;
+
+    // Aligned address check to use streetAddress instead of old string street
+    if (!shippingAddress || !shippingAddress.streetAddress || !shippingAddress.city || !shippingAddress.postalCode || !shippingAddress.country) {
+      return res.status(400).json({ success: false, message: "Incomplete address parameters provided." });
+    }
+
+    const order = await Order.findById(orderId);
+
+    if (!order) {
+      return res.status(404).json({ success: false, message: "Target order record not found." });
+    }
+
+    if (order.user.toString() !== req.user?._id.toString()) {
+      return res.status(403).json({ success: false, message: "Not authorized to modify this order data." });
+    }
+
+    // Strictly mapping fields according to your explicit Schema contract definition
+    order.shippingAddress = {
+      streetAddress: shippingAddress.streetAddress,
+      apartment: shippingAddress.apartment,
+      city: shippingAddress.city,
+      postalCode: shippingAddress.postalCode,
+      country: shippingAddress.country,
+    };
+
+    await order.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Order address updated successfully",
+      order,
+    });
+  } catch (error: any) {
+    return res.status(500).json({ success: false, message: "Internal application error saving address metrics", error: error.message });
   }
 };

@@ -15,7 +15,10 @@ export default function Categories() {
         const data = await fetchCategories();
 
         // Filter collections matching your homepage display configuration list
-        const filtered = data.filter((cat) =>
+        // const filtered = data.filter((cat) =>
+        //   allowedCategories.includes(cat.slug)
+        // );
+        const filtered = data.filter((cat: Category) => // <--- Add : Category here
           allowedCategories.includes(cat.slug)
         );
         

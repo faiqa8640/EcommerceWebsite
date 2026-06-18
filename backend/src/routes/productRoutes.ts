@@ -1,22 +1,20 @@
 import express from "express";
-import { 
-  getProducts, 
-  getProductById, 
-  addProductReview ,
-  // createProduct
+import {
+  getProducts,
+  getProductById,
+  addProductReview,
 } from "../controllers/productController";
+import { protect } from "../middleware/authMiddleware";
 
 const router = express.Router();
 
-// @route   GET /api/products
+// GET /api/products            → list all products (optionally filtered by ?category=)
 router.get("/", getProducts);
 
-// @route   GET /api/products/:id (Fetches product info combined with its reviews)
+// GET /api/products/:id        → single product + its reviews
 router.get("/:id", getProductById);
 
-// @route   POST /api/products/:productId/reviews (Adds a standalone review & updates averageRating)
-router.post("/:productId/reviews", addProductReview);
-
-// router.post("/", createProduct);
+// POST /api/products/:id/reviews   → add a review (must be logged in)
+router.post("/:id/reviews", protect, addProductReview);
 
 export default router;

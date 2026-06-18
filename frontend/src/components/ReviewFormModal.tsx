@@ -1,11 +1,12 @@
 import React, { useState } from "react";
 import { Review } from "../types"; 
+import { addReviewAPI } from "../data/apiService"; 
 
 interface ReviewFormModalProps {
   isOpen: boolean;
   onClose: () => void;
   productId: string;
-  onReviewSubmitted: (newReview: Review) => void; // Updated to use the comprehensive global type
+  onReviewSubmitted: (newReview: Review) => void;
 }
 
 export default function ReviewFormModal({
@@ -14,7 +15,6 @@ export default function ReviewFormModal({
   productId,
   onReviewSubmitted,
 }: ReviewFormModalProps) {
-  const [user, setUser] = useState("");
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -24,60 +24,22 @@ export default function ReviewFormModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user.trim() || !comment.trim()) {
-      setError("Please fill out all fields.");
-      return;
-    }
-
     setSubmitting(true);
     setError("");
 
     try {
-      // Format current date nicely (e.g., "June 12, 2026")
-      const formattedDate = new Date().toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      });
+      // Call the service with the productId prop passed from ProductDetail
+      // NOTE: addReviewAPI resolves to the saved review object directly
+      // (the backend controller does res.json(savedReview), not { data: ... }),
+      // so we must NOT do response.data here — that was always undefined,
+      // which corrupted the reviews array and crashed the averageRating reduce().
+      const savedReview = await addReviewAPI(productId, rating, comment);
 
-      // Local API payload for your MongoDB POST request
-      const reviewPayload = { user, rating, comment, date: formattedDate };
-
-      // Make API call to MongoDB backend
-      const response = await fetch(
-        `http://localhost:5000/api/products/${productId}/reviews`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(reviewPayload),
-        }
-      );
-
-      if (!response.ok) throw new Error("Failed to submit review");
-      
-      const savedData = await response.json();
-
-      // Construct the complete Review type containing the necessary productId state link
-      const completedReview: Review = {
-        _id: savedData._id || undefined, // Capture database ID if returned, otherwise fallback safely
-        productId: productId,
-        user: user,
-        rating: rating,
-        comment: comment,
-        date: formattedDate,
-      };
-
-      // Pass the fully typed review back to parent to instantly update UI
-      onReviewSubmitted(completedReview);
-      
-      // Reset form and close
-      setUser("");
-      setRating(5);
-      setComment("");
+      // Pass the returned review data back to the parent to update the UI
+      onReviewSubmitted(savedReview);
       onClose();
-    } catch (err) {
-      console.error(err);
-      setError("Could not save review. Please try again later.");
+    } catch (err: any) {
+      setError(err.message || "Failed to submit review.");
     } finally {
       setSubmitting(false);
     }
@@ -161,18 +123,6 @@ export default function ReviewFormModal({
           {error && <div className="modal-error">{error}</div>}
 
           <form onSubmit={handleSubmit}>
-            <div className="form-group">
-              <label className="form-label">Your Name</label>
-              <input
-                type="text"
-                className="form-input"
-                value={user}
-                onChange={(e) => setUser(e.target.value)}
-                placeholder="e.g., Sophia Vance"
-                required
-              />
-            </div>
-
             <div className="form-group">
               <label className="form-label">Rating</label>
               <div className="rating-stars">
