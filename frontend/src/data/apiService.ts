@@ -40,7 +40,6 @@ export const fetchProductById = async (id: string): Promise<Product | undefined>
 
 
 
-
 export const createOrder = async (orderPayload: any): Promise<ApiResponse<Order>> => {
   const token = localStorage.getItem('token');
   const response = await fetch(`${API_BASE_URL}/orders`, {

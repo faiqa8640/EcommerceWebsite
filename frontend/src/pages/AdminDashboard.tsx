@@ -1,552 +1,1237 @@
-// import { useEffect, useState } from "react";
-// import { useAuth } from "../context/AuthContext";
-// import { useNavigate } from "react-router-dom";
-
-// type Stats = {
-//   message: string;
-// };
-
-// export default function AdminDashboard() {
-//   const { user, token, logout } = useAuth();
-//   const navigate = useNavigate(); // used to redirect user properly
-//   const [stats, setStats] = useState<Stats | null>(null); // stores the admin data from backend
-//   const [error, setError] = useState("");
-//   const [loading, setLoading] = useState(true);
-
-//   useEffect(() => {
-//     const fetchAdminData = async () => { //api function
-//       try {
-//         const res = await fetch( // send request to the backend->admin api
-//           "http://localhost:5000/api/user/admin-only",
-//           {
-//             headers: {
-//               Authorization: `Bearer ${token}`, // sending the json token to backend
-//             },
-//           }
-//         );
-
-//         const data = await res.json();
-
-//         if (res.status === 401) {
-//           logout("expired");
-//           return;
-//         }
-
-//         if (res.status === 403) { // user is login not admin
-//           navigate("/", { replace: true });
-//           return;
-//         }
-
-//         if (!res.ok) {
-//           setError(data.message || "Failed to load admin data.");
-//           return;
-//         }
-
-//         setStats(data); // store admin data
-//       } catch {
-//         setError("Could not connect to server.");
-//       } finally {
-//         setLoading(false);
-//       }
-//     };
-
-//     if (token) fetchAdminData(); // if user is login then call tha api
-//   }, [token, logout, navigate]);
-
-//   return (
-//     <>
-//       <style>{`
-//         .admin-page {
-//           min-height: 100vh;
-//           background: #EAE0CF;
-//           padding: 2rem;
-//           color: #111844;
-//           font-family: "Jost", sans-serif;
-//         }
-
-//         .container {
-//           max-width: 1100px;
-//           margin: auto;
-//         }
-
-//         /* TOP WELCOME BOX (SMALLER NOW) */
-//         .welcome-box {
-//           background: rgba(17,24,68,0.05);
-//           border: 1px solid rgba(75,86,148,0.2);
-//           padding: 1.5rem 2rem;
-//           border-radius: 14px;
-//           margin-bottom: 2rem;
-//           display: flex;
-//           justify-content: space-between;
-//           align-items: center;
-//         }
-
-//         .welcome-box h2 {
-//           font-size: 1.3rem;
-//           font-weight: 500;
-//           margin-bottom: 0.2rem;
-//           font-family: "Cormorant Garamond", serif;
-//         }
-
-//         .welcome-box p {
-//           font-size: 0.85rem;
-//           color: #4B5694;
-//         }
-
-//         .badge {
-//           background: rgba(17,24,68,0.08);
-//           padding: 0.4rem 1rem;
-//           border-radius: 999px;
-//           font-size: 0.7rem;
-//           letter-spacing: 0.15em;
-//           text-transform: uppercase;
-//           color: #111844;
-//         }
-
-//         /* MAIN LAYOUT */
-//         .layout {
-//           display: grid;
-//           grid-template-columns: 260px 1fr;
-//           gap: 2rem;
-//         }
-
-//         /* LEFT MENU */
-//         .sidebar {
-//           background: rgba(17,24,68,0.04);
-//           border: 1px solid rgba(75,86,148,0.2);
-//           border-radius: 16px;
-//           padding: 1.2rem;
-//           display: flex;
-//           flex-direction: column;
-//           gap: 0.8rem;
-//           height: fit-content;
-//         }
-
-//         .menu-btn {
-//           padding: 0.9rem 1rem;
-//           border-radius: 12px;
-//           border: 1px solid rgba(75,86,148,0.25);
-//           background: transparent;
-//           color: #111844;
-//           text-align: left;
-//           font-size: 0.8rem;
-//           letter-spacing: 0.1em;
-//           text-transform: uppercase;
-//           cursor: pointer;
-//           transition: 0.3s;
-//         }
-
-//         .menu-btn:hover {
-//           background: rgba(75,86,148,0.12);
-//           transform: translateX(4px);
-//         }
-
-//         .logout {
-//           border-color: rgba(255,107,107,0.3);
-//           color: #c0392b;
-//         }
-
-//         .logout:hover {
-//           background: rgba(255,107,107,0.1);
-//         }
-
-//         /* RIGHT CONTENT */
-//         .content {
-//           background: rgba(17,24,68,0.03);
-//           border: 1px solid rgba(75,86,148,0.2);
-//           border-radius: 16px;
-//           padding: 1.5rem;
-//         }
-
-//         .section-title {
-//           font-size: 1.1rem;
-//           margin-bottom: 1rem;
-//           font-family: "Cormorant Garamond", serif;
-//         }
-
-//         /* STATES */
-//         .loading {
-//           text-align: center;
-//           padding: 3rem;
-//           color: #4B5694;
-//         }
-
-//         .error {
-//           background: rgba(255,0,0,0.08);
-//           padding: 1rem;
-//           border-radius: 10px;
-//           color: #c0392b;
-//         }
-
-//         /* RESPONSIVE */
-//         @media (max-width: 768px) {
-//           .layout {
-//             grid-template-columns: 1fr;
-//           }
-
-//           .sidebar {
-//             flex-direction: row;
-//             overflow-x: auto;
-//           }
-
-//           .menu-btn {
-//             white-space: nowrap;
-//           }
-//         }
-//       `}</style>
-
-//       <div className="admin-page">
-//         <div className="container">
-
-//           {loading ? (
-//             <div className="loading">Loading dashboard...</div>
-//           ) : error ? (
-//             <div className="error">⚠ {error}</div>
-//           ) : (
-//             <>
-//               {/* WELCOME */}
-//               <div className="welcome-box">
-//                 <div>
-//                   <h2>Welcome back, {user?.name}</h2>
-//                   <p>{user?.email}</p>
-//                 </div>
-
-//                 <div className="badge">
-//                   Admin Panel
-//                 </div>
-//               </div>
-
-//               {/* LAYOUT */}
-//               <div className="layout">
-
-//                 {/* LEFT MENU */}
-//                 <div className="sidebar">
-//                   <button className="menu-btn">
-//                     Manage Users
-//                   </button>
-
-//                   <button className="menu-btn">
-//                     View Orders
-//                   </button>
-
-//                   <button className="menu-btn">
-//                     Manage Products
-//                   </button>
-
-//                   <button className="menu-btn">
-//                     Analytics
-//                   </button>
-
-//                   <button
-//                     className="menu-btn logout"
-//                     onClick={() => logout("manual")}
-//                   >
-//                     Logout
-//                   </button>
-//                 </div>
-
-//                 {/* RIGHT CONTENT */}
-//                 <div className="content">
-//                   <h3 className="section-title">
-//                     Dashboard Overview
-//                   </h3>
-
-//                   <p style={{ color: "#4B5694", fontSize: "0.9rem" }}>
-//                     Select an option from the left menu to manage your store.
-//                   </p>
-//                 </div>
-
-//               </div>
-//             </>
-//           )}
-
-//         </div>
-//       </div>
-//     </>
-//   );
-// }
-
-
-
-// src/pages/AdminDashboard.tsx
-import { useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
+// import { NavItem } from "../types"; 
+// ─── Types ────────────────────────────────────────────────────────────────────
+type Order = {
+  _id: string;
+  user: { name: string; email: string } | string;
+  items: { name: string; quantity: number; price: number; size: string }[];
+  total: number;
+  subtotal: number;
+  shippingCost: number;
+  paymentMethod: string;
+  shippingMethod: string;
+  shippingAddress: {
+    streetAddress: string;
+    apartment?: string;
+    city: string;
+    postalCode: string;
+    country: string;
+  };
+  status: "Pending" | "Processing" | "Shipped" | "Delivered" | "Cancelled";
+  createdAt: string;
+};
 
+type Product = {
+  _id: string;
+  id: string;
+  name: string;
+  price: string;
+  priceNum: number;
+  category: string;
+  brand: string;
+  images: string[];
+  badge?: string;
+  shortDesc: string;
+  averageRating: number;
+};
+
+type Category = {
+  _id: string;
+  slug: string;
+  label: string;
+  desc: string;
+};
+
+type ActiveSection = "dashboard" | "orders" | "products" | "categories";
+
+type NavItem = {
+  id: ActiveSection; 
+  icon: string;
+  label: string;
+  badge?: number | null;
+};
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+const API = "http://localhost:5000/api";
+
+const statusColor: Record<string, string> = {
+  Pending: "#d97706",
+  Processing: "#2563eb",
+  Shipped: "#7c3aed",
+  Delivered: "#059669",
+  Cancelled: "#dc2626",
+};
+
+const statusBg: Record<string, string> = {
+  Pending: "rgba(217,119,6,0.12)",
+  Processing: "rgba(37,99,235,0.12)",
+  Shipped: "rgba(124,58,237,0.12)",
+  Delivered: "rgba(5,150,105,0.12)",
+  Cancelled: "rgba(220,38,38,0.12)",
+};
+
+function fmt(n: number) {
+  return `Rs. ${n.toLocaleString()}`;
+}
+
+function shortId(id: string) {
+  return `#${id.slice(-8).toUpperCase()}`;
+}
+
+function formatDate(d: string) {
+  return new Date(d).toLocaleDateString("en-PK", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+// ─── Sub-components ───────────────────────────────────────────────────────────
+
+function StatCard({
+  icon,
+  label,
+  value,
+  accent,
+}: {
+  icon: string;
+  label: string;
+  value: string | number;
+  accent: string;
+}) {
+  return (
+    <div style={{
+      background: "rgba(255,255,255,0.55)",
+      border: "1px solid rgba(75,86,148,0.18)",
+      borderRadius: 16,
+      padding: "1.4rem 1.6rem",
+      backdropFilter: "blur(10px)",
+      display: "flex",
+      alignItems: "center",
+      gap: "1.1rem",
+    }}>
+      <div style={{
+        width: 46,
+        height: 46,
+        borderRadius: 12,
+        background: accent,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        fontSize: "1.3rem",
+        flexShrink: 0,
+      }}>
+        {icon}
+      </div>
+      <div>
+        <div style={{ fontSize: "0.68rem", letterSpacing: "0.2em", textTransform: "uppercase", color: "#7288AE", marginBottom: 4 }}>
+          {label}
+        </div>
+        <div style={{ fontSize: "1.5rem", fontFamily: "'Cormorant Garamond', serif", fontWeight: 600, color: "#111844" }}>
+          {value}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function StatusPill({ status }: { status: string }) {
+  return (
+    <span style={{
+      display: "inline-block",
+      padding: "3px 12px",
+      borderRadius: 999,
+      fontSize: "0.72rem",
+      fontWeight: 600,
+      letterSpacing: "0.08em",
+      color: statusColor[status] || "#111844",
+      background: statusBg[status] || "rgba(17,24,68,0.08)",
+    }}>
+      {status}
+    </span>
+  );
+}
+
+// ─── Main Component ───────────────────────────────────────────────────────────
 export default function AdminDashboard() {
-  const { user, logout } = useAuth();
+  const { user, token, logout, isAdmin } = useAuth();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState("dashboard");
 
-  const stats = {
-    revenue: 3368,
-    orders: 4,
-    products: 5,
-    categories: 5,
+  const [active, setActive] = useState<ActiveSection>("dashboard");
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  // Orders state
+  const [orderSearch, setOrderSearch] = useState("");
+  const [orderStatusFilter, setOrderStatusFilter] = useState("All");
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null);
+
+  // Products state
+  const [productSearch, setProductSearch] = useState("");
+
+  const authHeaders = useCallback(() => ({
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`,
+  }), [token]);
+
+  // ── Fetch all data ──────────────────────────────────────────────────────────
+  useEffect(() => {
+    if (!token) return;
+
+    const loadAll = async () => {
+      try {
+        setLoading(true);
+
+        // Verify admin
+        const adminCheck = await fetch(`${API}/user/admin-only`, {
+          headers: authHeaders(),
+        });
+        if (adminCheck.status === 401) { logout("expired"); return; }
+        if (adminCheck.status === 403) { navigate("/", { replace: true }); return; }
+
+        // Fetch orders, products, categories in parallel
+        const [ordRes, prodRes, catRes] = await Promise.all([
+          fetch(`${API}/orders/all`, { headers: authHeaders() }),
+          fetch(`${API}/products`),
+          fetch(`${API}/categories`),
+        ]);
+
+        // Orders might not have an /all endpoint — graceful fallback
+        if (ordRes.ok) {
+          const ordData = await ordRes.json();
+          setOrders(Array.isArray(ordData) ? ordData : ordData.orders || []);
+        }
+
+        if (prodRes.ok) setProducts(await prodRes.json());
+        if (catRes.ok) setCategories(await catRes.json());
+
+      } catch {
+        setError("Could not connect to server.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadAll();
+  }, [token, logout, navigate, authHeaders]);
+
+  // ── Update order status ─────────────────────────────────────────────────────
+  const updateOrderStatus = async (orderId: string, newStatus: string) => {
+    setUpdatingOrderId(orderId);
+    try {
+      const res = await fetch(`${API}/orders/${orderId}/status`, {
+        method: "PATCH",
+        headers: authHeaders(),
+        body: JSON.stringify({ status: newStatus }),
+      });
+      if (res.ok) {
+        setOrders(prev =>
+          prev.map(o => o._id === orderId ? { ...o, status: newStatus as Order["status"] } : o)
+        );
+        if (selectedOrder?._id === orderId) {
+          setSelectedOrder(prev => prev ? { ...prev, status: newStatus as Order["status"] } : null);
+        }
+      }
+    } finally {
+      setUpdatingOrderId(null);
+    }
   };
 
-  const recentOrders = [
-    { id: "#0854F3A0", customer: "Sadia Mustafa", amount: 600, status: "Delivered", date: "Apr 10, 2026" },
-    { id: "#0854F394", customer: "Faiqa Mustafa", amount: 600, status: "Pending", date: "Apr 10, 2026" },
-    { id: "#0C011FF5", customer: "Faiqa Mustafa", amount: 1250, status: "Processing", date: "Apr 1, 2026" },
-    { id: "#CF012C29", customer: "Zain Arshad", amount: 918, status: "Cancelled", date: "Feb 22, 2026" },
-  ];
+  // ── Derived stats ───────────────────────────────────────────────────────────
+  const totalRevenue = orders.reduce((s, o) => s + (o.total || 0), 0);
+  const totalOrders = orders.length;
+  const totalProducts = products.length;
+  const totalCategories = categories.length;
 
-  const handleLogout = () => {
-    logout();
-    navigate("/login");
-  };
+  const recentOrders = [...orders]
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .slice(0, 5);
 
+  const pendingCount = orders.filter(o => o.status === "Pending").length;
+
+  // ── Filtered orders ─────────────────────────────────────────────────────────
+  const filteredOrders = orders.filter(o => {
+    const userName = typeof o.user === "object" ? o.user.name : "";
+    const userEmail = typeof o.user === "object" ? o.user.email : "";
+    const matchSearch =
+      !orderSearch ||
+      userName.toLowerCase().includes(orderSearch.toLowerCase()) ||
+      userEmail.toLowerCase().includes(orderSearch.toLowerCase()) ||
+      o._id.toLowerCase().includes(orderSearch.toLowerCase());
+    const matchStatus = orderStatusFilter === "All" || o.status === orderStatusFilter;
+    return matchSearch && matchStatus;
+  });
+
+  // ── Filtered products ───────────────────────────────────────────────────────
+  const filteredProducts = products.filter(p =>
+    !productSearch ||
+    p.name.toLowerCase().includes(productSearch.toLowerCase()) ||
+    p.category.toLowerCase().includes(productSearch.toLowerCase()) ||
+    p.brand.toLowerCase().includes(productSearch.toLowerCase())
+  );
+
+  if (loading) {
+    return (
+      <div style={{
+        minHeight: "100vh", background: "#EAE0CF",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        fontFamily: "'Cormorant Garamond', serif", fontSize: "1.5rem", color: "#111844",
+      }}>
+        Loading Admin Panel...
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div style={{
+        minHeight: "100vh", background: "#EAE0CF",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        color: "#c0392b", fontFamily: "'Jost', sans-serif",
+      }}>
+        ⚠ {error}
+      </div>
+    );
+  }
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // RENDER
+  // ──────────────────────────────────────────────────────────────────────────
   return (
     <>
       <style>{`
-        :root {
-          --navy: #111844;
-          --accent: #4B5694;
-          --cream: #EAE0CF;
-          --light: #F8F4EB;
-          --muted: #7288AE;
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=Jost:wght@300;400;500;600&display=swap');
+
+        * { box-sizing: border-box; }
+
+        .adm-root {
+          display: flex;
+          min-height: 100vh;
+          background: #EAE0CF;
+          font-family: 'Jost', sans-serif;
+          color: #111844;
         }
 
-        .admin-page {
-          background: var(--cream);
+        /* ── SIDEBAR ─────────────────────────────────────────── */
+        .adm-sidebar {
+          width: 240px;
+          background: linear-gradient(180deg, #111844 0%, #1a245c 100%);
+          display: flex;
+          flex-direction: column;
+          flex-shrink: 0;
+          position: fixed;
+          top: 0;
+          left: 0;
+          height: 100vh;
+          z-index: 100;
+        }
+
+        .adm-brand {
+          padding: 1.8rem 1.6rem 1.4rem;
+          border-bottom: 1px solid rgba(234,224,207,0.1);
+        }
+
+        .adm-brand-name {
+          font-family: 'Cormorant Garamond', serif;
+          font-size: 1.4rem;
+          font-weight: 500;
+          color: #EAE0CF;
+          letter-spacing: 0.08em;
+        }
+
+        .adm-brand-sub {
+          font-size: 0.65rem;
+          letter-spacing: 0.25em;
+          text-transform: uppercase;
+          color: rgba(234,224,207,0.45);
+          margin-top: 2px;
+        }
+
+        .adm-nav {
+          flex: 1;
+          padding: 1.2rem 0.8rem;
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+        }
+
+        .adm-nav-label {
+          font-size: 0.58rem;
+          letter-spacing: 0.28em;
+          text-transform: uppercase;
+          color: rgba(234,224,207,0.3);
+          padding: 0.8rem 0.8rem 0.4rem;
+        }
+
+        .adm-nav-btn {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding: 0.75rem 1rem;
+          border-radius: 10px;
+          border: none;
+          background: transparent;
+          color: rgba(234,224,207,0.65);
+          font-family: 'Jost', sans-serif;
+          font-size: 0.82rem;
+          letter-spacing: 0.05em;
+          cursor: pointer;
+          text-align: left;
+          transition: all 0.2s;
+          width: 100%;
+          position: relative;
+        }
+
+        .adm-nav-btn:hover {
+          background: rgba(234,224,207,0.08);
+          color: #EAE0CF;
+        }
+
+        .adm-nav-btn.active {
+          background: rgba(114,136,174,0.25);
+          color: #EAE0CF;
+        }
+
+        .adm-nav-btn.active::before {
+          content: '';
+          position: absolute;
+          left: 0;
+          top: 20%;
+          height: 60%;
+          width: 3px;
+          background: #7288AE;
+          border-radius: 0 3px 3px 0;
+        }
+
+        .adm-nav-icon {
+          font-size: 1rem;
+          width: 20px;
+          text-align: center;
+        }
+
+        .adm-badge {
+          margin-left: auto;
+          background: rgba(217,119,6,0.9);
+          color: #fff;
+          font-size: 0.62rem;
+          font-weight: 700;
+          padding: 2px 7px;
+          border-radius: 999px;
+          min-width: 20px;
+          text-align: center;
+        }
+
+        .adm-sidebar-footer {
+          padding: 1rem 0.8rem;
+          border-top: 1px solid rgba(234,224,207,0.1);
+        }
+
+        .adm-user-pill {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding: 0.7rem 0.8rem;
+          border-radius: 10px;
+          background: rgba(234,224,207,0.06);
+          border: 1px solid rgba(234,224,207,0.1);
+          margin-bottom: 8px;
+        }
+
+        .adm-avatar {
+          width: 32px;
+          height: 32px;
+          border-radius: 50%;
+          background: linear-gradient(135deg, #4B5694, #7288AE);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 0.8rem;
+          font-weight: 600;
+          color: #EAE0CF;
+          flex-shrink: 0;
+        }
+
+        .adm-user-info { min-width: 0; }
+        .adm-user-name { font-size: 0.78rem; color: #EAE0CF; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .adm-user-role { font-size: 0.6rem; letter-spacing: 0.15em; text-transform: uppercase; color: #7288AE; }
+
+        .adm-logout-btn {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          width: 100%;
+          padding: 0.65rem 1rem;
+          border-radius: 10px;
+          border: 1px solid rgba(220,38,38,0.25);
+          background: transparent;
+          color: rgba(252,165,165,0.8);
+          font-family: 'Jost', sans-serif;
+          font-size: 0.78rem;
+          letter-spacing: 0.1em;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+
+        .adm-logout-btn:hover {
+          background: rgba(220,38,38,0.12);
+          border-color: rgba(220,38,38,0.5);
+          color: #fca5a5;
+        }
+
+        /* ── MAIN ────────────────────────────────────────────── */
+        .adm-main {
+          margin-left: 240px;
+          flex: 1;
           min-height: 100vh;
           display: flex;
-          font-family: 'Jost', system-ui, sans-serif;
+          flex-direction: column;
         }
 
-        /* Sidebar */
-        .sidebar {
-          width: 260px;
-          background: var(--navy);
-          color: white;
-          padding: 2rem 1rem;
-          position: fixed;
-          height: 100vh;
-          border-right: 1px solid rgba(255,255,255,0.1);
+        .adm-topbar {
+          background: rgba(234,224,207,0.7);
+          backdrop-filter: blur(12px);
+          border-bottom: 1px solid rgba(75,86,148,0.15);
+          padding: 0 2rem;
+          height: 64px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          position: sticky;
+          top: 0;
+          z-index: 50;
         }
 
-        .logo {
+        .adm-page-title {
           font-family: 'Cormorant Garamond', serif;
-          font-size: 2.2rem;
-          letter-spacing: 0.25em;
-          margin-bottom: 3rem;
-          color: white;
+          font-size: 1.4rem;
+          font-weight: 500;
+          color: #111844;
+          letter-spacing: 0.04em;
         }
 
-        .nav-link {
-          padding: 0.85rem 1.2rem;
-          border-radius: 10px;
-          color: rgba(234,224,207,0.9);
-          text-decoration: none;
+        .adm-topbar-right {
           display: flex;
           align-items: center;
           gap: 12px;
-          margin-bottom: 6px;
-          transition: all 0.3s;
+          font-size: 0.78rem;
+          color: rgba(17,24,68,0.6);
         }
 
-        .nav-link.active,
-        .nav-link:hover {
-          background: rgba(234,224,207,0.15);
-          color: white;
-        }
-
-        /* Sign Out Button - Matches Screenshot */
-        .signout-btn {
-          margin-top: auto;
-          padding: 0.85rem 1.2rem;
-          background: white;
-          color: var(--navy);
-          border: none;
-          border-radius: 10px;
-          cursor: pointer;
-          font-size: 0.9rem;
-          font-weight: 500;
-          transition: all 0.3s;
-        }
-
-        .signout-btn:hover {
-          background: #f0e9db;
-        }
-
-        /* Main Content */
-        .main-content {
-          margin-left: 260px;
-          flex: 1;
+        .adm-content {
           padding: 2rem;
+          flex: 1;
         }
 
-        .header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 2rem;
-        }
-
-        .stat-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-          gap: 1.5rem;
-          margin-bottom: 3rem;
-        }
-
-        .stat-card {
-          background: white;
-          padding: 1.6rem 1.8rem;
-          border-radius: 12px;
-          box-shadow: 0 8px 25px rgba(17,24,68,0.08);
-          border: 1px solid #f0e9db;
-        }
-
-        .stat-label {
-          font-size: 0.75rem;
-          color: var(--muted);
-          text-transform: uppercase;
-          letter-spacing: 0.12em;
-        }
-
-        .stat-value {
-          font-size: 2.1rem;
-          font-weight: 600;
-          color: var(--navy);
-          margin-top: 0.4rem;
-        }
-
-        .orders-table {
-          background: white;
-          border-radius: 12px;
+        /* ── CARDS / TABLES ──────────────────────────────────── */
+        .adm-card {
+          background: rgba(255,255,255,0.55);
+          border: 1px solid rgba(75,86,148,0.15);
+          border-radius: 16px;
           overflow: hidden;
-          box-shadow: 0 8px 25px rgba(17,24,68,0.08);
+          backdrop-filter: blur(10px);
         }
 
-        table { width: 100%; border-collapse: collapse; }
-        th {
-          text-align: left;
-          padding: 1.1rem 1rem;
-          background: var(--light);
-          font-size: 0.72rem;
-          text-transform: uppercase;
-          letter-spacing: 0.1em;
-          color: var(--accent);
+        .adm-card-header {
+          padding: 1.2rem 1.5rem;
+          border-bottom: 1px solid rgba(75,86,148,0.1);
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 1rem;
         }
-        td { padding: 1.1rem 1rem; border-top: 1px solid #f0e9db; }
 
-        .status {
-          padding: 4px 14px;
-          border-radius: 999px;
-          font-size: 0.75rem;
+        .adm-card-title {
+          font-family: 'Cormorant Garamond', serif;
+          font-size: 1.1rem;
           font-weight: 500;
+          color: #111844;
         }
-        .Delivered { background: #d1fae5; color: #065f46; }
-        .Pending { background: #fef3c7; color: #92400e; }
-        .Processing { background: #dbeafe; color: #1e40af; }
-        .Cancelled { background: #fee2e2; color: #b91c1c; }
+
+        .adm-table {
+          width: 100%;
+          border-collapse: collapse;
+          font-size: 0.82rem;
+        }
+
+        .adm-table th {
+          padding: 0.75rem 1.2rem;
+          text-align: left;
+          font-size: 0.65rem;
+          letter-spacing: 0.18em;
+          text-transform: uppercase;
+          color: #7288AE;
+          font-weight: 500;
+          background: rgba(17,24,68,0.03);
+          border-bottom: 1px solid rgba(75,86,148,0.1);
+        }
+
+        .adm-table td {
+          padding: 0.9rem 1.2rem;
+          border-bottom: 1px solid rgba(75,86,148,0.07);
+          color: rgba(17,24,68,0.85);
+          vertical-align: middle;
+        }
+
+        .adm-table tr:last-child td { border-bottom: none; }
+
+        .adm-table tr:hover td {
+          background: rgba(75,86,148,0.04);
+        }
+
+        /* ── INPUTS ──────────────────────────────────────────── */
+        .adm-input {
+          background: rgba(255,255,255,0.7);
+          border: 1px solid rgba(75,86,148,0.25);
+          border-radius: 8px;
+          padding: 0.5rem 0.85rem;
+          font-family: 'Jost', sans-serif;
+          font-size: 0.82rem;
+          color: #111844;
+          outline: none;
+          transition: 0.2s;
+        }
+
+        .adm-input:focus {
+          border-color: #4B5694;
+          box-shadow: 0 0 0 3px rgba(75,86,148,0.1);
+        }
+
+        .adm-select {
+          background: rgba(255,255,255,0.7);
+          border: 1px solid rgba(75,86,148,0.25);
+          border-radius: 8px;
+          padding: 0.5rem 0.85rem;
+          font-family: 'Jost', sans-serif;
+          font-size: 0.82rem;
+          color: #111844;
+          outline: none;
+          cursor: pointer;
+        }
+
+        /* ── FILTER PILLS ────────────────────────────────────── */
+        .filter-pill {
+          padding: 5px 14px;
+          border-radius: 999px;
+          border: 1px solid rgba(75,86,148,0.25);
+          background: transparent;
+          font-size: 0.72rem;
+          letter-spacing: 0.1em;
+          color: rgba(17,24,68,0.65);
+          cursor: pointer;
+          transition: all 0.2s;
+          font-family: 'Jost', sans-serif;
+        }
+
+        .filter-pill.active, .filter-pill:hover {
+          background: #111844;
+          color: #EAE0CF;
+          border-color: #111844;
+        }
+
+        /* ── ORDER MODAL ─────────────────────────────────────── */
+        .adm-overlay {
+          position: fixed;
+          inset: 0;
+          background: rgba(17,24,68,0.5);
+          backdrop-filter: blur(4px);
+          z-index: 200;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 1rem;
+        }
+
+        .adm-modal {
+          background: #EAE0CF;
+          border-radius: 20px;
+          width: 100%;
+          max-width: 580px;
+          max-height: 90vh;
+          overflow-y: auto;
+          padding: 2rem;
+          position: relative;
+          border: 1px solid rgba(75,86,148,0.2);
+          box-shadow: 0 30px 70px rgba(17,24,68,0.3);
+        }
+
+        .adm-modal-close {
+          position: absolute;
+          top: 1.2rem;
+          right: 1.2rem;
+          width: 32px;
+          height: 32px;
+          border-radius: 50%;
+          border: 1px solid rgba(17,24,68,0.2);
+          background: transparent;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 1rem;
+          color: #111844;
+          transition: 0.2s;
+        }
+
+        .adm-modal-close:hover { background: rgba(17,24,68,0.08); }
+
+        .adm-action-btn {
+          padding: 6px 14px;
+          border-radius: 8px;
+          border: 1px solid rgba(75,86,148,0.3);
+          background: transparent;
+          font-family: 'Jost', sans-serif;
+          font-size: 0.72rem;
+          letter-spacing: 0.1em;
+          color: #111844;
+          cursor: pointer;
+          transition: 0.2s;
+        }
+
+        .adm-action-btn:hover {
+          background: #111844;
+          color: #EAE0CF;
+          border-color: #111844;
+        }
+
+        /* ── STATS GRID ──────────────────────────────────────── */
+        .adm-stats-grid {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 1.2rem;
+          margin-bottom: 1.8rem;
+        }
+
+        .adm-two-col {
+          display: grid;
+          grid-template-columns: 2fr 1fr;
+          gap: 1.4rem;
+          margin-bottom: 1.8rem;
+        }
+
+        /* ── PRODUCT THUMB ───────────────────────────────────── */
+        .prod-thumb {
+          width: 38px;
+          height: 46px;
+          border-radius: 6px;
+          object-fit: cover;
+          background: rgba(17,24,68,0.08);
+          border: 1px solid rgba(75,86,148,0.12);
+        }
+
+        /* ── RESPONSIVE ──────────────────────────────────────── */
+        @media (max-width: 1100px) {
+          .adm-stats-grid { grid-template-columns: repeat(2, 1fr); }
+          .adm-two-col { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 768px) {
+          .adm-sidebar { width: 200px; }
+          .adm-main { margin-left: 200px; }
+          .adm-content { padding: 1rem; }
+          .adm-stats-grid { grid-template-columns: 1fr 1fr; }
+        }
       `}</style>
 
-      <div className="admin-page">
-        {/* Sidebar */}
-        <div className="sidebar">
-          <div className="logo">ELOURA</div>
+      <div className="adm-root">
 
-          <nav>
-            <a href="#" className={`nav-link ${activeTab === "dashboard" ? "active" : ""}`} onClick={() => setActiveTab("dashboard")}>
-              📊 Dashboard
-            </a>
-            <a href="#" className={`nav-link ${activeTab === "products" ? "active" : ""}`} onClick={() => setActiveTab("products")}>
-              📦 Products
-            </a>
-            <a href="#" className={`nav-link ${activeTab === "categories" ? "active" : ""}`} onClick={() => setActiveTab("categories")}>
-              🗂️ Categories
-            </a>
-            <a href="#" className={`nav-link ${activeTab === "orders" ? "active" : ""}`} onClick={() => setActiveTab("orders")}>
-              🛒 Orders
-            </a>
+        {/* ── SIDEBAR ──────────────────────────────────────────── */}
+        <aside className="adm-sidebar">
+          <div className="adm-brand">
+            <div className="adm-brand-name">Eloura</div>
+            <div className="adm-brand-sub">Admin Panel</div>
+          </div>
+
+          <nav className="adm-nav">
+            <div className="adm-nav-label">Navigation</div>
+
+            {(
+              [
+                { id: "dashboard", icon: "◈", label: "Dashboard" },
+                { id: "orders", icon: "◉", label: "Orders", badge: pendingCount > 0 ? pendingCount : null },
+                { id: "products", icon: "✦", label: "Products" },
+                { id: "categories", icon: "❋", label: "Categories" },
+              ] as NavItem[]
+            ).map(item => (
+              <button
+                key={item.id}
+                className={`adm-nav-btn ${active === item.id ? "active" : ""}`}
+                onClick={() => setActive(item.id)}
+              >
+                <span className="adm-nav-icon">{item.icon}</span>
+                {item.label}
+                {item.badge ? <span className="adm-badge">{item.badge}</span> : null}
+              </button>
+            ))}
           </nav>
 
-          <button className="signout-btn" onClick={handleLogout}>
-            Sign Out
-          </button>
-        </div>
+          <div className="adm-sidebar-footer">
+            <div className="adm-user-pill">
+              <div className="adm-avatar">
+                {user?.name?.charAt(0).toUpperCase() ?? "A"}
+              </div>
+              <div className="adm-user-info">
+                <div className="adm-user-name">{user?.name}</div>
+                <div className="adm-user-role">Administrator</div>
+              </div>
+            </div>
+            <button className="adm-logout-btn" onClick={() => logout("manual")}>
+              <span>↩</span> Sign Out
+            </button>
+          </div>
+        </aside>
 
-        {/* Main Content */}
-        <div className="main-content">
-          <div className="header">
-            <h1 style={{ fontSize: "2.1rem", fontWeight: 400, color: "#111844" }}>
-              {activeTab === "dashboard" && "Dashboard"}
-              {activeTab === "products" && "Products"}
-              {activeTab === "categories" && "Categories"}
-              {activeTab === "orders" && "Orders"}
-            </h1>
-            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-              <span style={{ fontWeight: 500 }}>{user?.name}</span>
-              <span style={{ background: "#4B5694", color: "white", padding: "4px 12px", borderRadius: "999px", fontSize: "0.78rem" }}>
-                Administrator
+        {/* ── MAIN ─────────────────────────────────────────────── */}
+        <main className="adm-main">
+          <div className="adm-topbar">
+            <div className="adm-page-title">
+              {active === "dashboard" && "Dashboard"}
+              {active === "orders" && "Orders"}
+              {active === "products" && "Products"}
+              {active === "categories" && "Categories"}
+            </div>
+            <div className="adm-topbar-right">
+              <span style={{ fontSize: "0.7rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "#4B5694" }}>
+                {new Date().toLocaleDateString("en-PK", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
               </span>
             </div>
           </div>
 
-          {/* Dashboard */}
-          {activeTab === "dashboard" && (
-            <>
-              <div className="stat-grid">
-                <div className="stat-card">
-                  <div className="stat-label">TOTAL REVENUE</div>
-                  <div className="stat-value">Rs. {stats.revenue.toLocaleString()}</div>
-                </div>
-                <div className="stat-card">
-                  <div className="stat-label">TOTAL ORDERS</div>
-                  <div className="stat-value">{stats.orders}</div>
-                </div>
-                <div className="stat-card">
-                  <div className="stat-label">TOTAL PRODUCTS</div>
-                  <div className="stat-value">{stats.products}</div>
-                </div>
-                <div className="stat-card">
-                  <div className="stat-label">TOTAL CATEGORIES</div>
-                  <div className="stat-value">{stats.categories}</div>
-                </div>
-              </div>
+          <div className="adm-content">
 
-              <div className="orders-table">
-                <h3 style={{ padding: "1.5rem 1.5rem 1rem", margin: 0, fontSize: "1.5rem", color: "#111844" }}>
-                  Recent Orders
-                </h3>
-                <table>
+            {/* ═══════════════════════════════════════════════════
+                DASHBOARD
+            ═══════════════════════════════════════════════════ */}
+            {active === "dashboard" && (
+              <>
+                {/* Stats */}
+                <div className="adm-stats-grid">
+                  <StatCard icon="₨" label="Total Revenue" value={fmt(totalRevenue)} accent="rgba(75,86,148,0.15)" />
+                  <StatCard icon="◉" label="Total Orders" value={totalOrders} accent="rgba(5,150,105,0.12)" />
+                  <StatCard icon="✦" label="Total Products" value={totalProducts} accent="rgba(124,58,237,0.1)" />
+                  <StatCard icon="❋" label="Categories" value={totalCategories} accent="rgba(217,119,6,0.12)" />
+                </div>
+
+                {/* Two-col: recent orders + order status breakdown */}
+                <div className="adm-two-col">
+                  {/* Recent Orders */}
+                  <div className="adm-card">
+                    <div className="adm-card-header">
+                      <span className="adm-card-title">Recent Orders</span>
+                      <button className="adm-action-btn" onClick={() => setActive("orders")}>
+                        View All →
+                      </button>
+                    </div>
+                    <table className="adm-table">
+                      <thead>
+                        <tr>
+                          <th>Order ID</th>
+                          <th>Customer</th>
+                          <th>Total</th>
+                          <th>Status</th>
+                          <th>Date</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {recentOrders.length === 0 ? (
+                          <tr><td colSpan={5} style={{ textAlign: "center", padding: "2rem", color: "#7288AE" }}>No orders yet</td></tr>
+                        ) : recentOrders.map(o => (
+                          <tr key={o._id} style={{ cursor: "pointer" }} onClick={() => setSelectedOrder(o)}>
+                            <td style={{ fontFamily: "monospace", fontSize: "0.75rem", color: "#4B5694" }}>{shortId(o._id)}</td>
+                            <td>
+                              <div style={{ fontWeight: 500, fontSize: "0.82rem" }}>
+                                {typeof o.user === "object" ? o.user.name : "—"}
+                              </div>
+                              <div style={{ fontSize: "0.7rem", color: "#7288AE" }}>
+                                {typeof o.user === "object" ? o.user.email : ""}
+                              </div>
+                            </td>
+                            <td style={{ fontWeight: 600 }}>{fmt(o.total)}</td>
+                            <td><StatusPill status={o.status} /></td>
+                            <td style={{ color: "#7288AE", fontSize: "0.76rem" }}>{formatDate(o.createdAt)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Order Status Breakdown */}
+                  <div className="adm-card">
+                    <div className="adm-card-header">
+                      <span className="adm-card-title">Order Status</span>
+                    </div>
+                    <div style={{ padding: "1.2rem 1.5rem", display: "flex", flexDirection: "column", gap: "0.9rem" }}>
+                      {["Pending", "Processing", "Shipped", "Delivered", "Cancelled"].map(s => {
+                        const count = orders.filter(o => o.status === s).length;
+                        const pct = totalOrders ? Math.round((count / totalOrders) * 100) : 0;
+                        return (
+                          <div key={s}>
+                            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
+                              <span style={{ fontSize: "0.78rem", color: statusColor[s], fontWeight: 500 }}>{s}</span>
+                              <span style={{ fontSize: "0.78rem", color: "#7288AE" }}>{count} · {pct}%</span>
+                            </div>
+                            <div style={{ height: 5, borderRadius: 999, background: "rgba(17,24,68,0.08)", overflow: "hidden" }}>
+                              <div style={{
+                                height: "100%",
+                                width: `${pct}%`,
+                                background: statusColor[s],
+                                borderRadius: 999,
+                                transition: "width 0.6s ease",
+                              }} />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Top categories */}
+                    <div style={{ borderTop: "1px solid rgba(75,86,148,0.1)", padding: "1.2rem 1.5rem" }}>
+                      <div style={{ fontSize: "0.7rem", letterSpacing: "0.2em", textTransform: "uppercase", color: "#7288AE", marginBottom: "0.8rem" }}>
+                        Categories
+                      </div>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                        {categories.map(c => (
+                          <span key={c.slug} style={{
+                            padding: "4px 12px",
+                            borderRadius: 999,
+                            border: "1px solid rgba(75,86,148,0.25)",
+                            fontSize: "0.72rem",
+                            color: "#4B5694",
+                            background: "rgba(75,86,148,0.06)",
+                          }}>
+                            {c.label}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* ═══════════════════════════════════════════════════
+                ORDERS
+            ═══════════════════════════════════════════════════ */}
+            {active === "orders" && (
+              <>
+                {/* Stats row */}
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "1rem", marginBottom: "1.5rem" }}>
+                  {["Pending", "Processing", "Shipped", "Delivered"].map(s => (
+                    <StatCard
+                      key={s}
+                      icon={s === "Pending" ? "⏳" : s === "Processing" ? "⚙" : s === "Shipped" ? "🚚" : "✅"}
+                      label={s}
+                      value={orders.filter(o => o.status === s).length}
+                      accent={statusBg[s]}
+                    />
+                  ))}
+                </div>
+
+                <div className="adm-card">
+                  <div className="adm-card-header" style={{ flexWrap: "wrap", gap: "0.8rem" }}>
+                    <span className="adm-card-title">All Orders ({filteredOrders.length})</span>
+                    <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap", alignItems: "center" }}>
+                      <input
+                        className="adm-input"
+                        placeholder="Search customer, email, ID…"
+                        value={orderSearch}
+                        onChange={e => setOrderSearch(e.target.value)}
+                        style={{ width: 220 }}
+                      />
+                      {["All", "Pending", "Processing", "Shipped", "Delivered", "Cancelled"].map(s => (
+                        <button
+                          key={s}
+                          className={`filter-pill ${orderStatusFilter === s ? "active" : ""}`}
+                          onClick={() => setOrderStatusFilter(s)}
+                        >
+                          {s}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <table className="adm-table">
+                    <thead>
+                      <tr>
+                        <th>Order ID</th>
+                        <th>Customer</th>
+                        <th>Items</th>
+                        <th>Total</th>
+                        <th>Payment</th>
+                        <th>Status</th>
+                        <th>Date</th>
+                        <th>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredOrders.length === 0 ? (
+                        <tr><td colSpan={8} style={{ textAlign: "center", padding: "2.5rem", color: "#7288AE" }}>No orders found</td></tr>
+                      ) : filteredOrders.map(o => (
+                        <tr key={o._id}>
+                          <td style={{ fontFamily: "monospace", fontSize: "0.75rem", color: "#4B5694" }}>{shortId(o._id)}</td>
+                          <td>
+                            <div style={{ fontWeight: 500 }}>{typeof o.user === "object" ? o.user.name : "—"}</div>
+                            <div style={{ fontSize: "0.7rem", color: "#7288AE" }}>{typeof o.user === "object" ? o.user.email : ""}</div>
+                          </td>
+                          <td>{o.items?.length ?? 0} item{(o.items?.length ?? 0) !== 1 ? "s" : ""}</td>
+                          <td style={{ fontWeight: 600 }}>{fmt(o.total)}</td>
+                          <td style={{ fontSize: "0.76rem", color: "#7288AE" }}>{o.paymentMethod}</td>
+                          <td><StatusPill status={o.status} /></td>
+                          <td style={{ color: "#7288AE", fontSize: "0.76rem" }}>{formatDate(o.createdAt)}</td>
+                          <td>
+                            <button className="adm-action-btn" onClick={() => setSelectedOrder(o)}>
+                              View
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            )}
+
+            {/* ═══════════════════════════════════════════════════
+                PRODUCTS
+            ═══════════════════════════════════════════════════ */}
+            {active === "products" && (
+              <div className="adm-card">
+                <div className="adm-card-header">
+                  <span className="adm-card-title">All Products ({filteredProducts.length})</span>
+                  <input
+                    className="adm-input"
+                    placeholder="Search by name, brand, category…"
+                    value={productSearch}
+                    onChange={e => setProductSearch(e.target.value)}
+                    style={{ width: 260 }}
+                  />
+                </div>
+                <table className="adm-table">
                   <thead>
                     <tr>
-                      <th>ORDER ID</th>
-                      <th>CUSTOMER</th>
-                      <th>AMOUNT</th>
-                      <th>STATUS</th>
-                      <th>DATE</th>
+                      <th>Product</th>
+                      <th>Category</th>
+                      <th>Brand</th>
+                      <th>Price</th>
+                      <th>Rating</th>
+                      <th>Badge</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {recentOrders.map((order) => (
-                      <tr key={order.id}>
-                        <td><strong>{order.id}</strong></td>
-                        <td>{order.customer}</td>
-                        <td>Rs. {order.amount}</td>
-                        <td><span className={`status ${order.status}`}>{order.status}</span></td>
-                        <td>{order.date}</td>
+                    {filteredProducts.length === 0 ? (
+                      <tr><td colSpan={6} style={{ textAlign: "center", padding: "2.5rem", color: "#7288AE" }}>No products found</td></tr>
+                    ) : filteredProducts.map(p => (
+                      <tr key={p._id}>
+                        <td>
+                          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                            {p.images?.[0] && (
+                              <img src={p.images[0]} alt={p.name} className="prod-thumb" />
+                            )}
+                            <div>
+                              <div style={{ fontWeight: 500, fontSize: "0.85rem" }}>{p.name}</div>
+                              <div style={{ fontSize: "0.7rem", color: "#7288AE" }}>{p.id}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td style={{ textTransform: "capitalize" }}>{p.category}</td>
+                        <td>{p.brand}</td>
+                        <td style={{ fontWeight: 600, color: "#4B5694" }}>{p.price}</td>
+                        <td>
+                          <span style={{ color: "#d97706", fontSize: "0.8rem" }}>
+                            ★ {p.averageRating?.toFixed(1) ?? "0.0"}
+                          </span>
+                        </td>
+                        <td>
+                          {p.badge ? (
+                            <span style={{
+                              padding: "3px 10px", borderRadius: 999, fontSize: "0.65rem",
+                              background: "rgba(75,86,148,0.1)", color: "#4B5694",
+                              border: "1px solid rgba(75,86,148,0.2)",
+                            }}>
+                              {p.badge}
+                            </span>
+                          ) : <span style={{ color: "#7288AE", fontSize: "0.75rem" }}>—</span>}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
-            </>
-          )}
+            )}
 
-          {/* Other Tabs */}
-          {(activeTab === "products" || activeTab === "categories" || activeTab === "orders") && (
-            <div style={{ background: "white", padding: "3rem", borderRadius: "16px", boxShadow: "0 10px 30px rgba(17,24,68,0.08)", textAlign: "center" }}>
-              <h3 style={{ color: "#111844", marginBottom: "1rem" }}>{activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}</h3>
-              <p style={{ color: "#7288AE" }}>Management panel coming soon...</p>
-            </div>
-          )}
-        </div>
+            {/* ═══════════════════════════════════════════════════
+                CATEGORIES
+            ═══════════════════════════════════════════════════ */}
+            {active === "categories" && (
+              <div className="adm-card">
+                <div className="adm-card-header">
+                  <span className="adm-card-title">All Categories ({categories.length})</span>
+                </div>
+                <table className="adm-table">
+                  <thead>
+                    <tr>
+                      <th>Slug</th>
+                      <th>Label</th>
+                      <th>Description</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {categories.length === 0 ? (
+                      <tr><td colSpan={3} style={{ textAlign: "center", padding: "2.5rem", color: "#7288AE" }}>No categories found</td></tr>
+                    ) : categories.map(c => (
+                      <tr key={c._id || c.slug}>
+                        <td>
+                          <span style={{
+                            fontFamily: "monospace", fontSize: "0.78rem",
+                            background: "rgba(75,86,148,0.08)",
+                            padding: "3px 10px", borderRadius: 6,
+                            color: "#4B5694",
+                          }}>
+                            {c.slug}
+                          </span>
+                        </td>
+                        <td style={{ fontWeight: 500 }}>{c.label}</td>
+                        <td style={{ color: "#7288AE", fontSize: "0.8rem" }}>{c.desc}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+          </div>
+        </main>
       </div>
+
+      {/* ══ ORDER DETAIL MODAL ══════════════════════════════════════════════ */}
+      {selectedOrder && (
+        <div className="adm-overlay" onClick={() => setSelectedOrder(null)}>
+          <div className="adm-modal" onClick={e => e.stopPropagation()}>
+            <button className="adm-modal-close" onClick={() => setSelectedOrder(null)}>✕</button>
+
+            <div style={{ marginBottom: "1.4rem" }}>
+              <div style={{ fontSize: "0.65rem", letterSpacing: "0.25em", textTransform: "uppercase", color: "#7288AE", marginBottom: 4 }}>
+                Order Details
+              </div>
+              <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "1.5rem", color: "#111844", fontWeight: 500 }}>
+                {shortId(selectedOrder._id)}
+              </div>
+              <div style={{ fontSize: "0.76rem", color: "#7288AE", marginTop: 2 }}>
+                {formatDate(selectedOrder.createdAt)}
+              </div>
+            </div>
+
+            {/* Customer */}
+            <div style={{
+              background: "rgba(75,86,148,0.06)",
+              border: "1px solid rgba(75,86,148,0.15)",
+              borderRadius: 12,
+              padding: "1rem 1.2rem",
+              marginBottom: "1rem",
+            }}>
+              <div style={{ fontSize: "0.65rem", letterSpacing: "0.2em", textTransform: "uppercase", color: "#7288AE", marginBottom: 6 }}>Customer</div>
+              <div style={{ fontWeight: 600, color: "#111844" }}>
+                {typeof selectedOrder.user === "object" ? selectedOrder.user.name : "—"}
+              </div>
+              <div style={{ fontSize: "0.8rem", color: "#7288AE" }}>
+                {typeof selectedOrder.user === "object" ? selectedOrder.user.email : ""}
+              </div>
+            </div>
+
+            {/* Shipping */}
+            <div style={{
+              background: "rgba(75,86,148,0.06)",
+              border: "1px solid rgba(75,86,148,0.15)",
+              borderRadius: 12,
+              padding: "1rem 1.2rem",
+              marginBottom: "1rem",
+            }}>
+              <div style={{ fontSize: "0.65rem", letterSpacing: "0.2em", textTransform: "uppercase", color: "#7288AE", marginBottom: 6 }}>Shipping Address</div>
+              <div style={{ fontSize: "0.85rem", color: "#111844", lineHeight: 1.7 }}>
+                {selectedOrder.shippingAddress.streetAddress}
+                {selectedOrder.shippingAddress.apartment && `, ${selectedOrder.shippingAddress.apartment}`}<br />
+                {selectedOrder.shippingAddress.city}, {selectedOrder.shippingAddress.postalCode}<br />
+                {selectedOrder.shippingAddress.country}
+              </div>
+            </div>
+
+            {/* Items */}
+            <div style={{ marginBottom: "1rem" }}>
+              <div style={{ fontSize: "0.65rem", letterSpacing: "0.2em", textTransform: "uppercase", color: "#7288AE", marginBottom: 8 }}>Items</div>
+              {selectedOrder.items?.map((item, i) => (
+                <div key={i} style={{
+                  display: "flex", justifyContent: "space-between",
+                  padding: "0.7rem 0",
+                  borderBottom: "1px solid rgba(75,86,148,0.1)",
+                  fontSize: "0.82rem",
+                }}>
+                  <div>
+                    <span style={{ fontWeight: 500 }}>{item.name}</span>
+                    <span style={{ color: "#7288AE", marginLeft: 8 }}>{item.size} × {item.quantity}</span>
+                  </div>
+                  <span style={{ fontWeight: 600 }}>{fmt(item.price * item.quantity)}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Totals */}
+            <div style={{
+              background: "rgba(17,24,68,0.04)",
+              borderRadius: 10,
+              padding: "0.9rem 1.1rem",
+              marginBottom: "1.2rem",
+              fontSize: "0.82rem",
+              display: "flex",
+              flexDirection: "column",
+              gap: 6,
+            }}>
+              <div style={{ display: "flex", justifyContent: "space-between", color: "#7288AE" }}>
+                <span>Subtotal</span><span>{fmt(selectedOrder.subtotal)}</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", color: "#7288AE" }}>
+                <span>Shipping ({selectedOrder.shippingMethod})</span><span>{fmt(selectedOrder.shippingCost)}</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 700, color: "#111844", paddingTop: 6, borderTop: "1px solid rgba(75,86,148,0.15)" }}>
+                <span>Total</span><span>{fmt(selectedOrder.total)}</span>
+              </div>
+            </div>
+
+            {/* Status update */}
+            <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+              <div style={{ fontSize: "0.72rem", letterSpacing: "0.15em", textTransform: "uppercase", color: "#7288AE" }}>
+                Update Status:
+              </div>
+              {["Pending", "Processing", "Shipped", "Delivered", "Cancelled"].map(s => (
+                <button
+                  key={s}
+                  disabled={updatingOrderId === selectedOrder._id}
+                  onClick={() => updateOrderStatus(selectedOrder._id, s)}
+                  style={{
+                    padding: "5px 12px",
+                    borderRadius: 999,
+                    border: `1px solid ${statusColor[s]}`,
+                    background: selectedOrder.status === s ? statusColor[s] : "transparent",
+                    color: selectedOrder.status === s ? "#fff" : statusColor[s],
+                    fontSize: "0.7rem",
+                    fontWeight: 500,
+                    cursor: "pointer",
+                    transition: "all 0.2s",
+                    fontFamily: "'Jost', sans-serif",
+                    opacity: updatingOrderId === selectedOrder._id ? 0.5 : 1,
+                  }}
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

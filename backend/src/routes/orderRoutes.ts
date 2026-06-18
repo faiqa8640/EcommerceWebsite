@@ -4,9 +4,14 @@ import {
   createOrder, 
   getMyOrders, 
   getOrderById, 
-  updateOrderAddress 
+  updateOrderAddress,
+  getAllOrders,
+  updateOrderStatus,
+
+
 } from '../controllers/orderController';
-import { protect } from '../middleware/authMiddleware';
+// import { protect } from '../middleware/authMiddleware';
+import { protect, adminOnly } from '../middleware/authMiddleware';
 
 const router = Router();
 
@@ -20,6 +25,9 @@ router.post('/', protect, createOrder);
 // @desc    Retrieve all past order transaction files belonging to the logged-in account
 router.get('/my-orders', protect, getMyOrders);
 
+// Admin route — get ALL orders with populated user info
+router.get('/all', protect, adminOnly, getAllOrders);
+
 // ─── Single Order Verification Lookup ────────────────────────
 // @route   GET /api/orders/:id
 // @desc    Fetch a singular detailed transaction statement by its MongoDB ObjectId sequence
@@ -30,4 +38,11 @@ router.get('/:id', protect, getOrderById);
 // @desc    Modify shipping markers prior to strict administrative fulfillment locks
 router.put('/:id/address', protect, updateOrderAddress);
 
+
+// ADMIN ROUTES 
+// ------------------
+
+
+
+router.patch('/:orderId/status', protect, adminOnly, updateOrderStatus);
 export default router;

@@ -48,7 +48,8 @@ export default function Signup() {
       const payload = {
         name: userData.name,
         email: userData.email,
-        password: userData.password
+        password: userData.password,
+        confirmPassword: userData.confirmPassword 
       };
 
       const response = await fetch("http://localhost:5000/api/auth/signup", {

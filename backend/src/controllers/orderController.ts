@@ -144,3 +144,48 @@ export const updateOrderAddress = async (req: AuthRequest, res: Response) => {
     return res.status(500).json({ success: false, message: "Internal application error saving address metrics", error: error.message });
   }
 };
+
+// -------------------
+// ADMIN 
+// ---------------------
+
+// ── Admin: get ALL orders with user details populated ─────────────────────────
+export const getAllOrders = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const orders = await Order.find({})
+      .populate('user', 'name email')   // pull name + email from User collection
+      .sort({ createdAt: -1 });
+    res.status(200).json(orders);
+  } catch (error: any) {
+    res.status(500).json({ message: 'Server error retrieving all orders', error: error.message });
+  }
+};
+
+// ── Admin: update order status ─────────────────────────────────────────────────
+export const updateOrderStatus = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { orderId } = req.params;
+    const { status } = req.body;
+
+    const validStatuses = ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'];
+    if (!validStatuses.includes(status)) {
+      res.status(400).json({ message: 'Invalid status value' });
+      return;
+    }
+
+    const updated = await Order.findByIdAndUpdate(
+      orderId,
+      { status },
+      { new: true }
+    ).populate('user', 'name email');
+
+    if (!updated) {
+      res.status(404).json({ message: 'Order not found' });
+      return;
+    }
+
+    res.status(200).json({ success: true, order: updated });
+  } catch (error: any) {
+    res.status(500).json({ message: 'Server error updating order status', error: error.message });
+  }
+};
