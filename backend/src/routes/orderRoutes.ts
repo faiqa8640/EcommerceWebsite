@@ -7,6 +7,7 @@ import {
   updateOrderAddress,
   getAllOrders,
   updateOrderStatus,
+  deleteOrder,
 
 
 } from '../controllers/orderController';
@@ -43,6 +44,8 @@ router.put('/:id/address', protect, updateOrderAddress);
 // ------------------
 
 
+
+router.delete('/:id', deleteOrder);
 
 router.patch('/:orderId/status', protect, adminOnly, updateOrderStatus);
 export default router;

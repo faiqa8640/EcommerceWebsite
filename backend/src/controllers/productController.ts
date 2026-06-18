@@ -132,3 +132,109 @@ export const getCategories = async (req: Request, res: Response): Promise<void> 
     res.status(500).json({ message: "Error mapping category records", error: error.message });
   }
 };
+
+
+// -------------------
+// for the admin ->PRODUCT CRUD
+// -------------------
+
+// @desc    Create a new product
+// @route   POST /api/products
+export const createProduct = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const newProduct = new Product(req.body);
+    const savedProduct = await newProduct.save();
+    res.status(201).json({ success: true, product: savedProduct });
+  } catch (error: any) {
+    res.status(500).json({ message: "Error creating product", error: error.message });
+  }
+};
+
+// @desc    Update an existing product
+// @route   PUT /api/products/:id
+export const updateProduct = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const updatedProduct = await Product.findByIdAndUpdate(id, req.body, { new: true });
+    
+    if (!updatedProduct) {
+      res.status(404).json({ message: "Product not found" });
+      return;
+    }
+    
+    res.status(200).json({ success: true, product: updatedProduct });
+  } catch (error: any) {
+    res.status(500).json({ message: "Error updating product", error: error.message });
+  }
+};
+
+// @desc    Delete a product
+// @route   DELETE /api/products/:id
+export const deleteProduct = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const deletedProduct = await Product.findByIdAndDelete(id);
+    
+    if (!deletedProduct) {
+      res.status(404).json({ message: "Product not found" });
+      return;
+    }
+    
+    res.status(200).json({ success: true, message: "Product deleted successfully" });
+  } catch (error: any) {
+    res.status(500).json({ message: "Error deleting product", error: error.message });
+  }
+};
+
+
+// -------------------
+// for the admin ->CATEGORY CRUD
+// -------------------
+
+// @desc    Create a new category
+// @route   POST /api/categories
+export const createCategory = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const newCategory = new Category(req.body);
+    const savedCategory = await newCategory.save();
+    res.status(201).json({ success: true, category: savedCategory });
+  } catch (error: any) {
+    res.status(500).json({ message: "Error creating category", error: error.message });
+  }
+};
+
+// @desc    Update an existing category
+// @route   PUT /api/categories/:id
+export const updateCategory = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const updatedCategory = await Category.findByIdAndUpdate(id, req.body, { new: true });
+    
+    if (!updatedCategory) {
+      res.status(404).json({ message: "Category not found" });
+      return;
+    }
+    
+    res.status(200).json({ success: true, category: updatedCategory });
+  } catch (error: any) {
+    res.status(500).json({ message: "Error updating category", error: error.message });
+  }
+};
+
+// @desc    Delete a category
+// @route   DELETE /api/categories/:id
+export const deleteCategory = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const deletedCategory = await Category.findByIdAndDelete(id);
+    
+    if (!deletedCategory) {
+      res.status(404).json({ message: "Category not found" });
+      return;
+    }
+    
+    res.status(200).json({ success: true, message: "Category deleted successfully" });
+  } catch (error: any) {
+    res.status(500).json({ message: "Error deleting category", error: error.message });
+  }
+};
