@@ -1,12 +1,13 @@
+// 
 import { Request, Response } from "express"; 
 import mongoose from "mongoose";
 import Product from "../models/productModel";
 import Category from "../models/categoryModel";
 import Review from "../models/reviewModel";
 import { AuthRequest } from "../middleware/authMiddleware";
+import { resolveS3Url, resolveS3Urls, deleteFileFromS3, deleteFilesFromS3 } from "../config/s3Service";
 
-// @desc    Get all products or filter by category slug
-// @route   GET /api/products
+
 export const getProducts = async (req: Request, res: Response): Promise<void> => {
   try {
     const { category } = req.query;  
@@ -16,9 +17,19 @@ export const getProducts = async (req: Request, res: Response): Promise<void> =>
       filter = { category: category };  
     }
 
-    const products = await Product.find(filter);  
-    res.status(200).json(products);
+    const products = await Product.find(filter); 
+    
+    // Transform products to sign S3 image URLs (shared helper — same logic everywhere)
+    const productsWithSignedUrls = await Promise.all(
+      products.map(async (p) => {
+        const signedImages = await resolveS3Urls(p.images || []);
+        return { ...p.toObject(), images: signedImages };
+      })
+    );
+
+    res.status(200).json(productsWithSignedUrls);
   } catch (error: any) {
+    console.error("Error fetching products:", error);
     res.status(500).json({ message: "Error fetching products", error: error.message });
   }
 };
@@ -46,8 +57,12 @@ export const getProductById = async (req: Request, res: Response): Promise<void>
     // Fetch the separated relational reviews targeting the product document
     const reviews = await Review.find({ productId: product._id }).sort({ createdAt: -1 });
 
+    // Sign the product's images the same way getProducts does
+    const signedImages = await resolveS3Urls(product.images || []);
+
     res.status(200).json({
       ...product.toObject(),
+      images: signedImages,
       reviews: reviews
     });
   } catch (error: any) {
@@ -127,7 +142,19 @@ export const addProductReview = async (req: AuthRequest, res: Response): Promise
 export const getCategories = async (req: Request, res: Response): Promise<void> => {
   try {
     const categories = await Category.find({});
-    res.status(200).json(categories);
+
+    // Sign img + bannerImg for every category (same S3 logic as products)
+    const categoriesWithSignedUrls = await Promise.all(
+      categories.map(async (c) => {
+        const [signedImg, signedBanner] = await Promise.all([
+          resolveS3Url(c.img),
+          resolveS3Url(c.bannerImg),
+        ]);
+        return { ...c.toObject(), img: signedImg, bannerImg: signedBanner };
+      })
+    );
+
+    res.status(200).json(categoriesWithSignedUrls);
   } catch (error: any) {
     res.status(500).json({ message: "Error mapping category records", error: error.message });
   }
@@ -173,13 +200,20 @@ export const updateProduct = async (req: Request, res: Response): Promise<void> 
 export const deleteProduct = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
-    const deletedProduct = await Product.findByIdAndDelete(id);
-    
-    if (!deletedProduct) {
+
+    // Fetch first so we still have the image URLs/keys before the doc is gone
+    const product = await Product.findById(id);
+
+    if (!product) {
       res.status(404).json({ message: "Product not found" });
       return;
     }
-    
+
+    // Clean up S3 — best-effort, won't block deletion if it fails (logged in s3Service)
+    await deleteFilesFromS3(product.images || []);
+
+    await Product.findByIdAndDelete(id);
+
     res.status(200).json({ success: true, message: "Product deleted successfully" });
   } catch (error: any) {
     res.status(500).json({ message: "Error deleting product", error: error.message });
@@ -197,7 +231,18 @@ export const createCategory = async (req: Request, res: Response): Promise<void>
   try {
     const newCategory = new Category(req.body);
     const savedCategory = await newCategory.save();
-    res.status(201).json({ success: true, category: savedCategory });
+
+    // Sign img + bannerImg before sending back, same as getCategories,
+    // so the frontend doesn't render a raw (403'ing) S3 URL right after creation.
+    const [signedImg, signedBanner] = await Promise.all([
+      resolveS3Url(savedCategory.img),
+      resolveS3Url(savedCategory.bannerImg),
+    ]);
+
+    res.status(201).json({
+      success: true,
+      category: { ...savedCategory.toObject(), img: signedImg, bannerImg: signedBanner },
+    });
   } catch (error: any) {
     res.status(500).json({ message: "Error creating category", error: error.message });
   }
@@ -215,7 +260,17 @@ export const updateCategory = async (req: Request, res: Response): Promise<void>
       return;
     }
     
-    res.status(200).json({ success: true, category: updatedCategory });
+    // Sign img + bannerImg before sending back, same as getCategories,
+    // so an edit doesn't briefly show a raw (403'ing) S3 URL until refresh.
+    const [signedImg, signedBanner] = await Promise.all([
+      resolveS3Url(updatedCategory.img),
+      resolveS3Url(updatedCategory.bannerImg),
+    ]);
+
+    res.status(200).json({
+      success: true,
+      category: { ...updatedCategory.toObject(), img: signedImg, bannerImg: signedBanner },
+    });
   } catch (error: any) {
     res.status(500).json({ message: "Error updating category", error: error.message });
   }
@@ -226,13 +281,23 @@ export const updateCategory = async (req: Request, res: Response): Promise<void>
 export const deleteCategory = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
-    const deletedCategory = await Category.findByIdAndDelete(id);
-    
-    if (!deletedCategory) {
+
+    // Fetch first so we still have the img/bannerImg URLs before the doc is gone
+    const category = await Category.findById(id);
+
+    if (!category) {
       res.status(404).json({ message: "Category not found" });
       return;
     }
-    
+
+    // Clean up S3 — best-effort, won't block deletion if it fails (logged in s3Service)
+    await Promise.all([
+      deleteFileFromS3(category.img),
+      deleteFileFromS3(category.bannerImg),
+    ]);
+
+    await Category.findByIdAndDelete(id);
+
     res.status(200).json({ success: true, message: "Category deleted successfully" });
   } catch (error: any) {
     res.status(500).json({ message: "Error deleting category", error: error.message });

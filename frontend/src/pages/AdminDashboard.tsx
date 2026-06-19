@@ -1,3 +1,5 @@
+
+
 import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -145,12 +147,15 @@ export default function AdminDashboard() {
   const [productForm, setProductForm] = useState<Omit<Product, "_id" | "averageRating">>(emptyProduct);
   const [productSaving, setProductSaving] = useState(false);
   const [viewingProduct, setViewingProduct] = useState<Product | null>(null);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
 
   // Category state
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [categoryForm, setCategoryForm] = useState<Omit<Category, "_id">>(emptyCategory);
   const [categorySaving, setCategorySaving] = useState(false);
+  const [categoryImgFile, setCategoryImgFile] = useState<File | null>(null);
+  const [categoryBannerFile, setCategoryBannerFile] = useState<File | null>(null);
 
   const authHeaders = useCallback(() => ({
     "Content-Type": "application/json",
@@ -248,14 +253,74 @@ export default function AdminDashboard() {
     setShowProductModal(true);
   };
 
+  // const saveProduct = async () => {
+  //   setProductSaving(true);
+  //   try {
+  //     const method = editingProduct ? "PUT" : "POST";
+  //     const url = editingProduct ? `${API}/products/${editingProduct._id}` : `${API}/products`;
+  //     const body = {
+  //       ...productForm,
+  //       images: productForm.images.filter(i => i.trim()),
+  //       notes: {
+  //         top: productForm.notes.top.filter(n => n.trim()),
+  //         heart: productForm.notes.heart.filter(n => n.trim()),
+  //         base: productForm.notes.base.filter(n => n.trim()),
+  //       },
+  //       season: productForm.season,
+  //     };
+  //     const res = await fetch(url, { method, headers: authHeaders(), body: JSON.stringify(body) });
+  //     const data = await res.json();
+  //     if (res.ok) {
+  //       if (editingProduct) {
+  //         setProducts(prev => prev.map(p => p._id === editingProduct._id ? data.product : p));
+  //       } else {
+  //         setProducts(prev => [...prev, data.product]);
+  //       }
+  //       setShowProductModal(false);
+  //     } else {
+  //       alert(data.message || "Failed to save product.");
+  //     }
+  //   } finally {
+  //     setProductSaving(false);
+  //   }
+  // };
+
   const saveProduct = async () => {
     setProductSaving(true);
+    let finalImageUrls = [...productForm.images];
+
     try {
+      // 1. UPLOAD STEP: If files were selected, upload them first
+      if (selectedFiles.length > 0) {
+        const uploadedUrls: string[] = [];
+        
+        for (const file of selectedFiles) {
+          const formData = new FormData();
+          formData.append("image", file); // Must match the name in your multer middleware
+          formData.append("folder", "products"); // Keep product images in their own S3 folder
+
+          const res = await fetch("http://localhost:5000/api/upload/image", {
+            method: "POST",
+            body: formData,
+          });
+
+          const data = await res.json();
+          if (res.ok) {
+            uploadedUrls.push(data.imageUrl);
+          } else {
+            throw new Error("Upload failed: " + data.message);
+          }
+        }
+        finalImageUrls = uploadedUrls;
+      }
+
+      // 2. DATABASE STEP: Send the product with the S3 URLs
       const method = editingProduct ? "PUT" : "POST";
       const url = editingProduct ? `${API}/products/${editingProduct._id}` : `${API}/products`;
+
       const body = {
         ...productForm,
-        images: productForm.images.filter(i => i.trim()),
+        images: finalImageUrls.filter(i => i.trim()),
         notes: {
           top: productForm.notes.top.filter(n => n.trim()),
           heart: productForm.notes.heart.filter(n => n.trim()),
@@ -263,23 +328,35 @@ export default function AdminDashboard() {
         },
         season: productForm.season,
       };
-      const res = await fetch(url, { method, headers: authHeaders(), body: JSON.stringify(body) });
+
+      const res = await fetch(url, {
+        method,
+        headers: { ...authHeaders(), "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+
       const data = await res.json();
+
       if (res.ok) {
         if (editingProduct) {
           setProducts(prev => prev.map(p => p._id === editingProduct._id ? data.product : p));
         } else {
           setProducts(prev => [...prev, data.product]);
         }
+        setSelectedFiles([]);
         setShowProductModal(false);
       } else {
         alert(data.message || "Failed to save product.");
       }
+    } catch (err) {
+      console.error(err);
+      alert("Error saving product.");
     } finally {
       setProductSaving(false);
     }
   };
 
+  
   const deleteProduct = async (productId: string) => {
     if (!window.confirm("Delete this product permanently?")) return;
     const res = await fetch(`${API}/products/${productId}`, { method: "DELETE", headers: authHeaders() });
@@ -294,21 +371,60 @@ export default function AdminDashboard() {
   const openAddCategory = () => {
     setEditingCategory(null);
     setCategoryForm(emptyCategory);
+    setCategoryImgFile(null);
+    setCategoryBannerFile(null);
     setShowCategoryModal(true);
   };
 
   const openEditCategory = (c: Category) => {
     setEditingCategory(c);
     setCategoryForm({ slug: c.slug, label: c.label, desc: c.desc, img: c.img, bannerImg: c.bannerImg });
+    setCategoryImgFile(null);
+    setCategoryBannerFile(null);
     setShowCategoryModal(true);
   };
 
   const saveCategory = async () => {
+    if (!editingCategory && (!categoryImgFile || !categoryBannerFile)) {
+      alert("Please select both a card image and a banner image for a new category.");
+      return;
+    }
+
     setCategorySaving(true);
     try {
+      let finalImg = categoryForm.img;
+      let finalBannerImg = categoryForm.bannerImg;
+
+      // Helper to upload a single file into the "categories" S3 folder
+      const uploadCategoryFile = async (file: File): Promise<string> => {
+        const formData = new FormData();
+        formData.append("image", file);
+        formData.append("folder", "categories");
+
+        const res = await fetch("http://localhost:5000/api/upload/image", {
+          method: "POST",
+          body: formData,
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || "Upload failed");
+        return data.imageUrl;
+      };
+
+      // Upload card image if a new file was selected
+      if (categoryImgFile) {
+        finalImg = await uploadCategoryFile(categoryImgFile);
+      }
+
+      // Upload banner image if a new file was selected
+      if (categoryBannerFile) {
+        finalBannerImg = await uploadCategoryFile(categoryBannerFile);
+      }
+
+      const body = { ...categoryForm, img: finalImg, bannerImg: finalBannerImg };
+
       const method = editingCategory ? "PUT" : "POST";
       const url = editingCategory ? `${API}/categories/${editingCategory._id}` : `${API}/categories`;
-      const res = await fetch(url, { method, headers: authHeaders(), body: JSON.stringify(categoryForm) });
+      const res = await fetch(url, { method, headers: authHeaders(), body: JSON.stringify(body) });
       const data = await res.json();
       if (res.ok) {
         if (editingCategory) {
@@ -316,10 +432,15 @@ export default function AdminDashboard() {
         } else {
           setCategories(prev => [...prev, data.category]);
         }
+        setCategoryImgFile(null);
+        setCategoryBannerFile(null);
         setShowCategoryModal(false);
       } else {
         alert(data.message || "Failed to save category.");
       }
+    } catch (err: any) {
+      console.error(err);
+      alert(err.message || "Error saving category.");
     } finally {
       setCategorySaving(false);
     }
@@ -901,13 +1022,29 @@ export default function AdminDashboard() {
                 <label className="form-label">Full Description</label>
                 <textarea className="adm-textarea" value={productForm.description} onChange={e => setProductForm(p => ({ ...p, description: e.target.value }))} placeholder="Detailed product description" />
               </div>
-              <div className="form-group full">
+              {/* <div className="form-group full">
                 <label className="form-label">Image URLs (one per line)</label>
                 <textarea className="adm-textarea" style={{ minHeight: 60 }}
                   value={productForm.images.join("\n")}
                   onChange={e => setProductForm(p => ({ ...p, images: e.target.value.split("\n") }))}
                   placeholder="https://example.com/image1.jpg&#10;https://example.com/image2.jpg"
                 />
+              </div> */}
+              <div className="form-group full">
+                <label className="form-label">Product Images</label>
+                <input 
+                  type="file" 
+                  multiple 
+                  accept="image/*"
+                  className="adm-input"
+                  onChange={(e) => {
+                    // Store the files selected by the user
+                    if (e.target.files) {
+                      setSelectedFiles(Array.from(e.target.files));
+                    }
+                  }}
+                />
+                <small>Selecting new files will replace existing images on save.</small>
               </div>
               <div className="form-group">
                 <label className="form-label">Top Notes (comma separated)</label>
@@ -965,17 +1102,45 @@ export default function AdminDashboard() {
                 <textarea className="adm-textarea" value={categoryForm.desc} onChange={e => setCategoryForm(c => ({ ...c, desc: e.target.value }))} placeholder="Short description of this category" />
               </div>
               <div className="form-group">
-                <label className="form-label">Card Image URL * (img)</label>
-                <input className="adm-input" style={{ width: "100%" }} value={categoryForm.img} onChange={e => setCategoryForm(c => ({ ...c, img: e.target.value }))} placeholder="https://example.com/card-image.jpg" />
-                {categoryForm.img && (
-                  <img src={categoryForm.img} alt="Card preview" style={{ marginTop: 8, height: 60, borderRadius: 8, objectFit: "cover", border: "1px solid rgba(75,86,148,0.2)" }} onError={e => (e.currentTarget.style.display = "none")} />
+                <label className="form-label">Card Image {!editingCategory && "*"} (img)</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="adm-input"
+                  style={{ width: "100%" }}
+                  onChange={e => setCategoryImgFile(e.target.files?.[0] || null)}
+                />
+                <small style={{ fontSize: "0.7rem", color: "#7288AE" }}>
+                  {editingCategory ? "Leave empty to keep the current image." : "Required for a new category."}
+                </small>
+                {(categoryImgFile || categoryForm.img) && (
+                  <img
+                    src={categoryImgFile ? URL.createObjectURL(categoryImgFile) : categoryForm.img}
+                    alt="Card preview"
+                    style={{ marginTop: 8, height: 60, borderRadius: 8, objectFit: "cover", border: "1px solid rgba(75,86,148,0.2)" }}
+                    onError={e => (e.currentTarget.style.display = "none")}
+                  />
                 )}
               </div>
               <div className="form-group">
-                <label className="form-label">Banner Image URL * (bannerImg)</label>
-                <input className="adm-input" style={{ width: "100%" }} value={categoryForm.bannerImg} onChange={e => setCategoryForm(c => ({ ...c, bannerImg: e.target.value }))} placeholder="https://example.com/banner.jpg" />
-                {categoryForm.bannerImg && (
-                  <img src={categoryForm.bannerImg} alt="Banner preview" style={{ marginTop: 8, height: 60, width: "100%", borderRadius: 8, objectFit: "cover", border: "1px solid rgba(75,86,148,0.2)" }} onError={e => (e.currentTarget.style.display = "none")} />
+                <label className="form-label">Banner Image {!editingCategory && "*"} (bannerImg)</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="adm-input"
+                  style={{ width: "100%" }}
+                  onChange={e => setCategoryBannerFile(e.target.files?.[0] || null)}
+                />
+                <small style={{ fontSize: "0.7rem", color: "#7288AE" }}>
+                  {editingCategory ? "Leave empty to keep the current image." : "Required for a new category."}
+                </small>
+                {(categoryBannerFile || categoryForm.bannerImg) && (
+                  <img
+                    src={categoryBannerFile ? URL.createObjectURL(categoryBannerFile) : categoryForm.bannerImg}
+                    alt="Banner preview"
+                    style={{ marginTop: 8, height: 60, width: "100%", borderRadius: 8, objectFit: "cover", border: "1px solid rgba(75,86,148,0.2)" }}
+                    onError={e => (e.currentTarget.style.display = "none")}
+                  />
                 )}
               </div>
             </div>

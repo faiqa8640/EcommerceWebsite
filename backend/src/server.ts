@@ -8,6 +8,7 @@ import productRoutes from "./routes/productRoutes";
 import categoryRoutes from "./routes/categoryRoutes";
 import orderRoutes from './routes/orderRoutes';
 import wishlistRoutes from "./routes/wishlistRoutes";
+import uploadRoutes from "./routes/uploadRoutes"
 
 dotenv.config();
 connectDB();
@@ -29,6 +30,8 @@ app.use("/api/products", productRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use('/api/orders', orderRoutes);
 app.use("/api/wishlist", wishlistRoutes);
+app.use("/api/upload", uploadRoutes);
+
 
 app.get("/", (_req: Request, res: Response) => {
   res.json({ message: "Eloura API is running", status: "ok" });
