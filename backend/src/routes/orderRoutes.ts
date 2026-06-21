@@ -1,12 +1,13 @@
-
 import { Router } from 'express';
 import { 
   createOrder, 
   getMyOrders, 
   getOrderById, 
   updateOrderAddress,
+  cancelOrder,
   getAllOrders,
   updateOrderStatus,
+  updatePaymentStatus,
   deleteOrder,
 
 
@@ -39,13 +40,19 @@ router.get('/:id', protect, getOrderById);
 // @desc    Modify shipping markers prior to strict administrative fulfillment locks
 router.put('/:id/address', protect, updateOrderAddress);
 
+// ─── Customer Cancellation ────────────────────────────────────
+// @route   PATCH /api/orders/:id/cancel
+// @desc    Customer cancels their own order (blocked once Shipped/Delivered)
+router.patch('/:id/cancel', protect, cancelOrder);
+
 
 // ADMIN ROUTES 
 // ------------------
 
 
 
-router.delete('/:id', deleteOrder);
+router.delete('/:id', protect, adminOnly, deleteOrder);
 
 router.patch('/:orderId/status', protect, adminOnly, updateOrderStatus);
+router.patch('/:orderId/payment-status', protect, adminOnly, updatePaymentStatus);
 export default router;

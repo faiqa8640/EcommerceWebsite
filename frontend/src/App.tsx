@@ -23,6 +23,7 @@ import { Cart } from './pages/Cart';
 import { Checkout } from './pages/Checkout';
 import { Wishlist } from './pages/Wishlist';
 import UserProfile from "./pages/UserProfile";
+import { ThankYou } from "./pages/Thankyou";
 
 
 function App() {
@@ -52,6 +53,8 @@ function App() {
             <Route path="/checkout" element={<Checkout />} />
             <Route path="/wishlist" element={<Wishlist />} />
             <Route path="/profile" element={<UserProfile />} />
+
+            <Route path="/order-confirmation/:orderId" element={<ThankYou />} />
 
 
 

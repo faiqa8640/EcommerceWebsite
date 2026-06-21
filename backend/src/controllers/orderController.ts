@@ -145,6 +145,47 @@ export const updateOrderAddress = async (req: AuthRequest, res: Response) => {
   }
 };
 
+// @desc    Customer cancels their own order (allowed any time before it ships)
+// @route   PATCH /api/orders/:id/cancel
+// @access  Private
+export const cancelOrder = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const orderId = req.params.id;
+    const order = await Order.findById(orderId);
+
+    if (!order) {
+      res.status(404).json({ success: false, message: "Order not found." });
+      return;
+    }
+
+    // Only the order owner can cancel it
+    if (order.user.toString() !== req.user?._id.toString()) {
+      res.status(403).json({ success: false, message: "Not authorized to cancel this order." });
+      return;
+    }
+
+    // Can't cancel once it's already shipped, delivered, or cancelled
+    const lockedStatuses = ["Shipped", "Delivered", "Cancelled"];
+    if (lockedStatuses.includes(order.status)) {
+      res.status(400).json({
+        success: false,
+        message: `This order can no longer be cancelled — it is already "${order.status}". Please contact support if you need help.`,
+      });
+      return;
+    }
+
+    order.status = "Cancelled" as any;
+    order.cancelledAt = new Date();
+    order.cancelReason = req.body?.reason || "Cancelled by customer";
+
+    await order.save();
+
+    res.status(200).json({ success: true, message: "Order cancelled successfully.", order });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: "Server error cancelling order", error: error.message });
+  }
+};
+
 // -------------------
 // ADMIN 
 // ---------------------
@@ -190,6 +231,35 @@ export const updateOrderStatus = async (req: Request, res: Response): Promise<vo
   }
 };
 
+
+// ── Admin: update payment status (e.g. verify a bank transfer) ─────────────────
+export const updatePaymentStatus = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { orderId } = req.params;
+    const { paymentStatus } = req.body;
+
+    const validStatuses = ['Pending', 'Verified', 'Paid'];
+    if (!validStatuses.includes(paymentStatus)) {
+      res.status(400).json({ message: 'Invalid payment status value' });
+      return;
+    }
+
+    const updated = await Order.findByIdAndUpdate(
+      orderId,
+      { paymentStatus },
+      { new: true }
+    ).populate('user', 'name email');
+
+    if (!updated) {
+      res.status(404).json({ message: 'Order not found' });
+      return;
+    }
+
+    res.status(200).json({ success: true, order: updated });
+  } catch (error: any) {
+    res.status(500).json({ message: 'Server error updating payment status', error: error.message });
+  }
+};
 
 // @desc    Delete an order
 // @route   DELETE /api/orders/:id

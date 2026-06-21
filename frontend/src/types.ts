@@ -1,3 +1,4 @@
+
 export type Review = {
   _id?: string;
   productId: string; // The MongoDB ObjectId as a string
@@ -84,7 +85,8 @@ export type Order = {
     postalCode: string;
     country: string;
   };
-  paymentMethod: "Cash on Delivery" | "JazzCash" | "Easypaisa" | "Card";
+  paymentMethod: "Cash on Delivery" | "Direct Bank Transfer";
+  paymentStatus: "Pending" | "Verified" | "Paid";
   shippingMethod: "Standard Shipping" | "Express Shipping";
   status: "Pending" | "Confirmed" | "Shipped" | "Delivered" | "Cancelled";
   subtotal: number;
@@ -94,8 +96,11 @@ export type Order = {
 };
 
 // Add this to your types.ts
+// NOTE: your backend controllers (createOrder, getOrderById, cancelOrder, etc.)
+// return the payload under the key "order", not "data" — this type now matches that.
 export type ApiResponse<T = any> = {
   success: boolean;
   message: string;
-  data?: T; // This will hold the Order object if successful
+  order?: T;  // This holds the Order object on success (matches backend's actual response key)
+  data?: T;   // Kept for any endpoints that use "data" instead — optional, rarely used
 };

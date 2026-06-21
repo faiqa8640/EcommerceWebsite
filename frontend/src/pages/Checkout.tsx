@@ -35,7 +35,7 @@ export const Checkout: React.FC = () => {
 
   const [shippingMethod, setShippingMethod] = useState<'Standard Shipping' | 'Express Shipping'>('Standard Shipping');
   const [paymentMethod, setPaymentMethod] = useState<
-    "Cash on Delivery" | "JazzCash" | "Easypaisa" | "Card"
+    "Cash on Delivery" | "Direct Bank Transfer"
   >("Cash on Delivery");
 
   const subtotal = getCartSubtotal();
@@ -95,10 +95,9 @@ export const Checkout: React.FC = () => {
     try {
       const data = await createOrder(orderPayload);
 
-      if (data.success) {
-        alert('✨ Order placed successfully! Thank you for your purchase.');
+      if (data.success && data.order) {
         clearCart();
-        navigate('/shop'); // ← Redirect to Shop Page as requested
+        navigate(`/order-confirmation/${data.order._id}`);
       } else {
         alert(`Failed to place order: ${data.message || 'Please try again.'}`);
       }
@@ -196,6 +195,20 @@ export const Checkout: React.FC = () => {
           color: #1b234a;
           box-sizing: border-box;
           outline: none;
+        }
+        .bank-transfer-alert {
+          background-color: #f4efe6;
+          border: 1px solid rgba(27, 35, 74, 0.15);
+          border-radius: 8px;
+          padding: 14px 16px;
+          margin: -2px 0 12px 0;
+          font-family: sans-serif;
+          font-size: 13px;
+          line-height: 1.6;
+          color: #4a4540;
+        }
+        .bank-transfer-alert strong {
+          color: #1b234a;
         }
         .selectable-option-row {
           display: flex;
@@ -434,35 +447,27 @@ export const Checkout: React.FC = () => {
                 </div>
               </div>
 
-              {/* Payment Method - All Options Visible */}
+              {/* Payment Method */}
               <div className="form-section-card">
                 <h2 className="section-title">Payment Method</h2>
-                
+
+                <div className="selectable-option-row" onClick={() => setPaymentMethod('Direct Bank Transfer')}>
+                  <div className="radio-label-block">
+                    <input type="radio" checked={paymentMethod === 'Direct Bank Transfer'} readOnly className="radio-input" />
+                    <span className="option-label-text">Direct Bank Transfer</span>
+                  </div>
+                </div>
+
+                {paymentMethod === 'Direct Bank Transfer' && (
+                  <div className="bank-transfer-alert">
+                    Make your payment directly into our JazzCash / bank account. Please use your <strong>Order Number</strong> as the payment reference. Your order will not be shipped until the funds have been verified by our team.
+                  </div>
+                )}
+
                 <div className="selectable-option-row" onClick={() => setPaymentMethod('Cash on Delivery')}>
                   <div className="radio-label-block">
                     <input type="radio" checked={paymentMethod === 'Cash on Delivery'} readOnly className="radio-input" />
                     <span className="option-label-text">Cash on Delivery (COD)</span>
-                  </div>
-                </div>
-
-                <div className="selectable-option-row" onClick={() => setPaymentMethod('JazzCash')}>
-                  <div className="radio-label-block">
-                    <input type="radio" checked={paymentMethod === 'JazzCash'} readOnly className="radio-input" />
-                    <span className="option-label-text">JazzCash</span>
-                  </div>
-                </div>
-
-                <div className="selectable-option-row" onClick={() => setPaymentMethod('Easypaisa')}>
-                  <div className="radio-label-block">
-                    <input type="radio" checked={paymentMethod === 'Easypaisa'} readOnly className="radio-input" />
-                    <span className="option-label-text">Easypaisa</span>
-                  </div>
-                </div>
-
-                <div className="selectable-option-row" onClick={() => setPaymentMethod('Card')}>
-                  <div className="radio-label-block">
-                    <input type="radio" checked={paymentMethod === 'Card'} readOnly className="radio-input" />
-                    <span className="option-label-text">Credit / Debit Card</span>
                   </div>
                 </div>
               </div>

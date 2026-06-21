@@ -1,4 +1,3 @@
-
 import { Product, Order, OrderPayload, Review , ApiResponse} from "../types";
 
 const API_BASE_URL = "http://localhost:5000/api";
@@ -54,6 +53,36 @@ export const createOrder = async (orderPayload: any): Promise<ApiResponse<Order>
   const data = await response.json();
   
   // Return the full response object
+  return data;
+};
+
+// Fetch a single order by its ID — used by the Thank You / order confirmation page
+export const getOrderByIdAPI = async (orderId: string): Promise<ApiResponse<Order>> => {
+  const token = localStorage.getItem('token');
+  const response = await fetch(`${API_BASE_URL}/orders/${orderId}`, {
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+  });
+
+  const data = await response.json();
+  return data;
+};
+
+// Customer cancels their own order (only works while status is before "Shipped")
+export const cancelOrderAPI = async (orderId: string, reason?: string): Promise<ApiResponse<Order>> => {
+  const token = localStorage.getItem('token');
+  const response = await fetch(`${API_BASE_URL}/orders/${orderId}/cancel`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify({ reason }),
+  });
+
+  const data = await response.json();
   return data;
 };
 
@@ -135,5 +164,6 @@ export const fetchCategories = async () => {
     return [];
   }
 };
+
 
 
