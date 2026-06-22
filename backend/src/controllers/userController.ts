@@ -8,20 +8,21 @@ import Review from "../models/reviewModel";
 import bcrypt from "bcrypt";
 
 // ══════════════════════════════════════════════════════════════════════════════
-// GET /api/user/profile
+// GET /api/user/profile -> for admin dashboard
 // ═════════════════════════════════════════════════════════════════════════════
-
+// after login send the profilw
 export const getProfile = async (req: AuthRequest, res: Response) => {
   try {
-    if (!req.user || !req.user.id) {
+    if (!req.user || !req.user.id) {// check if user is logined -> if jwt missing 
       return res.status(401).json({ success: false, message: "Not authorized" });
     }
 
     // 1. Fetch user (it remains 'null' | 'UserDocument')
+    // fetch user from db and  populate the db and remove the password 
     const fullUser = await User.findById(req.user.id).select("-password").populate("wishlist");
 
     // 2. CHECK FOR NULL BEFORE PROCEEDING
-    if (!fullUser) {
+    if (!fullUser) { // if no user
       return res.status(404).json({ success: false, message: "User not found" });
     }
 
@@ -47,7 +48,7 @@ export const getProfile = async (req: AuthRequest, res: Response) => {
 };
 
 // // ══════════════════════════════════════════════════════════════════════════════
-// PUT /api/user/address
+// PUT /api/user/address // for the dash board
 // ═════════════════════════════════════════════════════════════════════════════
 
 

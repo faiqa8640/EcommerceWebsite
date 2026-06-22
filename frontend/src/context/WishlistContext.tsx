@@ -93,6 +93,7 @@ export const WishlistProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   };
 
   // Toggle function with explicit authentication checks
+  // it handle both add to the wishlist and remove from the whishlist 
   const toggleWishlist = async (product: Product) => {
     if (!isAuthenticated()) {
       alert("✨ Please sign in to save items to your personal wishlist!");
@@ -104,11 +105,11 @@ export const WishlistProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     if (!uniqueId) return;
 
     try {
-      if (isInWishlist(String(uniqueId))) {
+      if (isInWishlist(String(uniqueId))) { // if  in the wishlist  -> remove it 
         await removeFromWishlist(String(uniqueId));
         console.log(`Removed ${product.name} from wishlist.`);
-      } else {
-        await addToWishlist(product);
+      } else {// if not then add the to wishlist
+        await addToWishlist(product); 
         alert(`✨ ${product.name} has been added to your wishlist!`);
       }
     } catch (error: any) {
@@ -117,7 +118,7 @@ export const WishlistProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   };
 
   // Clear all items
-  const clearWishlist = async () => {
+  const clearWishlist = async () => { 
     if (!isAuthenticated()) return;
     try {
       setWishlist([]);

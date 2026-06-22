@@ -30,7 +30,9 @@ app.use(
   })
 );
 
-app.use("/api/auth", authRoutes);
+//Route Registration -> tells expree which routes files handle with url path
+
+app.use("/api/auth", authRoutes); // if auth reqest send it to auth routes 
 app.use("/api/user", userRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/categories", categoryRoutes);
@@ -43,7 +45,6 @@ app.get("/", (_req: Request, res: Response) => {
   res.json({ message: "Eloura API is running", status: "ok" });
 });
 
-// ADD THIS before app.listen()
 app.use((err: any, req: any, res: any, next: any) => {
   console.error("💥 EXPRESS GLOBAL ERROR:", err);
   res.status(500).json({ message: err.message });

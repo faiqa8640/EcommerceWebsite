@@ -9,7 +9,7 @@ import {
 
 export type User = {
   id: string;
-  _id: string; // Syncs seamlessly with the backend AuthRequest payload interface
+  _id: string; 
   name: string;
   email: string;
   role: string;
@@ -35,9 +35,11 @@ const AuthContext = createContext<AuthContextType>({
 });
 
 // ─── Helper: decode JWT payload without a library ────────────────────────────
+// decode the jwt token -> jwt has header,payload and signature
+// decode-> convert the token into the redadable object 
 function decodeToken(token: string): { id: string; exp: number } | null {
   try {
-    const payload = token.split(".")[1];
+    const payload = token.split(".")[1]; //extract the payload part from the token
     // atob decodes base64 → JSON string
     return JSON.parse(atob(payload));
   } catch {
@@ -50,11 +52,11 @@ function isTokenExpired(token: string): boolean {
   const decoded = decodeToken(token);
   if (!decoded) return true;
   // exp is in seconds, Date.now() is in ms
-  return decoded.exp * 1000 < Date.now();
-}
+  return decoded.exp * 1000 < Date.now(); // the exp  is the expiry time in sec *1000 -> coz javescript usese the mili sec
+} 
 
 // ─── Helper: ms until token expires ──────────────────────────────────────────
-function msUntilExpiry(token: string): number {
+function msUntilExpiry(token: string): number { // return the millisec before token expires
   const decoded = decodeToken(token);
   if (!decoded) return 0;
   return decoded.exp * 1000 - Date.now();
@@ -67,7 +69,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   // Derived: is the current user an admin?
-  const isAdmin = user?.role === "admin";
+  const isAdmin = user?.role === "admin"; // control the admin dashboard visiblity etc 
 
   // ── logout ────────────────────────────────────────────────────────────────
   // reason="expired" → came from auto-expiry timer
@@ -75,7 +77,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = useCallback((reason: "expired" | "manual" = "manual") => {
     setToken(null);
     setUser(null);
-    localStorage.removeItem("token");
+    localStorage.removeItem("token"); // clear the browser storage 
     localStorage.removeItem("user");
 
     if (reason === "expired") {
@@ -87,19 +89,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // ── On mount: restore from localStorage + validate token ─────────────────
-  useEffect(() => {
+  useEffect(() => { // this happend when app reload 
     const storedToken = localStorage.getItem("token");
     const storedUser = localStorage.getItem("user");
 
     if (storedToken && storedUser) {
       // If token is already expired on page load → log out immediately
-      if (isTokenExpired(storedToken)) {
+      if (isTokenExpired(storedToken)) { // if token expire then force restart
         localStorage.removeItem("token");
         localStorage.removeItem("user");
         sessionStorage.setItem("sessionExpired", "true");
       } else {
         try {
-          setToken(storedToken);
+          setToken(storedToken); // else restore the session 
           setUser(JSON.parse(storedUser));
         } catch {
           localStorage.removeItem("token");
@@ -111,17 +113,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // ── Auto-logout timer: fires exactly when token expires ───────────────────
-  useEffect(() => {
-    if (!token) return;
+  useEffect(() => { // kind of security system 
+    if (!token) return; 
 
-    const ms = msUntilExpiry(token);
-    if (ms <= 0) {
-      logout("expired");
+    const ms = msUntilExpiry(token); // calculate the remainin time
+    if (ms <= 0) {// if already expire 
+      logout("expired");// then logout
       return;
     }
 
     // Schedule auto-logout at the exact moment the token expires
-    const timer = setTimeout(() => {
+    const timer = setTimeout(() => { // set the time out that logout the user when the tokend expires
       logout("expired");
     }, ms);
 
@@ -130,7 +132,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // ── login ─────────────────────────────────────────────────────────────────
   const login = (newToken: string, newUser: User) => {
-    setToken(newToken);
+    setToken(newToken); // svae the satate 
     setUser(newUser);
     localStorage.setItem("token", newToken);
     localStorage.setItem("user", JSON.stringify(newUser));

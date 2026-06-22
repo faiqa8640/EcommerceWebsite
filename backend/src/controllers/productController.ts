@@ -8,6 +8,7 @@ import { AuthRequest } from "../middleware/authMiddleware";
 import { resolveS3Url, resolveS3Urls, deleteFileFromS3, deleteFilesFromS3 } from "../config/s3Service";
 
 
+// returns the products  based on the categories 
 export const getProducts = async (req: Request, res: Response): Promise<void> => {
   try {
     const { category } = req.query;  
@@ -34,11 +35,12 @@ export const getProducts = async (req: Request, res: Response): Promise<void> =>
   }
 };
 
+// get one product for thr product detail
 // @desc    Get single product details by native database ObjectId along with its reviews
 // @route   GET /api/products/:id
 export const getProductById = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { id } = req.params;
+    const { id } = req.params; 
 
     // Type Guard Fix: Explicitly ensure 'id' is a singular string and a valid ObjectId
     if (!id || typeof id !== "string" || !mongoose.Types.ObjectId.isValid(id)) {
@@ -70,6 +72,7 @@ export const getProductById = async (req: Request, res: Response): Promise<void>
   }
 };
 
+// to add the product review 
 export const addProductReview = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
@@ -78,7 +81,7 @@ export const addProductReview = async (req: AuthRequest, res: Response): Promise
 
     // 1. Validate Authentication
     // NOTE: authMiddleware's AuthRequest sets req.user.id (a string), not req.user._id
-    if (!req.user || !req.user.id) {
+    if (!req.user || !req.user.id) { // only logined user can write the review
       res.status(401).json({ message: "Not authorized" });
       return;
     }
@@ -93,7 +96,7 @@ export const addProductReview = async (req: AuthRequest, res: Response): Promise
     const productObjectId = new mongoose.Types.ObjectId(id);
 
     // 3. Verify Product Existence
-    const targetProduct = await Product.findById(productObjectId);
+    const targetProduct = await Product.findById(productObjectId); // finding the product  in db 
     if (!targetProduct) {
       res.status(404).json({ message: "Product not found" });
       return;
@@ -136,6 +139,9 @@ export const addProductReview = async (req: AuthRequest, res: Response): Promise
     }
   }
 };
+
+
+// get the categories 
 
 // @desc    Get all categories
 // @route   GET /api/categories

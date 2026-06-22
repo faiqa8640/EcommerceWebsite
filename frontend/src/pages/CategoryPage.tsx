@@ -10,27 +10,28 @@ export default function CategoryPage() {
   const location = useLocation();  // give the correct location[cite: 2]
 
   const [currentCategoryInfo, setCurrentCategoryInfo] = useState<Category | null>(null); //get the current category information[cite: 2]
-  const [baseItems, setBaseItems] = useState<Product[]>([]); //  get the products in that category[cite: 2]
+  const [baseItems, setBaseItems] = useState<Product[]>([]); //  get the products list 
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [hasCheckedData, setHasCheckedData] = useState<boolean>(false);
 
   // ------------------
   // FILTERS info
   // ------------------
-  const [currentPage, setCurrentPage] = useState(1);  // it just store the current page[cite: 2]
-  const itemsPerPage = 8; // on one page the total 8 products will be visible[cite: 2]
-  const [isFilterOpen, setIsFilterOpen] = useState(false);  //for the mobile[cite: 2]
-  const [selectedRating, setSelectedRating] = useState(0);// for rating[cite: 2]
-  const [selectedBrands, setSelectedBrands] = useState<string[]>([]);// for selected brand[cite: 2]
-  const [maxPrice, setMaxPrice] = useState(100000);// storing the max price[cite: 2]
+  const [currentPage, setCurrentPage] = useState(1);  // it just store the current page
+  const itemsPerPage = 8; // on one page the total 8 products will be visible
+  const [isFilterOpen, setIsFilterOpen] = useState(false);  //for the mobile
+  const [selectedRating, setSelectedRating] = useState(0);// for rating
+  const [selectedBrands, setSelectedBrands] = useState<string[]>([]);// for selected brand
+  const [maxPrice, setMaxPrice] = useState(100000);// storing the max price
 
   // ── NEW DEBOUNCE Search ───────────────────
-  const searchParams = new URLSearchParams(location.search);  // create an object that read the query parameter[cite: 2]
-  const urlSearchQuery = searchParams.get("search") || "";//if search?allure -> the it contain allure[cite: 2]
+  // read the url search 
+  const searchParams = new URLSearchParams(location.search);  // create an object that read the query parameter
+  const urlSearchQuery = searchParams.get("search") || "";//if search?allure -> the it contain allure
 
   // 1. Tracks what's in the URL immediately
-  const [localSearch, setLocalSearch] = useState<string>(urlSearchQuery); // lword by word storing[cite: 2]
-  const [debouncedSearch, setDebouncedSearch] = useState<string>(urlSearchQuery); // the final search value is saved[cite: 2]
+  const [localSearch, setLocalSearch] = useState<string>(urlSearchQuery); // lword by word storing
+  const [debouncedSearch, setDebouncedSearch] = useState<string>(urlSearchQuery); // the final search value is saved
 
   // Sync local search when URL changes directly (e.g. clearing search or navigating)
   useEffect(() => {
@@ -92,13 +93,13 @@ export default function CategoryPage() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [currentPage]);
 
-  if (hasCheckedData && !currentCategoryInfo) {
+  if (hasCheckedData && !currentCategoryInfo) { //if category not found then redirect it to theshop
     return <Navigate to="/shop" replace />; 
   }
 
   const allBrands = [...new Set(baseItems.map(p => p.brand))];
   
-  // ✅ FIXED: Changed p.priceNum to p.price
+  
   const highestPrice = baseItems.length > 0 ? Math.max(...baseItems.map(p => p.price)) : 100000;
 
   // -------------------------

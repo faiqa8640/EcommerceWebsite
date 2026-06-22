@@ -1,23 +1,23 @@
 import { Product, Order, OrderPayload, Review , ApiResponse} from "../types";
 
-const API_BASE_URL = "http://localhost:5000/api";
+const API_BASE_URL = "http://localhost:5000/api"; // backend url 
 
-const getAuthHeaders = (): HeadersInit => {
-  const token = localStorage.getItem("token");
+const getAuthHeaders = (): HeadersInit => { // automatically attach the jwt token to the request
+  const token = localStorage.getItem("token"); // get the token
   return {
-    "Content-Type": "application/json",
-    ...(token ? { "Authorization": `Bearer ${token}` } : {}),
+    "Content-Type": "application/json", // build header
+    ...(token ? { "Authorization": `Bearer ${token}` } : {}), // if token exist the n added to header of request 
   };
 };
 
-// --- Product API ---
+// --- Product API --- // fetch the produtcs
 export const fetchProducts = async (categorySlug?: string): Promise<Product[]> => {
   try {
     const url = categorySlug && categorySlug !== "all" 
       ? `${API_BASE_URL}/products?category=${categorySlug}`
       : `${API_BASE_URL}/products`;
     
-    const response = await fetch(url);
+    const response = await fetch(url); // wait for responce 
     if (!response.ok) throw new Error("Failed to fetch products");
     return await response.json();
   } catch (error) {
@@ -26,6 +26,8 @@ export const fetchProducts = async (categorySlug?: string): Promise<Product[]> =
   }
 };
 
+
+// fetch products by it 
 export const fetchProductById = async (id: string): Promise<Product | undefined> => {
   try {
     const response = await fetch(`${API_BASE_URL}/products/${id}`);
@@ -38,9 +40,9 @@ export const fetchProductById = async (id: string): Promise<Product | undefined>
 };
 
 
-
+//create the order
 export const createOrder = async (orderPayload: any): Promise<ApiResponse<Order>> => {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem('token'); // send the token  coz only the authorized user can create the order 
   const response = await fetch(`${API_BASE_URL}/orders`, {
     method: 'POST',
     headers: {
@@ -58,7 +60,7 @@ export const createOrder = async (orderPayload: any): Promise<ApiResponse<Order>
 
 // Fetch a single order by its ID — used by the Thank You / order confirmation page
 export const getOrderByIdAPI = async (orderId: string): Promise<ApiResponse<Order>> => {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem('token'); // authorization
   const response = await fetch(`${API_BASE_URL}/orders/${orderId}`, {
     headers: {
       'Content-Type': 'application/json',
@@ -86,7 +88,8 @@ export const cancelOrderAPI = async (orderId: string, reason?: string): Promise<
   return data;
 };
 
-// --- Wishlist API ---
+// --- Wishlist API --- 
+//fetch user whishlist
 export const getWishlistAPI = async (): Promise<Product[]> => {
   try {
     const response = await fetch(`${API_BASE_URL}/wishlist`, { headers: getAuthHeaders() });
@@ -103,7 +106,7 @@ export const addToWishlistAPI = async (productId: string) => {
     const response = await fetch(`${API_BASE_URL}/wishlist`, {
       method: "POST",
       headers: getAuthHeaders(),
-      body: JSON.stringify({ productId }),
+      body: JSON.stringify({ productId }), // backend send req.boy.productId
     });
     if (!response.ok) throw new Error("Failed to add to wishlist");
     return await response.json();

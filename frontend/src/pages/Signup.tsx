@@ -20,7 +20,7 @@ export default function Signup() {
   const [loading, setLoading] = useState<boolean>(false);
   const [success, setSuccess] = useState<boolean>(false); // show success state
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>): void => { //whenever user types 
     setUserData({ ...userData, [e.target.name]: e.target.value });
   };
 

@@ -195,7 +195,7 @@ export default function AdminDashboard() {
 
   // ── Update order status ─────────────────────────────────────────────────────
   const updateOrderStatus = async (orderId: string, newStatus: string) => {
-    setUpdatingOrderId(orderId);
+    setUpdatingOrderId(orderId); // stores which item is currently being updated
     try {
       const res = await fetch(`${API}/orders/${orderId}/status`, {
         method: "PATCH",
@@ -234,15 +234,15 @@ export default function AdminDashboard() {
   };
 
   // ── Product CRUD ────────────────────────────────────────────────────────────
-  const openAddProduct = () => {
+  const openAddProduct = () => { // when admin click add product button
     setEditingProduct(null);
     setProductForm(emptyProduct);
     setShowProductModal(true);
   };
 
-  const openEditProduct = (p: Product) => {
+  const openEditProduct = (p: Product) => {  // when admin click edit product 
     setEditingProduct(p);
-    setProductForm({
+    setProductForm({ // filling with existing data
       name: p.name, price: p.price, category: p.category, brand: p.brand,
       images: p.images?.length ? p.images : [""],
       badge: p.badge || "", shortDesc: p.shortDesc, description: p.description,
@@ -252,39 +252,6 @@ export default function AdminDashboard() {
     });
     setShowProductModal(true);
   };
-
-  // const saveProduct = async () => {
-  //   setProductSaving(true);
-  //   try {
-  //     const method = editingProduct ? "PUT" : "POST";
-  //     const url = editingProduct ? `${API}/products/${editingProduct._id}` : `${API}/products`;
-  //     const body = {
-  //       ...productForm,
-  //       images: productForm.images.filter(i => i.trim()),
-  //       notes: {
-  //         top: productForm.notes.top.filter(n => n.trim()),
-  //         heart: productForm.notes.heart.filter(n => n.trim()),
-  //         base: productForm.notes.base.filter(n => n.trim()),
-  //       },
-  //       season: productForm.season,
-  //     };
-  //     const res = await fetch(url, { method, headers: authHeaders(), body: JSON.stringify(body) });
-  //     const data = await res.json();
-  //     if (res.ok) {
-  //       if (editingProduct) {
-  //         setProducts(prev => prev.map(p => p._id === editingProduct._id ? data.product : p));
-  //       } else {
-  //         setProducts(prev => [...prev, data.product]);
-  //       }
-  //       setShowProductModal(false);
-  //     } else {
-  //       alert(data.message || "Failed to save product.");
-  //     }
-  //   } finally {
-  //     setProductSaving(false);
-  //   }
-  // };
-
   const saveProduct = async () => {
     setProductSaving(true);
     let finalImageUrls = [...productForm.images];
@@ -315,7 +282,7 @@ export default function AdminDashboard() {
       }
 
       // 2. DATABASE STEP: Send the product with the S3 URLs
-      const method = editingProduct ? "PUT" : "POST";
+      const method = editingProduct ? "PUT" : "POST"; //post -> update and put -> add
       const url = editingProduct ? `${API}/products/${editingProduct._id}` : `${API}/products`;
 
       const body = {
@@ -329,7 +296,7 @@ export default function AdminDashboard() {
         season: productForm.season,
       };
 
-      const res = await fetch(url, {
+      const res = await fetch(url, { // save to the db
         method,
         headers: { ...authHeaders(), "Content-Type": "application/json" },
         body: JSON.stringify(body),
@@ -338,9 +305,9 @@ export default function AdminDashboard() {
       const data = await res.json();
 
       if (res.ok) {
-        if (editingProduct) {
+        if (editingProduct) {// replavce old
           setProducts(prev => prev.map(p => p._id === editingProduct._id ? data.product : p));
-        } else {
+        } else {// if new
           setProducts(prev => [...prev, data.product]);
         }
         setSelectedFiles([]);

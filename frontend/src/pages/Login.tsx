@@ -16,6 +16,7 @@ export default function Login() {
   const [notVerified, setNotVerified] = useState<boolean>(false);
   const [sessionExpired, setSessionExpired] = useState<boolean>(false);
 
+  // this is the auth context connection -> make user login everywhere 
   const { login } = useAuth();//login() does:stores JWT tokenstores user dataupdates global state
   const navigate = useNavigate();
 
@@ -27,16 +28,17 @@ export default function Login() {
     }
   }, []);
 
+  // heandle the change 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>): void => { // update form state when user type
     setUserData({ ...userData, [e.target.name]: e.target.value });
     setNotVerified(false);
     setSessionExpired(false);
   };
 
-  const handleSubmit = async (
+  const handleSubmit = async ( // handle the submit 
     e: React.FormEvent<HTMLFormElement>
   ): Promise<void> => {
-    e.preventDefault();
+    e.preventDefault(); //stop page reload 
     setError("");
     setNotVerified(false);
     setLoading(true); //Clears old errors when user starts typing again
@@ -57,13 +59,13 @@ export default function Login() {
         return;
       }
 
-      login(data.token, data.user);
+      login(data.token, data.user);// the token is jwt
 
       // Admins go to admin dashboard, regular users go to home
       if (data.user.role === "admin") {
         navigate("/admin");
       } else {
-        navigate("/");
+        navigate("/"); // to te home page
       }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "An error occurred");

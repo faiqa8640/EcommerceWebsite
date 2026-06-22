@@ -3,13 +3,13 @@ import Order, { IOrder } from '../models/orderModel';
 import { AuthRequest } from "../middleware/authMiddleware";
 
 
-
+//customer side
 export const createOrder = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { items, shippingAddress, paymentMethod, shippingMethod, subtotal, shippingCost, total } = req.body;
 
     // 1. Verify user is authenticated and access the _id from middleware
-    if (!req.user || !req.user._id) {
+    if (!req.user || !req.user._id) { // if not login
       res.status(401).json({ 
         success: false, 
         message: "Authentication failed. Please log in again." 
@@ -18,7 +18,7 @@ export const createOrder = async (req: AuthRequest, res: Response): Promise<void
     }
 
     // 2. Basic Validation
-    if (!items || items.length === 0) {
+    if (!items || items.length === 0) { // if item 
       res.status(400).json({ success: false, message: 'No order items found' });
       return;
     }
@@ -51,6 +51,8 @@ export const createOrder = async (req: AuthRequest, res: Response): Promise<void
     });
   }
 };
+
+//cusomer side 
 // @desc    Get logged in user's orders
 // @route   GET /api/orders/myorders
 // @access  Private
@@ -74,6 +76,7 @@ export const getMyOrders = async (req: AuthRequest, res: Response): Promise<void
   }
 };
 
+//customer side 
 // @desc    Get single order details
 // @route   GET /api/orders/:id
 // @access  Private
@@ -101,6 +104,8 @@ export const getOrderById = async (req: AuthRequest, res: Response): Promise<voi
   }
 };
 
+
+//update the order addresss 
 // @desc    Update order shipping address statement (Before fulfillment processing window completes)
 // @route   PUT /api/orders/:id/address
 // @access  Private
@@ -145,6 +150,8 @@ export const updateOrderAddress = async (req: AuthRequest, res: Response) => {
   }
 };
 
+
+//cancel the order ->customer
 // @desc    Customer cancels their own order (allowed any time before it ships)
 // @route   PATCH /api/orders/:id/cancel
 // @access  Private

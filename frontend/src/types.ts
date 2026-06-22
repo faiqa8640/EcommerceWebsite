@@ -85,7 +85,7 @@ export type Order = {
     postalCode: string;
     country: string;
   };
-  paymentMethod: "Cash on Delivery" | "Direct Bank Transfer";
+  paymentMethod: "Cash on Delivery" | "Direct Bank Transfer"; // called union type that only these values are allowed
   paymentStatus: "Pending" | "Verified" | "Paid";
   shippingMethod: "Standard Shipping" | "Express Shipping";
   status: "Pending" | "Confirmed" | "Shipped" | "Delivered" | "Cancelled";

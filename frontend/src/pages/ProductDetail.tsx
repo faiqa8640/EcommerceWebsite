@@ -53,7 +53,7 @@ function DynamicStars({ rating }: { rating: number }) {
 }
 
 export default function ProductDetail() {
-  const { category, productId } = useParams<{
+  const { category, productId } = useParams<{ // get the category and productid from url 
     category: string; 
     productId: string;
   }>();
@@ -172,7 +172,7 @@ export default function ProductDetail() {
   };
 
   // Handle redirects safely
-  if (redirect) return <Navigate to="/shop" replace />;
+  if (redirect) return <Navigate to="/shop" replace />;// if product not founf redirect to the shop
   if (loading) return <div className="text-center py-20 bg-[#EAE0CF] min-height-100vh text-[#111844]">Loading luxury fragrance...</div>;
   if (!product || !cat) return <Navigate to="/shop" replace />;
 
