@@ -2,10 +2,10 @@
   "name": "backend",
   "version": "1.0.0",
   "description": "Eloura backend API",
-  "main": "index.js",
+  "main": "dist/server.js",
   "scripts": {
     "dev": "nodemon src/server.ts",
-    "build": "tsc",
+    "build": "tsc && tsc-alias",
     "start": "node dist/server.js"
   },
   "keywords": [],
@@ -32,6 +32,7 @@
     "@types/nodemailer": "^6.4.23",
     "nodemon": "^3.1.14",
     "ts-node": "^10.9.2",
+    "tsc-alias": "^1.8.10",
     "typescript": "^6.0.3"
   }
 }

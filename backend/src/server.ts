@@ -17,9 +17,15 @@ const app = express();
 
 app.use(express.json());// covert the json to the js object
 app.use(express.urlencoded({ extended: true })); // covert the html data into the js object
+// app.use(
+//   cors({
+//     origin: "http://localhost:5173",
+//     credentials: true,
+//   })
+// );
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: [process.env.FRONTEND_URL || "http://localhost:5173"],
     credentials: true,
   })
 );
