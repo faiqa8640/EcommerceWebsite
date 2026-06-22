@@ -9,7 +9,7 @@ export default function Header() {
   const [scrolled, setScrolled] = useState<boolean>(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user, logout, isAdmin } = useAuth();
   
   // Connect to live frontend state calculations
   const { getCartCount } = useCart();
@@ -606,7 +606,7 @@ export default function Header() {
             <div className="icon-divider" />
 
             {/* User Login Area */}
-            <UserIconArea user={user} onLogout={handleLogout} onWishlistClick={handleWishlistClick} />
+            <UserIconArea user={user} isAdmin={isAdmin} onLogout={handleLogout} onWishlistClick={handleWishlistClick} />
           </div>
 
           {/* Mobile Hamburger Trigger */}
@@ -693,11 +693,12 @@ export default function Header() {
 // ── Sub-component: User icon with dropdown ──────────────────────────────────
 interface UserIconAreaProps {
   user: { name: string } | null;
+  isAdmin: boolean;
   onLogout: () => void;
   onWishlistClick: (e: React.MouseEvent) => void;
 }
 
-function UserIconArea({ user, onLogout, onWishlistClick }: UserIconAreaProps) {
+function UserIconArea({ user, isAdmin, onLogout, onWishlistClick }: UserIconAreaProps) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement | null>(null);
 
@@ -738,8 +739,12 @@ function UserIconArea({ user, onLogout, onWishlistClick }: UserIconAreaProps) {
       {open && (
         <div className="user-tooltip">
           <div className="user-tooltip-name">Hi, {user.name.split(" ")[0]}</div>
-          <Link to="/profile" className="user-tooltip-link" onClick={() => setOpen(false)}>
-            My Profile
+          <Link
+            to={isAdmin ? "/admin" : "/profile"}
+            className="user-tooltip-link"
+            onClick={() => setOpen(false)}
+          >
+            {isAdmin ? "Dashboard" : "My Profile"}
           </Link>
           
           {/* PROTECTED DROPDOWN WISHLIST LINK */}

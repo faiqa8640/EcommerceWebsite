@@ -23,7 +23,7 @@ import { Cart } from './pages/Cart';
 import { Checkout } from './pages/Checkout';
 import { Wishlist } from './pages/Wishlist';
 import UserProfile from "./pages/UserProfile";
-import { ThankYou } from "./pages/Thankyou";
+import { ThankYou } from "./pages/ThankYou";
 
 
 function App() {
