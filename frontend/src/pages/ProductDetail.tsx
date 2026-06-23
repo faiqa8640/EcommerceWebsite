@@ -139,15 +139,6 @@ export default function ProductDetail() {
     alert(`${product.name} (${selectedSize}) added to your luxury selection!`);
   };
   // HANDLES THE NEW REVIEW
-  // const handleNewReview = (newReview: Review) => {
-  //   if (product) {
-  //     setProduct({
-  //       ...product,
-  //       reviews: [newReview, ...(product.reviews || [])],
-  //     });
-  //   }
-  // };
-  // HANDLES THE NEW REVIEW
   const handleNewReview = (newReview: Review) => {
     if (product) {
       setProduct({
@@ -813,7 +804,7 @@ export default function ProductDetail() {
               {reviews.map((r, i) => (
                 <div className="review-card" key={r._id || i}>
                   <div className="review-top">
-                    <div className="review-user" style={{ textTransform: "capitalize" }}>{r.userName}</div>
+                    <div className="review-user" style={{ textTransform: "capitalize" }}>{r.userId?.name || "Anonymous"}</div>
                     <div className="review-rating">
                       <DynamicStars rating={r.rating} />
                     </div>

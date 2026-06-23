@@ -1,281 +1,274 @@
-import { Request, Response } from 'express';
-import Order, { IOrder } from '../models/orderModel';
+import { Request, Response } from "express";
+import Order, { IOrder, OrderStatus, PaymentStatus, PaymentMethod, ShippingMethod } from "../models/orderModel";
 import { AuthRequest } from "../middleware/authMiddleware";
 
+// ── Helper: compute total from items + shippingCost ───────────────────────────
+const computeTotal = (
+  items: { price: number; quantity: number }[],
+  shippingCost: number
+): number => {
+  const itemsTotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  return itemsTotal + shippingCost;
+};
 
-//customer side
+// ── POST /api/orders ───────────────────────────────────────────────────────────
+// Customer: place a new order
 export const createOrder = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const { items, shippingAddress, paymentMethod, shippingMethod, subtotal, shippingCost, total } = req.body;
-
-    // 1. Verify user is authenticated and access the _id from middleware
-    if (!req.user || !req.user._id) { // if not login
-      res.status(401).json({ 
-        success: false, 
-        message: "Authentication failed. Please log in again." 
-      });
+    if (!req.user?._id) {
+      res.status(401).json({ success: false, message: "Authentication failed. Please log in again." });
       return;
     }
 
-    // 2. Basic Validation
-    if (!items || items.length === 0) { // if item 
-      res.status(400).json({ success: false, message: 'No order items found' });
+    const { items, addressId, shippingAddress, paymentMethod, shippingMethod, shippingCost } = req.body;
+
+    if (!items || items.length === 0) {
+      res.status(400).json({ success: false, message: "No order items found" });
       return;
     }
 
-    // 3. Create New Order Instance
-    // Map the user ID directly from the authenticated request object
+    // shippingAddress snapshot is required (addressId is optional — belt-and-suspenders)
+    if (!shippingAddress?.streetAddress || !shippingAddress?.city || !shippingAddress?.postalCode || !shippingAddress?.country) {
+      res.status(400).json({ success: false, message: "Incomplete shipping address" });
+      return;
+    }
+
+    if (!Object.values(PaymentMethod).includes(paymentMethod)) {
+      res.status(400).json({ success: false, message: `Invalid paymentMethod. Valid values: ${Object.values(PaymentMethod).join(", ")}` });
+      return;
+    }
+
+    if (!Object.values(ShippingMethod).includes(shippingMethod)) {
+      res.status(400).json({ success: false, message: `Invalid shippingMethod. Valid values: ${Object.values(ShippingMethod).join(", ")}` });
+      return;
+    }
+
+    if (typeof shippingCost !== "number") {
+      res.status(400).json({ success: false, message: "shippingCost is required" });
+      return;
+    }
+
+    // Strip "name" from items if accidentally sent — only store product ref, price, qty, size
+    const cleanItems = items.map((item: any) => ({
+      product: item.product,
+      price: item.price,
+      quantity: item.quantity,
+      size: item.size,
+    }));
+
+    // Total is always computed server-side — never trust the client's "total"
+    const total = computeTotal(cleanItems, shippingCost);
+
     const newOrder = new Order({
-      user: req.user._id, 
-      items,
+      user: req.user._id,
+      items: cleanItems,
+
+      // ── Store BOTH the reference and the snapshot ──────────────────────────
+      // addressId: loose ref — nullable if address is deleted later; used for linkback/analytics
+      // shippingAddress: immutable snapshot of the address at time of purchase
+      addressId: addressId || null,
       shippingAddress,
+
       paymentMethod,
       shippingMethod,
-      subtotal,
       shippingCost,
-      total
+      total,
     });
 
     const savedOrder = await newOrder.save();
-    
-    res.status(201).json({ 
-      success: true, 
-      order: savedOrder 
-    });
+
+    // Populate addressId so the response includes the full address object if it exists
+    await savedOrder.populate("addressId", "-user -__v");
+
+    res.status(201).json({ success: true, order: savedOrder });
   } catch (error: any) {
     console.error("📦 [createOrder] Error:", error);
-    res.status(500).json({ 
-      success: false, 
-      message: "Server error creating order", 
-      error: error.message 
-    });
+    res.status(500).json({ success: false, message: "Server error creating order", error: error.message });
   }
 };
 
-//cusomer side 
-// @desc    Get logged in user's orders
-// @route   GET /api/orders/myorders
-// @access  Private
+// ── GET /api/orders/my-orders ──────────────────────────────────────────────────
 export const getMyOrders = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const userId = req.user?._id;
-    
     if (!userId) {
-      res.status(401).json({ success: false, message: "Unauthorized access detected." });
+      res.status(401).json({ success: false, message: "Unauthorized" });
       return;
     }
 
-    // Populate user details and product reference items inside the order array
     const orders = await Order.find({ user: userId })
       .populate("user", "name email")
-      .populate("items.product", "name brand images price");
+      .populate("items.product", "name brand images price")
+      .populate("addressId", "-user -__v")   // populate the saved address if it still exists
+      .sort({ createdAt: -1 });
 
     res.status(200).json({ success: true, orders });
   } catch (error: any) {
-    res.status(500).json({ success: false, message: "Error fetching order database profiles", error: error.message });
+    res.status(500).json({ success: false, message: "Error fetching orders", error: error.message });
   }
 };
 
-//customer side 
-// @desc    Get single order details
-// @route   GET /api/orders/:id
-// @access  Private
+// ── GET /api/orders/:id ────────────────────────────────────────────────────────
 export const getOrderById = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const orderId = req.params.id;
-    const order = await Order.findById(orderId)
+    const order = await Order.findById(req.params.id)
       .populate("user", "name email")
-      .populate("items.product", "name brand images price");
+      .populate("items.product", "name brand images price")
+      .populate("addressId", "-user -__v");  // populate the saved address if it still exists
 
     if (!order) {
-      res.status(404).json({ success: false, message: "Order records not found." });
+      res.status(404).json({ success: false, message: "Order not found" });
       return;
     }
 
-    // Authorization safeguard check
-    if (order.user._id.toString() !== req.user?._id.toString() && req.user?.role !== 'admin') {
-      res.status(403).json({ success: false, message: "Not authorized to view this order transaction statement." });
+    if (order.user._id.toString() !== req.user?._id.toString() && req.user?.role !== "admin") {
+      res.status(403).json({ success: false, message: "Not authorized to view this order" });
       return;
     }
 
     res.status(200).json({ success: true, order });
   } catch (error: any) {
-    res.status(500).json({ success: false, message: "Error looking up order details", error: error.message });
+    res.status(500).json({ success: false, message: "Error fetching order", error: error.message });
   }
 };
 
-
-//update the order addresss 
-// @desc    Update order shipping address statement (Before fulfillment processing window completes)
-// @route   PUT /api/orders/:id/address
-// @access  Private
+// ── PUT /api/orders/:id/address ────────────────────────────────────────────────
+// Customer can update shipping address before order is shipped.
+// Updates both the snapshot and the addressId reference.
 export const updateOrderAddress = async (req: AuthRequest, res: Response) => {
   try {
-    const orderId = req.params.id;
-    const { shippingAddress } = req.body;
+    const order = await Order.findById(req.params.id);
 
-    // Aligned address check to use streetAddress instead of old string street
-    if (!shippingAddress || !shippingAddress.streetAddress || !shippingAddress.city || !shippingAddress.postalCode || !shippingAddress.country) {
-      return res.status(400).json({ success: false, message: "Incomplete address parameters provided." });
-    }
-
-    const order = await Order.findById(orderId);
-
-    if (!order) {
-      return res.status(404).json({ success: false, message: "Target order record not found." });
-    }
-
+    if (!order) return res.status(404).json({ success: false, message: "Order not found" });
     if (order.user.toString() !== req.user?._id.toString()) {
-      return res.status(403).json({ success: false, message: "Not authorized to modify this order data." });
+      return res.status(403).json({ success: false, message: "Not authorized" });
     }
 
-    // Strictly mapping fields according to your explicit Schema contract definition
-    order.shippingAddress = {
-      streetAddress: shippingAddress.streetAddress,
-      apartment: shippingAddress.apartment,
-      city: shippingAddress.city,
-      postalCode: shippingAddress.postalCode,
-      country: shippingAddress.country,
-    };
+    const { addressId, shippingAddress } = req.body;
 
+    if (!shippingAddress?.streetAddress || !shippingAddress?.city || !shippingAddress?.postalCode || !shippingAddress?.country) {
+      return res.status(400).json({ success: false, message: "Incomplete address" });
+    }
+
+    // Update both: the new reference and the new snapshot
+    order.addressId = addressId || null;
+    order.shippingAddress = shippingAddress;
     await order.save();
 
-    return res.status(200).json({
-      success: true,
-      message: "Order address updated successfully",
-      order,
-    });
+    await order.populate("addressId", "-user -__v");
+
+    return res.status(200).json({ success: true, message: "Address updated", order });
   } catch (error: any) {
-    return res.status(500).json({ success: false, message: "Internal application error saving address metrics", error: error.message });
+    return res.status(500).json({ success: false, message: "Error updating address", error: error.message });
   }
 };
 
-
-//cancel the order ->customer
-// @desc    Customer cancels their own order (allowed any time before it ships)
-// @route   PATCH /api/orders/:id/cancel
-// @access  Private
+// ── PATCH /api/orders/:id/cancel ──────────────────────────────────────────────
 export const cancelOrder = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const orderId = req.params.id;
-    const order = await Order.findById(orderId);
+    const order = await Order.findById(req.params.id);
 
     if (!order) {
-      res.status(404).json({ success: false, message: "Order not found." });
+      res.status(404).json({ success: false, message: "Order not found" });
       return;
     }
 
-    // Only the order owner can cancel it
     if (order.user.toString() !== req.user?._id.toString()) {
-      res.status(403).json({ success: false, message: "Not authorized to cancel this order." });
+      res.status(403).json({ success: false, message: "Not authorized" });
       return;
     }
 
-    // Can't cancel once it's already shipped, delivered, or cancelled
-    const lockedStatuses = ["Shipped", "Delivered", "Cancelled"];
+    const lockedStatuses = [OrderStatus.SHIPPED, OrderStatus.DELIVERED, OrderStatus.CANCELLED];
     if (lockedStatuses.includes(order.status)) {
       res.status(400).json({
         success: false,
-        message: `This order can no longer be cancelled — it is already "${order.status}". Please contact support if you need help.`,
+        message: `Order cannot be cancelled — it is already "${order.status}". Please contact support.`,
       });
       return;
     }
 
-    order.status = "Cancelled" as any;
+    order.status = OrderStatus.CANCELLED;
     order.cancelledAt = new Date();
     order.cancelReason = req.body?.reason || "Cancelled by customer";
-
     await order.save();
 
-    res.status(200).json({ success: true, message: "Order cancelled successfully.", order });
+    res.status(200).json({ success: true, message: "Order cancelled successfully", order });
   } catch (error: any) {
-    res.status(500).json({ success: false, message: "Server error cancelling order", error: error.message });
+    res.status(500).json({ success: false, message: "Error cancelling order", error: error.message });
   }
 };
 
-// -------------------
-// ADMIN 
-// ---------------------
-
-// ── Admin: get ALL orders with user details populated ─────────────────────────
-export const getAllOrders = async (req: Request, res: Response): Promise<void> => {
+// ── ADMIN: GET /api/orders/all ─────────────────────────────────────────────────
+export const getAllOrders = async (_req: Request, res: Response): Promise<void> => {
   try {
     const orders = await Order.find({})
-      .populate('user', 'name email')   // pull name + email from User collection
+      .populate("user", "name email")
+      .populate("items.product", "name brand images price")
+      .populate("addressId", "-user -__v")
       .sort({ createdAt: -1 });
+
     res.status(200).json(orders);
   } catch (error: any) {
-    res.status(500).json({ message: 'Server error retrieving all orders', error: error.message });
+    res.status(500).json({ message: "Server error retrieving orders", error: error.message });
   }
 };
 
-// ── Admin: update order status ─────────────────────────────────────────────────
+// ── ADMIN: PATCH /api/orders/:orderId/status ───────────────────────────────────
 export const updateOrderStatus = async (req: Request, res: Response): Promise<void> => {
   try {
     const { orderId } = req.params;
     const { status } = req.body;
 
-    const validStatuses = ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'];
+    const validStatuses = Object.values(OrderStatus);
     if (!validStatuses.includes(status)) {
-      res.status(400).json({ message: 'Invalid status value' });
+      res.status(400).json({ message: `Invalid status. Valid values: ${validStatuses.join(", ")}` });
       return;
     }
 
-    const updated = await Order.findByIdAndUpdate(
-      orderId,
-      { status },
-      { new: true }
-    ).populate('user', 'name email');
+    const updated = await Order.findByIdAndUpdate(orderId, { status }, { new: true })
+      .populate("user", "name email");
 
     if (!updated) {
-      res.status(404).json({ message: 'Order not found' });
+      res.status(404).json({ message: "Order not found" });
       return;
     }
 
     res.status(200).json({ success: true, order: updated });
   } catch (error: any) {
-    res.status(500).json({ message: 'Server error updating order status', error: error.message });
+    res.status(500).json({ message: "Error updating order status", error: error.message });
   }
 };
 
-
-// ── Admin: update payment status (e.g. verify a bank transfer) ─────────────────
+// ── ADMIN: PATCH /api/orders/:orderId/payment-status ──────────────────────────
 export const updatePaymentStatus = async (req: Request, res: Response): Promise<void> => {
   try {
     const { orderId } = req.params;
     const { paymentStatus } = req.body;
 
-    const validStatuses = ['Pending', 'Verified', 'Paid'];
+    const validStatuses = Object.values(PaymentStatus);
     if (!validStatuses.includes(paymentStatus)) {
-      res.status(400).json({ message: 'Invalid payment status value' });
+      res.status(400).json({ message: `Invalid payment status. Valid values: ${validStatuses.join(", ")}` });
       return;
     }
 
-    const updated = await Order.findByIdAndUpdate(
-      orderId,
-      { paymentStatus },
-      { new: true }
-    ).populate('user', 'name email');
+    const updated = await Order.findByIdAndUpdate(orderId, { paymentStatus }, { new: true })
+      .populate("user", "name email");
 
     if (!updated) {
-      res.status(404).json({ message: 'Order not found' });
+      res.status(404).json({ message: "Order not found" });
       return;
     }
 
     res.status(200).json({ success: true, order: updated });
   } catch (error: any) {
-    res.status(500).json({ message: 'Server error updating payment status', error: error.message });
+    res.status(500).json({ message: "Error updating payment status", error: error.message });
   }
 };
 
-// @desc    Delete an order
-// @route   DELETE /api/orders/:id
-// @access  Private/Admin
+// ── ADMIN: DELETE /api/orders/:id ─────────────────────────────────────────────
 export const deleteOrder = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { id } = req.params;
-
-    const order = await Order.findByIdAndDelete(id);
+    const order = await Order.findByIdAndDelete(req.params.id);
 
     if (!order) {
       res.status(404).json({ success: false, message: "Order not found" });
@@ -284,10 +277,6 @@ export const deleteOrder = async (req: Request, res: Response): Promise<void> =>
 
     res.status(200).json({ success: true, message: "Order deleted successfully" });
   } catch (error: any) {
-    res.status(500).json({ 
-      success: false, 
-      message: "Server error deleting order", 
-      error: error.message 
-    });
+    res.status(500).json({ success: false, message: "Error deleting order", error: error.message });
   }
 };

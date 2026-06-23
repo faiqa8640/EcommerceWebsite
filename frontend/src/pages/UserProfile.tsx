@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import Header from "../components/header";
 import Footer from "../components/Footer";
 import { useAuth } from "../context/AuthContext";
+import AddressesSection from "../components/AddressSection";
 
 // --- TypeScript Backend Object Interfaces ---
 interface ScentProfile {
@@ -61,7 +62,6 @@ export default function UserProfile() {
   
   // ─── TOP LEVEL HOOKS (CRITICAL FIX FOR INVALID HOOK CALL) ───
   const [activeSection, setActiveSection] = useState("overview");
-  const [editingAddress, setEditingAddress] = useState(false);
   const [savedMessage, setSavedMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [ordersLoading, setOrdersLoading] = useState(true);
@@ -82,13 +82,6 @@ export default function UserProfile() {
     newArrivals: true,
   });
 
-  const [address, setAddress] = useState({
-    street: "123 Main Boulevard, Gulberg III",
-    city: "Lahore",
-    postal: "54000",
-    country: "Pakistan",
-  });
-
   // ─── FETCH PROFILE SUMMARY ──────────────────────────────────
   useEffect(() => {
     const fetchProfileData = async () => {
@@ -107,10 +100,6 @@ export default function UserProfile() {
         if (response.ok) {
           const data = await response.json();
           setProfileData(data.user || data);
-          
-          if (data.user?.address) {
-            setAddress(data.user.address);
-          }
         } else {
           throw new Error("Failed to fetch profile metadata");
         }
@@ -187,28 +176,6 @@ export default function UserProfile() {
     setTimeout(() => setSavedMessage(""), 2800);
   };
 
-  const handleAddressSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      const token = localStorage.getItem("token");
-      const response = await fetch("http://localhost:5000/api/user/address", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
-        },
-        body: JSON.stringify(address),
-      });
-
-      if (!response.ok) throw new Error("Could not update address coordinates.");
-
-      setEditingAddress(false);
-      handleSave("Address saved successfully");
-    } catch (err) {
-      handleSave("Error updating address details");
-    }
-  };
-
   // ─── EARLY RETURN (SAFE TO EXECUTE DOWN HERE) ───────────────
   if (loading) {
     return (
@@ -268,12 +235,9 @@ export default function UserProfile() {
         .order-item-sub { font-size: 0.75rem; color: rgba(17,24,68,0.5); margin-top: 2px; }
         .order-item-price { font-size: 0.9rem; color: #4B5694; font-weight: 500; }
         .order-total-row { display: flex; justify-content: space-between; align-items: baseline; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(75,86,148,0.18); }
-        .address-card { background: rgba(17,24,68,0.04); border: 1px solid rgba(75,86,148,0.18); border-radius: 16px; padding: 1.5rem; position: relative; }
-        .address-label-tag { display: inline-block; font-size: 0.6rem; letter-spacing: 0.22em; text-transform: uppercase; padding: 3px 12px; border-radius: 999px; background: rgba(17,24,68,0.08); color: #4B5694; margin-bottom: 0.8rem; }
-        .address-text { font-size: 0.92rem; color: #111844; line-height: 1.8; }
+
         .edit-btn { position: absolute; top: 1.2rem; right: 1.2rem; background: transparent; border: 1px solid rgba(75,86,148,0.3); border-radius: 8px; padding: 5px 12px; font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: #4B5694; cursor: pointer; transition: 0.25s; font-family: 'Jost', sans-serif; }
         .edit-btn:hover { background: #111844; color: #EAE0CF; border-color: #111844; }
-        .address-form { display: grid; gap: 12px; }
         .form-field label { display: block; font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase; color: #7288AE; margin-bottom: 5px; }
         .form-field input { width: 100%; padding: 0.7rem 1rem; border: 1px solid rgba(75,86,148,0.25); border-radius: 10px; background: rgba(255,255,255,0.7); font-size: 0.88rem; color: #111844; font-family: 'Jost', sans-serif; outline: none; transition: 0.25s; box-sizing: border-box; }
         .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -530,135 +494,7 @@ export default function UserProfile() {
             {/* ══ SAVED ADDRESSES ══════════════════════ */}
             {activeSection === "addresses" && (
               <div className="section-card">
-                <p className="section-eyebrow">Delivery Details</p>
-                <h2 className="section-title">
-                  Saved <span>Addresses</span>
-                </h2>
-
-                {ordersLoading ? (
-                  <p style={{ color: "#111844", letterSpacing: "0.1em" }}>Retrieving address logs...</p>
-                ) : orders.length === 0 ? (
-                  /* Fallback if user hasn't placed an order yet */
-                  <div className="no-orders-msg">
-                    <i className="ti ti-map-pin-off" style={{ fontSize: "2rem", display: "block", marginBottom: "1rem" }} />
-                    No saved addresses found. Your delivery address will be registered here once you place your first order!
-                  </div>
-                ) : !editingAddress ? (
-                  /* Displaying address from the most recent order */
-                  <>
-                    <div className="address-card">
-                      <button 
-                        className="edit-btn" 
-                        onClick={() => {
-                          // Populate form fields with the latest order's address details before opening edit mode
-                          const latestOrderAddress = orders[0].shippingAddress || { street: "", city: "", postal: "", country: "" };
-                          setAddress({
-                            street: latestOrderAddress.streetAddress|| "",
-                            city: latestOrderAddress.city || "",
-                            postal: latestOrderAddress.postalCode || "",
-                            country: latestOrderAddress.country || "",
-                          });
-                          setEditingAddress(true);
-                        }}
-                      >
-                        <i className="ti ti-edit" style={{ marginRight: 4 }} />
-                        Edit Order Address
-                      </button>
-                      <div className="address-label-tag">Shipping Address — Last Order</div>
-                      <div className="address-text">
-                        <strong>{profileData?.name}</strong><br />
-                        {orders[0].shippingAddress?.streetAddress || "No street provided"}<br />
-                        {orders[0].shippingAddress?.city || "Lahore"}, {orders[0].shippingAddress?.postalCode || "54000"}<br />
-                        {orders[0].shippingAddress?.country || "Pakistan"}
-                      </div>
-                      <p style={{ fontSize: "0.72rem", color: "rgba(17,24,68,0.5)", marginTop: "1rem", fontStyle: "italic" }}>
-                        * This address is tied to your latest order (ID: #{orders[0]._id.slice(-8)}). Editing it will update the shipping destination for this order.
-                      </p>
-                    </div>
-                  </>
-                ) : (
-                  /* Form to edit the latest order's address */
-                  <form 
-                    className="address-form" 
-                    onSubmit={async (e) => {
-                      e.preventDefault();
-                      try {
-                        const token = localStorage.getItem("token");
-                        const latestOrderId = orders[0]._id; // Capture the target order ID
-
-                        const response = await fetch(`http://localhost:5000/api/orders/${latestOrderId}/address`, {
-                          method: "PUT",
-                          headers: {
-                            "Content-Type": "application/json",
-                            "Authorization": `Bearer ${token}`,
-                          },
-                          body: JSON.stringify({ shippingAddress: address }),
-                        });
-
-                        if (!response.ok) throw new Error("Could not update order address.");
-
-                        const updatedOrder = await response.json();
-
-                        // Dynamic Update: instantly refresh local state so UI updates without page reload
-                        setOrders(prevOrders => 
-                          prevOrders.map(o => o._id === latestOrderId ? { ...o, shippingAddress: updatedOrder.order.shippingAddress } : o)
-                        );
-
-                        setEditingAddress(false);
-                        handleSave("Order delivery address updated in database!");
-                      } catch (err) {
-                        handleSave("Error updating order destination.");
-                      }
-                    }}
-                  >
-                    <div className="form-field">
-                      <label>Street Address</label>
-                      <input
-                        value={address.street}
-                        onChange={(e) => setAddress({ ...address, street: e.target.value })}
-                        placeholder="Street address"
-                        required
-                      />
-                    </div>
-                    <div className="form-row">
-                      <div className="form-field">
-                        <label>City</label>
-                        <input
-                          value={address.city}
-                          onChange={(e) => setAddress({ ...address, city: e.target.value })}
-                          placeholder="City"
-                          required
-                        />
-                      </div>
-                      <div className="form-field">
-                        <label>Postal Code</label>
-                        <input
-                          value={address.postal}
-                          onChange={(e) => setAddress({ ...address, postal: e.target.value })}
-                          placeholder="Postal code"
-                          required
-                        />
-                      </div>
-                    </div>
-                    <div className="form-field">
-                      <label>Country</label>
-                      <input
-                        value={address.country}
-                        onChange={(e) => setAddress({ ...address, country: e.target.value })}
-                        placeholder="Country"
-                        required
-                      />
-                    </div>
-                    <div style={{ display: "flex", gap: 10, marginTop: 4 }}>
-                      <button type="submit" className="save-btn">
-                        Update Order Address
-                      </button>
-                      <button type="button" className="cancel-btn" onClick={() => setEditingAddress(false)}>
-                        Cancel
-                      </button>
-                    </div>
-                  </form>
-                )}
+                <AddressesSection />
               </div>
             )}
 

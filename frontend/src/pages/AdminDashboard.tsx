@@ -1,5 +1,3 @@
-
-
 import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -8,20 +6,23 @@ import { useNavigate } from "react-router-dom";
 type Order = {
   _id: string;
   user: { name: string; email: string } | string;
-  items: { name: string; quantity: number; price: number; size: string }[];
-  total: number;
-  subtotal: number;
+  items: { product?: { name: string } | string; name?: string; quantity: number; price: number; size: string }[];
   shippingCost: number;
   paymentMethod: string;
   shippingMethod: string;
   shippingAddress: {
+    label?: string;
     streetAddress: string;
     apartment?: string;
     city: string;
     postalCode: string;
     country: string;
   };
-  status: "Pending" | "Processing" | "Shipped" | "Delivered" | "Cancelled";
+  addressId?: {
+    recipientName?: string;
+    phone?: string;
+  } | string | null;
+  status: "pending" | "confirmed" | "shipped" | "delivered" | "cancelled";
   createdAt: string;
 };
 
@@ -65,22 +66,38 @@ type NavItem = {
 const API = "http://localhost:5000/api";
 
 const statusColor: Record<string, string> = {
-  Pending: "#d97706",
-  Processing: "#2563eb",
-  Shipped: "#7c3aed",
-  Delivered: "#059669",
-  Cancelled: "#dc2626",
+  pending: "#d97706",
+  confirmed: "#2563eb",
+  shipped: "#7c3aed",
+  delivered: "#059669",
+  cancelled: "#dc2626",
 };
 
 const statusBg: Record<string, string> = {
-  Pending: "rgba(217,119,6,0.12)",
-  Processing: "rgba(37,99,235,0.12)",
-  Shipped: "rgba(124,58,237,0.12)",
-  Delivered: "rgba(5,150,105,0.12)",
-  Cancelled: "rgba(220,38,38,0.12)",
+  pending: "rgba(217,119,6,0.12)",
+  confirmed: "rgba(37,99,235,0.12)",
+  shipped: "rgba(124,58,237,0.12)",
+  delivered: "rgba(5,150,105,0.12)",
+  cancelled: "rgba(220,38,38,0.12)",
 };
 
-function fmt(n: number) { return `Rs. ${n.toLocaleString()}`; }
+// Display labels for UI (capitalized)
+const STATUS_LABELS: Record<string, string> = {
+  pending: "Pending",
+  confirmed: "Confirmed",
+  shipped: "Shipped",
+  delivered: "Delivered",
+  cancelled: "Cancelled",
+};
+
+// Backend enum values (lowercase) — what we send to the API
+const ORDER_STATUSES = ["pending", "confirmed", "shipped", "delivered", "cancelled"] as const;
+
+function fmt(n: number) { return `Rs. ${(n || 0).toLocaleString()}`; }
+function orderTotal(o: { items: { price: number; quantity: number }[]; shippingCost: number }): number {
+  const itemsSum = (o.items || []).reduce((s, i) => s + i.price * i.quantity, 0);
+  return itemsSum + (o.shippingCost || 0);
+}
 function shortId(id: string) { return `#${id.slice(-8).toUpperCase()}`; }
 function formatDate(d: string) {
   return new Date(d).toLocaleDateString("en-PK", { day: "numeric", month: "short", year: "numeric" });
@@ -104,7 +121,7 @@ function StatCard({ icon, label, value, accent }: { icon: string; label: string;
 function StatusPill({ status }: { status: string }) {
   return (
     <span style={{ display: "inline-block", padding: "3px 12px", borderRadius: 999, fontSize: "0.72rem", fontWeight: 600, letterSpacing: "0.08em", color: statusColor[status] || "#111844", background: statusBg[status] || "rgba(17,24,68,0.08)" }}>
-      {status}
+      {STATUS_LABELS[status] || status}
     </span>
   );
 }
@@ -424,9 +441,9 @@ export default function AdminDashboard() {
   };
 
   // ── Derived stats ───────────────────────────────────────────────────────────
-  const totalRevenue = orders.reduce((s, o) => s + (o.total || 0), 0);
+  const totalRevenue = orders.reduce((s, o) => s + orderTotal(o), 0);
   const recentOrders = [...orders].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 5);
-  const pendingCount = orders.filter(o => o.status === "Pending").length;
+  const pendingCount = orders.filter(o => o.status === "pending").length;
 
   const filteredOrders = orders.filter(o => {
     const userName = typeof o.user === "object" ? o.user.name : "";
@@ -630,7 +647,7 @@ export default function AdminDashboard() {
                               <div style={{ fontWeight: 500, fontSize: "0.82rem" }}>{typeof o.user === "object" ? o.user.name : "—"}</div>
                               <div style={{ fontSize: "0.7rem", color: "#7288AE" }}>{typeof o.user === "object" ? o.user.email : ""}</div>
                             </td>
-                            <td style={{ fontWeight: 600 }}>{fmt(o.total)}</td>
+                            <td style={{ fontWeight: 600 }}>{fmt(orderTotal(o))}</td>
                             <td><StatusPill status={o.status} /></td>
                             <td style={{ color: "#7288AE", fontSize: "0.76rem" }}>{formatDate(o.createdAt)}</td>
                           </tr>
@@ -641,13 +658,13 @@ export default function AdminDashboard() {
                   <div className="adm-card">
                     <div className="adm-card-header"><span className="adm-card-title">Order Status</span></div>
                     <div style={{ padding: "1.2rem 1.5rem", display: "flex", flexDirection: "column", gap: "0.9rem" }}>
-                      {["Pending", "Processing", "Shipped", "Delivered", "Cancelled"].map(s => {
+                      {ORDER_STATUSES.map(s => {
                         const count = orders.filter(o => o.status === s).length;
                         const pct = orders.length ? Math.round((count / orders.length) * 100) : 0;
                         return (
                           <div key={s}>
                             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
-                              <span style={{ fontSize: "0.78rem", color: statusColor[s], fontWeight: 500 }}>{s}</span>
+                              <span style={{ fontSize: "0.78rem", color: statusColor[s], fontWeight: 500 }}>{STATUS_LABELS[s]}</span>
                               <span style={{ fontSize: "0.78rem", color: "#7288AE" }}>{count} · {pct}%</span>
                             </div>
                             <div style={{ height: 5, borderRadius: 999, background: "rgba(17,24,68,0.08)", overflow: "hidden" }}>
@@ -678,8 +695,8 @@ export default function AdminDashboard() {
             {active === "orders" && (
               <>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "1rem", marginBottom: "1.5rem" }}>
-                  {["Pending", "Processing", "Shipped", "Delivered"].map(s => (
-                    <StatCard key={s} icon={s === "Pending" ? "⏳" : s === "Processing" ? "⚙" : s === "Shipped" ? "🚚" : "✅"} label={s} value={orders.filter(o => o.status === s).length} accent={statusBg[s]} />
+                  {(["pending", "confirmed", "shipped", "delivered"] as const).map(s => (
+                    <StatCard key={s} icon={s === "pending" ? "⏳" : s === "confirmed" ? "⚙" : s === "shipped" ? "🚚" : "✅"} label={STATUS_LABELS[s]} value={orders.filter(o => o.status === s).length} accent={statusBg[s]} />
                   ))}
                 </div>
                 <div className="adm-card">
@@ -687,8 +704,8 @@ export default function AdminDashboard() {
                     <span className="adm-card-title">All Orders ({filteredOrders.length})</span>
                     <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap", alignItems: "center" }}>
                       <input className="adm-input" placeholder="Search customer, email, ID…" value={orderSearch} onChange={e => setOrderSearch(e.target.value)} style={{ width: 220 }} />
-                      {["All", "Pending", "Processing", "Shipped", "Delivered", "Cancelled"].map(s => (
-                        <button key={s} className={`filter-pill ${orderStatusFilter === s ? "active" : ""}`} onClick={() => setOrderStatusFilter(s)}>{s}</button>
+                      {["All", ...ORDER_STATUSES].map(s => (
+                        <button key={s} className={`filter-pill ${orderStatusFilter === s ? "active" : ""}`} onClick={() => setOrderStatusFilter(s)}>{s === "All" ? "All" : STATUS_LABELS[s]}</button>
                       ))}
                     </div>
                   </div>
@@ -707,7 +724,7 @@ export default function AdminDashboard() {
                             <div style={{ fontSize: "0.7rem", color: "#7288AE" }}>{typeof o.user === "object" ? o.user.email : ""}</div>
                           </td>
                           <td>{o.items?.length ?? 0} item{(o.items?.length ?? 0) !== 1 ? "s" : ""}</td>
-                          <td style={{ fontWeight: 600 }}>{fmt(o.total)}</td>
+                          <td style={{ fontWeight: 600 }}>{fmt(orderTotal(o))}</td>
                           <td style={{ fontSize: "0.76rem", color: "#7288AE" }}>{o.paymentMethod}</td>
                           <td><StatusPill status={o.status} /></td>
                           <td style={{ color: "#7288AE", fontSize: "0.76rem" }}>{formatDate(o.createdAt)}</td>
@@ -848,6 +865,17 @@ export default function AdminDashboard() {
             <div style={{ background: "rgba(75,86,148,0.06)", border: "1px solid rgba(75,86,148,0.15)", borderRadius: 12, padding: "1rem 1.2rem", marginBottom: "1rem" }}>
               <div style={{ fontSize: "0.65rem", letterSpacing: "0.2em", textTransform: "uppercase", color: "#7288AE", marginBottom: 6 }}>Shipping Address</div>
               <div style={{ fontSize: "0.85rem", color: "#111844", lineHeight: 1.7 }}>
+                {selectedOrder.shippingAddress.label && (
+                  <div style={{ fontWeight: 600, fontSize: "0.78rem", color: "#4B5694", marginBottom: 4 }}>{selectedOrder.shippingAddress.label}</div>
+                )}
+                {typeof selectedOrder.addressId === "object" && selectedOrder.addressId?.recipientName && (
+                  <div style={{ fontWeight: 600, marginBottom: 2 }}>
+                    {selectedOrder.addressId.recipientName}
+                    {selectedOrder.addressId.phone && (
+                      <span style={{ fontWeight: 400, color: "#7288AE", marginLeft: 8 }}>· {selectedOrder.addressId.phone}</span>
+                    )}
+                  </div>
+                )}
                 {selectedOrder.shippingAddress.streetAddress}
                 {selectedOrder.shippingAddress.apartment && `, ${selectedOrder.shippingAddress.apartment}`}<br />
                 {selectedOrder.shippingAddress.city}, {selectedOrder.shippingAddress.postalCode}<br />
@@ -858,21 +886,21 @@ export default function AdminDashboard() {
               <div style={{ fontSize: "0.65rem", letterSpacing: "0.2em", textTransform: "uppercase", color: "#7288AE", marginBottom: 8 }}>Items</div>
               {selectedOrder.items?.map((item, i) => (
                 <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "0.7rem 0", borderBottom: "1px solid rgba(75,86,148,0.1)", fontSize: "0.82rem" }}>
-                  <div><span style={{ fontWeight: 500 }}>{item.name}</span><span style={{ color: "#7288AE", marginLeft: 8 }}>{item.size} × {item.quantity}</span></div>
+                  <div><span style={{ fontWeight: 500 }}>{typeof item.product === "object" && item.product ? item.product.name : (item.name || "Product")}</span><span style={{ color: "#7288AE", marginLeft: 8 }}>{item.size} × {item.quantity}</span></div>
                   <span style={{ fontWeight: 600 }}>{fmt(item.price * item.quantity)}</span>
                 </div>
               ))}
             </div>
             <div style={{ background: "rgba(17,24,68,0.04)", borderRadius: 10, padding: "0.9rem 1.1rem", marginBottom: "1.2rem", fontSize: "0.82rem", display: "flex", flexDirection: "column", gap: 6 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", color: "#7288AE" }}><span>Subtotal</span><span>{fmt(selectedOrder.subtotal)}</span></div>
+              <div style={{ display: "flex", justifyContent: "space-between", color: "#7288AE" }}><span>Subtotal</span><span>{fmt(orderTotal(selectedOrder) - (selectedOrder.shippingCost || 0))}</span></div>
               <div style={{ display: "flex", justifyContent: "space-between", color: "#7288AE" }}><span>Shipping ({selectedOrder.shippingMethod})</span><span>{fmt(selectedOrder.shippingCost)}</span></div>
-              <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 700, color: "#111844", paddingTop: 6, borderTop: "1px solid rgba(75,86,148,0.15)" }}><span>Total</span><span>{fmt(selectedOrder.total)}</span></div>
+              <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 700, color: "#111844", paddingTop: 6, borderTop: "1px solid rgba(75,86,148,0.15)" }}><span>Total</span><span>{fmt(orderTotal(selectedOrder))}</span></div>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: "1.2rem" }}>
               <div style={{ fontSize: "0.72rem", letterSpacing: "0.15em", textTransform: "uppercase", color: "#7288AE" }}>Update Status:</div>
-              {["Pending", "Processing", "Shipped", "Delivered", "Cancelled"].map(s => (
+              {ORDER_STATUSES.map(s => (
                 <button key={s} disabled={updatingOrderId === selectedOrder._id} onClick={() => updateOrderStatus(selectedOrder._id, s)} style={{ padding: "5px 12px", borderRadius: 999, border: `1px solid ${statusColor[s]}`, background: selectedOrder.status === s ? statusColor[s] : "transparent", color: selectedOrder.status === s ? "#fff" : statusColor[s], fontSize: "0.7rem", fontWeight: 500, cursor: "pointer", transition: "all 0.2s", fontFamily: "'Jost', sans-serif", opacity: updatingOrderId === selectedOrder._id ? 0.5 : 1 }}>
-                  {s}
+                  {STATUS_LABELS[s]}
                 </button>
               ))}
             </div>

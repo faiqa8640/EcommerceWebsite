@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import { CartProvider } from "./context/CartContext"
 import { WishlistProvider } from "./context/WishlistContext";
+import { AddressProvider } from "./context/AddressContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Header from "./components/header";
 import Home from "./pages/Home";
@@ -32,55 +33,57 @@ function App() {
     <AuthProvider>
       <BrowserRouter> 
         <WishlistProvider>
-          <ScrollToTop />
-          <Header />
-          <Routes>
-            {/* ── Public Routes ─────────────────────────────────── */}
-            <Route path="/" element={<Home />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/reset-password/:token" element={<ResetPassword />} />
-            <Route path="/verify-email/:token" element={<VerifyEmail />} />
-            <Route path="/resend-verification" element={<ResendVerification />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/shop" element={<Shop />} />
-            <Route path="/shop/:category" element={<CategoryPage />} />
-            <Route path="/shop/:category/:productId" element={<ProductDetail />} />
-            <Route path="/contact" element={<Contact />} />
+          <AddressProvider>
+            <ScrollToTop />
+            <Header />
+            <Routes>
+              {/* ── Public Routes ─────────────────────────────────── */}
+              <Route path="/" element={<Home />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/signup" element={<Signup />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password/:token" element={<ResetPassword />} />
+              <Route path="/verify-email/:token" element={<VerifyEmail />} />
+              <Route path="/resend-verification" element={<ResendVerification />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/shop" element={<Shop />} />
+              <Route path="/shop/:category" element={<CategoryPage />} />
+              <Route path="/shop/:category/:productId" element={<ProductDetail />} />
+              <Route path="/contact" element={<Contact />} />
 
-            <Route path="/cart" element={<Cart />} />
-            <Route path="/checkout" element={<Checkout />} />
-            <Route path="/wishlist" element={<Wishlist />} />
-            <Route path="/profile" element={<UserProfile />} />
+              <Route path="/cart" element={<Cart />} />
+              <Route path="/checkout" element={<Checkout />} />
+              <Route path="/wishlist" element={<Wishlist />} />
+              <Route path="/profile" element={<UserProfile />} />
 
-            <Route path="/order-confirmation/:orderId" element={<ThankYou />} />
-
-
+              <Route path="/order-confirmation/:orderId" element={<ThankYou />} />
 
 
-            {/* ── Protected: any logged-in user ─────────────────── */}
-            {/*
-            <Route
-              path="/dashboard"
-              element={
-                <ProtectedRoute>
-                  <Dashboard />
-                </ProtectedRoute>
-              }
-            />
-            */}
 
-            {/* ── Protected: admin only ──────────────────────────── */}
-            <Route
-              path="/admin"
-              element={
-                <ProtectedRoute adminOnly>
-                  <AdminDashboard />
-                </ProtectedRoute>
-              }
-            />
-          </Routes>
+
+              {/* ── Protected: any logged-in user ─────────────────── */}
+              {/*
+              <Route
+                path="/dashboard"
+                element={
+                  <ProtectedRoute>
+                    <Dashboard />
+                  </ProtectedRoute>
+                }
+              />
+              */}
+
+              {/* ── Protected: admin only ──────────────────────────── */}
+              <Route
+                path="/admin"
+                element={
+                  <ProtectedRoute adminOnly>
+                    <AdminDashboard />
+                  </ProtectedRoute>
+                }
+              />
+            </Routes>
+          </AddressProvider>
         </WishlistProvider> 
       </BrowserRouter>
     </AuthProvider>

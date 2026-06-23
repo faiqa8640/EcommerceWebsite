@@ -2,9 +2,7 @@ import mongoose, { Schema, Document } from "mongoose";
 
 export interface IReview extends Document {
   productId: mongoose.Types.ObjectId;
-  userId: mongoose.Types.ObjectId;
-
-  userName: string; // Snapshot of user's name at review time
+  userId: mongoose.Types.ObjectId; 
 
   rating: number;
   comment: string;
@@ -27,11 +25,6 @@ const reviewSchema = new Schema<IReview>(
       ref: "User",
       required: true,
       index: true,
-    },
-
-    userName: {
-      type: String,
-      required: true,
     },
 
     rating: {

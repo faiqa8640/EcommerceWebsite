@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import Footer from "../components/Footer";
 import { getOrderByIdAPI, cancelOrderAPI } from '../data/apiService';
-import { Order } from '../types';
 
 // Your store's helpline + bank/JazzCash receiving details.
 // Edit these to match your real numbers/accounts.
@@ -12,13 +11,94 @@ const BANK_DETAILS = [
   { label: "Easypaisa", accountName: "MYBRAND", accountNumber: "0344-7175455" },
 ];
 
-const LOCKED_STATUSES = ["Shipped", "Delivered", "Cancelled"];
+// ── Backend enums are lowercase slugs — these maps turn them into labels ──────
+const PAYMENT_METHOD_LABELS: Record<string, string> = {
+  cash_on_delivery: "Cash on Delivery",
+  direct_bank_transfer: "Direct Bank Transfer",
+};
+const SHIPPING_METHOD_LABELS: Record<string, string> = {
+  standard_shipping: "Standard Shipping",
+  express_shipping: "Express Shipping",
+};
+const STATUS_LABELS: Record<string, string> = {
+  pending: "Pending",
+  confirmed: "Confirmed",
+  shipped: "Shipped",
+  delivered: "Delivered",
+  cancelled: "Cancelled",
+};
+
+const LOCKED_STATUSES = ["shipped", "delivered", "cancelled"];
+
+// ── Local order shape — matches what orderController.ts actually returns ─────
+// (items.product and addressId are populated by the backend; the address
+// snapshot itself never carries recipientName/phone — those live on the
+// Address document and only show up when addressId is still populatable)
+interface PopulatedProduct {
+  _id: string;
+  name: string;
+  brand?: string;
+  images?: string[];
+  price: number;
+}
+
+interface OrderItem {
+  product: PopulatedProduct | string;
+  price: number;
+  quantity: number;
+  size: string;
+}
+
+interface ShippingAddressSnapshot {
+  label: string;
+  streetAddress: string;
+  apartment?: string;
+  city: string;
+  postalCode: string;
+  country: string;
+}
+
+interface PopulatedAddress {
+  _id: string;
+  label: string;
+  customLabel?: string;
+  recipientName: string;
+  phone: string;
+  streetAddress: string;
+  apartment?: string;
+  city: string;
+  postalCode: string;
+  country: string;
+  isDefault: boolean;
+}
+
+interface OrderDetails {
+  _id: string;
+  user: { _id: string; name: string; email: string } | string;
+  items: OrderItem[];
+  addressId?: PopulatedAddress | string | null;
+  shippingAddress: ShippingAddressSnapshot;
+  paymentMethod: "cash_on_delivery" | "direct_bank_transfer";
+  paymentStatus: "pending" | "verified" | "paid";
+  shippingMethod: "standard_shipping" | "express_shipping";
+  status: "pending" | "confirmed" | "shipped" | "delivered" | "cancelled";
+  shippingCost: number;
+  cancelledAt?: string;
+  cancelReason?: string;
+  createdAt: string;
+}
+
+const getItemName = (item: OrderItem): string =>
+  typeof item.product === "object" ? item.product.name : "Item";
+
+const getSubtotal = (items: OrderItem[]): number =>
+  items.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
 export const ThankYou: React.FC = () => {
   const { orderId } = useParams<{ orderId: string }>();
   const navigate = useNavigate();
 
-  const [order, setOrder] = useState<Order | null>(null);
+  const [order, setOrder] = useState<OrderDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isCancelling, setIsCancelling] = useState(false);
@@ -31,7 +111,7 @@ export const ThankYou: React.FC = () => {
       try {
         const data = await getOrderByIdAPI(orderId);
         if (data.success && data.order) {
-          setOrder(data.order);
+          setOrder(data.order as unknown as OrderDetails);
         } else {
           setError(data.message || "We couldn't find this order.");
         }
@@ -56,7 +136,7 @@ export const ThankYou: React.FC = () => {
     try {
       const data = await cancelOrderAPI(order._id);
       if (data.success && data.order) {
-        setOrder(data.order);
+        setOrder(data.order as unknown as OrderDetails);
       } else {
         alert(data.message || "Couldn't cancel the order. Please try again.");
       }
@@ -68,6 +148,10 @@ export const ThankYou: React.FC = () => {
   };
 
   const canCancel = order && !LOCKED_STATUSES.includes(order.status);
+  const subtotal = order ? getSubtotal(order.items) : 0;
+  const total = order ? subtotal + order.shippingCost : 0;
+  const populatedAddress =
+    order && order.addressId && typeof order.addressId === "object" ? order.addressId : null;
 
   return (
     <>
@@ -377,35 +461,44 @@ export const ThankYou: React.FC = () => {
                 </div>
                 <div>
                   <div className="meta-item-label">Total</div>
-                  <div className="meta-item-value">Rs. {order.total.toLocaleString()}</div>
+                  <div className="meta-item-value">Rs. {total.toLocaleString()}</div>
                 </div>
                 <div>
                   <div className="meta-item-label">Order Status</div>
                   <div className="meta-item-value">
-                    <span className={`status-pill ${order.status === 'Cancelled' ? 'cancelled' : ''}`}>
-                      {order.status}
+                    <span className={`status-pill ${order.status === 'cancelled' ? 'cancelled' : ''}`}>
+                      {STATUS_LABELS[order.status] || order.status}
                     </span>
                   </div>
                 </div>
               </div>
 
-              {order.status === 'Cancelled' && (
+              {order.status === 'cancelled' && (
                 <p className="cancelled-note">This order has been cancelled.</p>
               )}
 
-              {order.paymentMethod === 'Direct Bank Transfer' && order.status !== 'Cancelled' && (
-                <div className="bank-card">
-                  <h2>Our Bank Details</h2>
-                  {BANK_DETAILS.map((b, i) => (
-                    <div className="bank-row" key={i}>
-                      <div className="bank-row-label">{b.label} — {b.accountName}</div>
-                      <div className="bank-row-detail">Account number: {b.accountNumber}</div>
-                    </div>
-                  ))}
-                  <p className="bank-note">
-                    Please use order number <strong>#{order._id.slice(-6).toUpperCase()}</strong> as your payment reference, and keep your transaction screenshot handy. Your order will ship once we verify the payment.
-                  </p>
-                </div>
+              {order.paymentMethod === 'direct_bank_transfer' && order.status !== 'cancelled' && (
+                order.paymentStatus === 'pending' ? (
+                  <div className="bank-card">
+                    <h2>Our Bank Details</h2>
+                    {BANK_DETAILS.map((b, i) => (
+                      <div className="bank-row" key={i}>
+                        <div className="bank-row-label">{b.label} — {b.accountName}</div>
+                        <div className="bank-row-detail">Account number: {b.accountNumber}</div>
+                      </div>
+                    ))}
+                    <p className="bank-note">
+                      Please use order number <strong>#{order._id.slice(-6).toUpperCase()}</strong> as your payment reference, and keep your transaction screenshot handy. Your order will ship once we verify the payment.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="bank-card">
+                    <h2>Payment Verified ✓</h2>
+                    <p className="bank-note" style={{ marginTop: 0 }}>
+                      We've confirmed your bank transfer for this order. It's now being prepared for shipping.
+                    </p>
+                  </div>
+                )
               )}
 
               <h2 className="section-heading">Order Details</h2>
@@ -417,32 +510,38 @@ export const ThankYou: React.FC = () => {
                 {order.items.map((item, i) => (
                   <div className="order-table-row" key={i}>
                     <span className="item-name-cell">
-                      {item.name} <span>× {item.quantity} ({item.size})</span>
+                      {getItemName(item)} <span>× {item.quantity} ({item.size})</span>
                     </span>
                     <span>Rs. {(item.price * item.quantity).toLocaleString()}</span>
                   </div>
                 ))}
                 <div className="order-table-row">
                   <span>Subtotal</span>
-                  <span>Rs. {order.subtotal.toLocaleString()}</span>
+                  <span>Rs. {subtotal.toLocaleString()}</span>
                 </div>
                 <div className="order-table-row">
-                  <span>Shipping ({order.shippingMethod})</span>
+                  <span>Shipping ({SHIPPING_METHOD_LABELS[order.shippingMethod] || order.shippingMethod})</span>
                   <span>Rs. {order.shippingCost.toLocaleString()}</span>
                 </div>
                 <div className="order-table-row">
                   <span>Payment Method</span>
-                  <span>{order.paymentMethod}</span>
+                  <span>{PAYMENT_METHOD_LABELS[order.paymentMethod] || order.paymentMethod}</span>
                 </div>
                 <div className="order-table-row total-row">
                   <span>Total</span>
-                  <span>Rs. {order.total.toLocaleString()}</span>
+                  <span>Rs. {total.toLocaleString()}</span>
                 </div>
               </div>
 
               <div className="addresses-grid">
                 <div className="address-card">
                   <h3>Shipping Address</h3>
+                  <p style={{ fontWeight: 600, color: '#1b234a' }}>{order.shippingAddress.label}</p>
+                  {populatedAddress && (
+                    <p style={{ fontWeight: 600 }}>
+                      {populatedAddress.recipientName} · {populatedAddress.phone}
+                    </p>
+                  )}
                   <p>{order.shippingAddress.streetAddress}</p>
                   {order.shippingAddress.apartment && <p>{order.shippingAddress.apartment}</p>}
                   <p>{order.shippingAddress.city}, {order.shippingAddress.postalCode}</p>
@@ -478,3 +577,4 @@ export const ThankYou: React.FC = () => {
     </>
   );
 };
+

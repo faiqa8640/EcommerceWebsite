@@ -1,46 +1,40 @@
-import mongoose, { Schema, Document } from "mongoose";
+import mongoose, { Schema, Document, Types } from "mongoose";
 
-/* =========================
-   ENUMS
-========================= */
-
+// ── Enums ─────────────────────────────────────────────────────────────────────
 export enum PaymentMethod {
-  COD = "Cash on Delivery",
-  BANK_TRANSFER = "Direct Bank Transfer",
-}
-
-export enum PaymentStatus {
-  PENDING = "Pending",         // COD: pending until delivered. Bank transfer: pending until you confirm funds received.
-  VERIFIED = "Verified",       // Admin confirmed the bank transfer landed
-  PAID = "Paid",                // COD collected on delivery
+  COD = "cash_on_delivery",
+  BANK_TRANSFER = "direct_bank_transfer",
 }
 
 export enum ShippingMethod {
-  STANDARD = "Standard Shipping",
-  EXPRESS = "Express Shipping",
+  STANDARD = "standard_shipping",
+  EXPRESS = "express_shipping",
 }
 
 export enum OrderStatus {
-  PENDING = "Pending",
-  CONFIRMED = "Confirmed",
-  SHIPPED = "Shipped",
-  DELIVERED = "Delivered",
-  CANCELLED = "Cancelled",
+  PENDING   = "pending",
+  CONFIRMED = "confirmed",
+  SHIPPED   = "shipped",
+  DELIVERED = "delivered",
+  CANCELLED = "cancelled",
 }
 
-/* =========================
-   INTERFACES
-========================= */
+export enum PaymentStatus {
+  PENDING  = "pending",
+  VERIFIED = "verified",
+  PAID     = "paid",
+}
+
+// ── Sub-document interfaces ───────────────────────────────────────────────────
 
 export interface IOrderItem {
-  product: mongoose.Types.ObjectId;
-  name: string;
+  product: Types.ObjectId;
   price: number;
   quantity: number;
   size: string;
 }
-
-export interface IShippingAddress {
+export interface ISnapshotAddress {
+  label: string;
   streetAddress: string;
   apartment?: string;
   city: string;
@@ -48,96 +42,66 @@ export interface IShippingAddress {
   country: string;
 }
 
-export interface IOrder extends Document {
-  user: mongoose.Types.ObjectId;
+// ── Main document interface ───────────────────────────────────────────────────
 
+export interface IOrder extends Document {
+  user: Types.ObjectId;
   items: IOrderItem[];
 
-  shippingAddress: IShippingAddress;
+  addressId?: Types.ObjectId | null;
+
+  shippingAddress: ISnapshotAddress;
 
   paymentMethod: PaymentMethod;
   paymentStatus: PaymentStatus;
-  shippingMethod: ShippingMethod;
+  shippingMethod:  ShippingMethod;
   status: OrderStatus;
-
-  subtotal: number;
   shippingCost: number;
-  total: number;
-
+  // total: number;
+  createdAt: Date;
   cancelledAt?: Date;
   cancelReason?: string;
-
-  createdAt: Date;
-  updatedAt: Date;
 }
 
-/* =========================
-   SCHEMA
-========================= */
+// ── Schemas ───────────────────────────────────────────────────────────────────
+
+const OrderItemSchema = new Schema<IOrderItem>(
+  {
+    product:  { type: Schema.Types.ObjectId, ref: "Product", required: true },
+    price:    { type: Number, required: true },
+    quantity: { type: Number, required: true, min: 1 },
+    size:     { type: String, required: true },
+  },
+  { _id: false }
+);
+
+const SnapshotAddressSchema = new Schema<ISnapshotAddress>(
+  {
+    label:         { type: String, required: true },
+    streetAddress: { type: String, required: true },
+    apartment:     { type: String },
+    city:          { type: String, required: true },
+    postalCode:    { type: String, required: true },
+    country:       { type: String, required: true, default: "Pakistan" },
+  },
+  { _id: false }
+);
 
 const OrderSchema = new Schema<IOrder>(
   {
-    user: {
+    user:  { type: Schema.Types.ObjectId, ref: "User", required: true },
+    items: { type: [OrderItemSchema], required: true },
+
+    // ── Address: reference + snapshot ─────────────────────────────────────
+    addressId: {
       type: Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
+      ref: "Address",
+      default: null,
+      // Not required — the referenced doc may be deleted; snapshot is the source of truth
     },
-
-    items: [
-      {
-        product: {
-          type: Schema.Types.ObjectId,
-          ref: "Product",
-          required: true,
-        },
-
-        name: {
-          type: String,
-          required: true,
-        },
-
-        price: {
-          type: Number,
-          required: true,
-        },
-
-        quantity: {
-          type: Number,
-          required: true,
-          min: 1,
-        },
-
-        size: {
-          type: String,
-          required: true,
-        },
-      },
-    ],
-
     shippingAddress: {
-      streetAddress: {
-        type: String,
-        required: true,
-      },
-
-      apartment: {
-        type: String,
-      },
-
-      city: {
-        type: String,
-        required: true,
-      },
-
-      postalCode: {
-        type: String,
-        required: true,
-      },
-
-      country: {
-        type: String,
-        required: true,
-      },
+      type: SnapshotAddressSchema,
+      required: true,
     },
 
     paymentMethod: {
@@ -145,54 +109,28 @@ const OrderSchema = new Schema<IOrder>(
       enum: Object.values(PaymentMethod),
       required: true,
     },
-
     paymentStatus: {
       type: String,
       enum: Object.values(PaymentStatus),
       default: PaymentStatus.PENDING,
-      required: true,
     },
-
     shippingMethod: {
       type: String,
       enum: Object.values(ShippingMethod),
-      default: ShippingMethod.STANDARD,
       required: true,
     },
-
     status: {
       type: String,
       enum: Object.values(OrderStatus),
       default: OrderStatus.PENDING,
-      required: true,
     },
-
-    subtotal: {
-      type: Number,
-      required: true,
-    },
-
-    shippingCost: {
-      type: Number,
-      required: true,
-    },
-
-    total: {
-      type: Number,
-      required: true,
-    },
-
-    cancelledAt: {
-      type: Date,
-    },
-
-    cancelReason: {
-      type: String,
-    },
+    shippingCost: { type: Number, required: true },
+    // total:        { type: Number, required: true },
+    cancelledAt:  { type: Date },
+    cancelReason: { type: String },
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
 export default mongoose.model<IOrder>("Order", OrderSchema);
+

@@ -9,6 +9,7 @@ import categoryRoutes from "./routes/categoryRoutes";
 import orderRoutes from './routes/orderRoutes';
 import wishlistRoutes from "./routes/wishlistRoutes";
 import uploadRoutes from "./routes/uploadRoutes"
+import addressRoutes from "./routes/addressRoutes";
 
 dotenv.config();
 connectDB();
@@ -39,6 +40,7 @@ app.use("/api/categories", categoryRoutes);
 app.use('/api/orders', orderRoutes);
 app.use("/api/wishlist", wishlistRoutes);
 app.use("/api/upload", uploadRoutes);
+app.use("/api/addresses", addressRoutes);
 
 
 app.get("/", (_req: Request, res: Response) => {

@@ -1,4 +1,3 @@
-// 
 import { Request, Response } from "express"; 
 import mongoose from "mongoose";
 import Product from "../models/productModel";
@@ -56,8 +55,45 @@ export const getProductById = async (req: Request, res: Response): Promise<void>
       return;
     }
 
-    // Fetch the separated relational reviews targeting the product document
-    const reviews = await Review.find({ productId: product._id }).sort({ createdAt: -1 });
+    // Fetch the separated relational reviews targeting the product document,
+    // joined with the User collection via aggregation ($lookup) so we get the
+    // CURRENT user name, not a stale snapshot stored on the review itself.
+    const reviews = await Review.aggregate([
+      // Stage 1: only reviews belonging to this product
+      { $match: { productId: product._id } },
+
+      // Stage 2: join with the "users" collection on userId -> _id
+      {
+        $lookup: {
+          from: "users",          // actual MongoDB collection name for the User model
+          localField: "userId",
+          foreignField: "_id",
+          as: "user",
+        },
+      },
+
+      // Stage 3: $lookup always returns an array — unwind it to a single object
+      { $unwind: "$user" },
+
+      // Stage 4: sort newest first
+      { $sort: { createdAt: -1 } },
+
+      // Stage 5: shape the final output — keep review fields,
+      // but only expose the user's name (not their whole document/password etc.)
+      {
+        $project: {
+          productId: 1,
+          rating: 1,
+          comment: 1,
+          createdAt: 1,
+          updatedAt: 1,
+          userId: {
+            _id: "$user._id",
+            name: "$user.name",
+          },
+        },
+      },
+    ]);
 
     // Sign the product's images the same way getProducts does
     const signedImages = await resolveS3Urls(product.images || []);
@@ -103,16 +139,44 @@ export const addProductReview = async (req: AuthRequest, res: Response): Promise
     }
 
     // 4. Create Review
-    // Mapping: req.user._id (ObjectId) and req.user.name (Snapshot)
+    // Mapping: req.user._id (ObjectId). Name is fetched via aggregation ($lookup) when
+    // reading reviews — not stored here — so it's never stale.
     const newReview = new Review({
       productId: productObjectId,
       userId: new mongoose.Types.ObjectId(req.user.id),
-      userName: req.user.name,
       rating: Number(rating),
       comment: comment.trim()
     });
 
     const savedReview = await newReview.save();
+
+    // Re-fetch the saved review joined with the User collection via aggregation,
+    // so the response includes the reviewer's CURRENT name (no stored snapshot).
+    const [reviewWithUser] = await Review.aggregate([
+      { $match: { _id: savedReview._id } },
+      {
+        $lookup: {
+          from: "users",
+          localField: "userId",
+          foreignField: "_id",
+          as: "user",
+        },
+      },
+      { $unwind: "$user" },
+      {
+        $project: {
+          productId: 1,
+          rating: 1,
+          comment: 1,
+          createdAt: 1,
+          updatedAt: 1,
+          userId: {
+            _id: "$user._id",
+            name: "$user.name",
+          },
+        },
+      },
+    ]);
 
     // 5. Update Average Rating
     const allReviews = await Review.find({ productId: productObjectId });
@@ -127,7 +191,7 @@ export const addProductReview = async (req: AuthRequest, res: Response): Promise
       { runValidators: true }
     );
 
-    res.status(201).json(savedReview);
+    res.status(201).json(reviewWithUser);
 
   } catch (error: any) {
     // 6. Handle Unique Index Violation (User already reviewed)
